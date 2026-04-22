@@ -1,0 +1,126 @@
+using FormAI.Application.Forms.CloseForm;
+using FormAI.Application.Forms.CreateForm;
+using FormAI.Application.Forms.DeleteForm;
+using FormAI.Application.Forms.GetForm;
+using FormAI.Application.Forms.UpdateForm;
+using FormAI.Application.Forms.UpdateQuestions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Security.Claims;
+
+namespace FormAI.API.Controllers;
+
+[ApiController]
+[Route("api/forms")]
+public class FormsController : ControllerBase
+{
+    private readonly CreateFormHandler _create;
+    private readonly GetFormHandler _getById;
+    private readonly GetFormsByUserHandler _getByUser;
+    private readonly UpdateFormHandler _update;
+    private readonly DeleteFormHandler _delete;
+    private readonly CloseFormHandler _close;
+    private readonly UpdateQuestionsHandler _updateQuestions;
+
+    public FormsController(CreateFormHandler create,
+    GetFormHandler getById, GetFormsByUserHandler getByUser,
+    UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
+    UpdateQuestionsHandler updateQuestions)
+    {
+        _create = create;
+        _getById = getById;
+        _getByUser = getByUser;
+        _update = update;
+        _delete = delete;
+        _close = close;
+        _updateQuestions = updateQuestions;
+    }
+
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub")
+            ?? throw new UnauthorizedAccessException());
+
+    
+    // POST /api/forms
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateFormRequest request, CancellationToken cancellationToken)
+    {
+        var response = await _create.HandleAsync(request, CurrentUserId, cancellationToken);
+        return CreatedAtAction(nameof(Create), new { Id = response.Id }, response);
+    }
+
+    // GET /api/forms
+    [HttpGet]
+    public async Task<IActionResult> GetMyForms(CancellationToken cancellationToken)
+    {
+        var response = await _getByUser.HandleAsync(CurrentUserId, cancellationToken);
+        return Ok(response);    
+    }
+
+    // GET /api/forms/{id}
+    [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+         // Try to get userId from JWT if present; anonymous users get null
+        Guid? userId = null;
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier)
+               ?? User.FindFirstValue("sub");
+        if (sub is not null) userId = Guid.Parse(sub);
+
+        var response = await _getById.HandleAsync(id, userId, cancellationToken);
+        return Ok(response);    
+    }
+
+    // PUT /api/forms/{id}
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, 
+    [FromBody]UpdateFormRequest request,
+    CancellationToken cancellationToken)
+    {
+        var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
+        await _update.HandleAsync(cmd, cancellationToken);
+        return NoContent();  
+    }
+
+    // DELETE /api/forms/{id}
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _delete.HandleAsync(new DeleteFormRequest(id, CurrentUserId), cancellationToken);
+        return NoContent();
+    }
+
+    // PATCH /api/forms/{id}/close
+    [HttpPatch("{id:guid}/close")]
+    public async Task<IActionResult> Close(Guid id, CancellationToken cancellationToken)
+    {
+        await _close.HandleAsync(new CloseFormRequest(id, CurrentUserId), cancellationToken);
+        return NoContent();
+    }
+
+    // PUT /api/forms/{id}/questions
+    [HttpPut("{id:guid}/questions")]
+    public async Task<IActionResult> UpdateQuestions(Guid id, [FromBody]UpdateQuestionsRequest request, CancellationToken cancellationToken)
+    {
+        var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
+        await _updateQuestions.HandleAsync(cmd, cancellationToken);
+        return NoContent();
+    }
+
+    // POST   /api/forms/generate/text
+    // POST   /api/forms/generate/file
+    // POST   /api/forms/generate/url
+    // POST   /api/forms/generate/image
+
+    // POST   /api/forms
+    // GET    /api/forms
+    // GET    /api/forms/{id}
+    // PUT    /api/forms/{id}
+    // DELETE /api/forms/{id}
+    // PATCH  /api/forms/{id}/close
+    // PUT    /api/forms/{id}/questions
+    // POST   /api/forms/{id}/analyze
+}
