@@ -15,7 +15,7 @@ public class FormConfiguration : IEntityTypeConfiguration<Form>
             .HasMaxLength(255);
 
         builder.Property(u => u.Description)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(1024);
 
         builder.Property(u => u.SourceType)

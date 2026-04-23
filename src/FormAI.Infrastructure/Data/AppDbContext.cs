@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Answer> Answers => Set<Answer>();
     public DbSet<AnswerSelectedOption> AnswerSelectedOptions => Set<AnswerSelectedOption>(); 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserConfirmationToken> UserConfirmationTokens => Set<UserConfirmationToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

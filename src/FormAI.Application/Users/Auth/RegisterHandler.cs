@@ -1,5 +1,6 @@
 
-
+using System.Security.Cryptography;
+using System.Text;
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
@@ -9,12 +10,17 @@ namespace FormAI.Application.Users.Auth;
 public class RegisterHandler
 {
     private readonly IUserRepository _users;
+    private readonly IUserTokenConfirmationRepository _userTokens;
     private readonly IPasswordHasher _hasher;
+    private readonly IEmailService _emailService;
 
-    public RegisterHandler(IUserRepository users, IPasswordHasher hasher)
+    public RegisterHandler(IUserRepository users, IPasswordHasher hasher,
+    IUserTokenConfirmationRepository userTokens, IEmailService emailService)
     {
         _users = users;
         _hasher = hasher;
+        _userTokens = userTokens;
+        _emailService = emailService;
     }
 
     public async Task<RegisterUserResponse> HandleAsync(RegisterUserRequest request,
@@ -28,8 +34,25 @@ public class RegisterHandler
 
         var hash = _hasher.Hash(request.Password);
         var user = User.Create(request.Name, request.Email, hash);
+        user.SetConfirmationSent();
 
         await _users.AddAsync(user, cancellationToken);
+
+         // Generate raw token (sent to user) and hash (stored in DB — raw never persisted)
+        var tokenBytes = RandomNumberGenerator.GetBytes(64);
+        var rawToken = Convert.ToBase64String(tokenBytes)
+            .Replace("+", "-").Replace("/", "_").Replace("=", ""); // URL-safe base64
+
+        var tokenHash = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
+
+        var userToken = UserConfirmationToken.Create(user.Id, tokenHash,
+         Domain.Enums.TokenPurpose.EmailConfirmation,
+        user.PendingRegistrationExpiresAt.GetValueOrDefault());
+
+        await _userTokens.AddAsync(userToken, cancellationToken);
+            
+        await _emailService.SendVerificationEmailAsync(user.Email, user.Name, rawToken, cancellationToken);
 
         return new RegisterUserResponse(user.Id, user.Name, user.Email);
     }

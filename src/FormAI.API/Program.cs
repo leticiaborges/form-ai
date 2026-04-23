@@ -29,13 +29,14 @@ builder.Services.AddSwaggerGen(c =>
                     {
                         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
                     });
-    // c.AddSecurityRequirement(document => new OpenApiSecurityRequirement 
-    // {
-    //     [new OpenApiSecurityScheme 
-    //     { 
-    //         Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } 
-    //     }] = new string[] {}
-    // });
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDev", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
 });
 
 var app = builder.Build();
@@ -48,6 +49,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

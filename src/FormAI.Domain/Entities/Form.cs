@@ -6,7 +6,7 @@ public class Form
 {
     public Guid Id { get; private set; }
     public string Title { get; private set; } = string.Empty;
-    public string Description { get; private set; } = string.Empty;
+    public string? Description { get; private set; } = string.Empty;
     public Guid CreatedBy { get; private set; }
     public SourceType SourceType { get; private set; }
     public bool IsPublic { get; private set; }

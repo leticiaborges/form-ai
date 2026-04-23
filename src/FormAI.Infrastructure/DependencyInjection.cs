@@ -10,6 +10,7 @@ using FormAI.Application.Interfaces;
 using FormAI.Application.Users.Auth;
 using FormAI.Infrastructure.AI;
 using FormAI.Infrastructure.Data;
+using FormAI.Infrastructure.Email;
 using FormAI.Infrastructure.Repositories;
 using FormAI.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,14 +33,18 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUserTokenConfirmationRepository, UserTokenConfirmationRepository>();
 
         services.AddScoped<IFormGenerationService, ClaudeFormGenerationService>();
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.Configure<EmailSettings>(configuration.GetSection("Email"));
+        services.AddScoped<IEmailService, EmailService>();
 
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshTokenHandler>();
+        services.AddScoped<VerifyEmailHandler>();
         
         services.AddScoped<CreateFormHandler>();
         services.AddScoped<CloseFormHandler>();
