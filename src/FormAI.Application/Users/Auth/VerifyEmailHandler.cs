@@ -23,7 +23,7 @@ public class VerifyEmailHandler
         if (string.IsNullOrWhiteSpace(request.Token))
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                ["Token"] = ["Token is required."]
+                ["token"] = ["Token is required."]
             });
 
         var tokenHash = Convert.ToHexString(
@@ -42,7 +42,7 @@ public class VerifyEmailHandler
         if (user.IsEmailVerified)
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                ["Email"] = ["This email is already verified."]
+                ["email"] = ["This email is already verified."]
             });
 
         userToken.MarkUsed();

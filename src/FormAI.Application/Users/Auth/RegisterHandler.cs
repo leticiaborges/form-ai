@@ -29,7 +29,7 @@ public class RegisterHandler
         if (await _users.EmailExistsAsync(request.Email, cancellationToken))
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                ["Email"] = ["This email is already registered."]
+                ["email"] = ["This email is already registered."]
             });
 
         var hash = _hasher.Hash(request.Password);
