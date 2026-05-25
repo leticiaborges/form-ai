@@ -14,9 +14,10 @@ public class AppDbContext : DbContext
     public DbSet<QuestionOption> QuestionOptions => Set<QuestionOption>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Answer> Answers => Set<Answer>();
-    public DbSet<AnswerSelectedOption> AnswerSelectedOptions => Set<AnswerSelectedOption>(); 
+    public DbSet<AnswerSelectedOption> AnswerSelectedOptions => Set<AnswerSelectedOption>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserConfirmationToken> UserConfirmationTokens => Set<UserConfirmationToken>();
+    public DbSet<FormSourceContent> FormSourceContents => Set<FormSourceContent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

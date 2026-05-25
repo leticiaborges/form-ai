@@ -1,6 +1,7 @@
 using FormAI.Application.Forms.CloseForm;
 using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
+using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.UpdateForm;
 using FormAI.Application.Forms.UpdateQuestions;
@@ -22,11 +23,14 @@ public class FormsController : ControllerBase
     private readonly DeleteFormHandler _delete;
     private readonly CloseFormHandler _close;
     private readonly UpdateQuestionsHandler _updateQuestions;
+    private readonly GenerateFormHandler _generateForm;
+
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
     UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
-    UpdateQuestionsHandler updateQuestions)
+    UpdateQuestionsHandler updateQuestions,
+    GenerateFormHandler generateForm)
     {
         _create = create;
         _getById = getById;
@@ -35,6 +39,7 @@ public class FormsController : ControllerBase
         _delete = delete;
         _close = close;
         _updateQuestions = updateQuestions;
+        _generateForm = generateForm;
     }
 
     private Guid CurrentUserId =>
@@ -42,7 +47,7 @@ public class FormsController : ControllerBase
             ?? User.FindFirstValue("sub")
             ?? throw new UnauthorizedAccessException());
 
-    
+
     // POST /api/forms
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateFormRequest request, CancellationToken cancellationToken)
@@ -56,7 +61,7 @@ public class FormsController : ControllerBase
     public async Task<IActionResult> GetMyForms(CancellationToken cancellationToken)
     {
         var response = await _getByUser.HandleAsync(CurrentUserId, cancellationToken);
-        return Ok(response);    
+        return Ok(response);
     }
 
     // GET /api/forms/{id}
@@ -64,25 +69,25 @@ public class FormsController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-         // Try to get userId from JWT if present; anonymous users get null
+        // Try to get userId from JWT if present; anonymous users get null
         Guid? userId = null;
         var sub = User.FindFirstValue(ClaimTypes.NameIdentifier)
                ?? User.FindFirstValue("sub");
         if (sub is not null) userId = Guid.Parse(sub);
 
         var response = await _getById.HandleAsync(id, userId, cancellationToken);
-        return Ok(response);    
+        return Ok(response);
     }
 
     // PUT /api/forms/{id}
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, 
-    [FromBody]UpdateFormRequest request,
+    public async Task<IActionResult> Update(Guid id,
+    [FromBody] UpdateFormRequest request,
     CancellationToken cancellationToken)
     {
         var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
         await _update.HandleAsync(cmd, cancellationToken);
-        return NoContent();  
+        return NoContent();
     }
 
     // DELETE /api/forms/{id}
@@ -103,11 +108,21 @@ public class FormsController : ControllerBase
 
     // PUT /api/forms/{id}/questions
     [HttpPut("{id:guid}/questions")]
-    public async Task<IActionResult> UpdateQuestions(Guid id, [FromBody]UpdateQuestionsRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateQuestions(Guid id, [FromBody] UpdateQuestionsRequest request, CancellationToken cancellationToken)
     {
         var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
         await _updateQuestions.HandleAsync(cmd, cancellationToken);
         return NoContent();
+    }
+
+
+    // POST /api/forms/generate/text
+    [HttpPost("generate/text")]
+    public async Task<IActionResult> GenerateFromText([FromBody] GenerateFormRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _generateForm.HandleAsync(request, CurrentUserId, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = response.FormId }, response);
     }
 
     // POST   /api/forms/generate/text

@@ -19,12 +19,15 @@ public record QuestionDTO(
     QuestionType Type,
     int Order,
     bool IsRequired,
+    bool AiGenerated,
     int? Points,
+    string? CorrectAnswer,
     List<OptionDTO> Options
 );
 
 public record OptionDTO(
     Guid Id,
     string? Text,
-    int Order
+    int Order,
+    bool IsCorrect
 );

@@ -42,5 +42,10 @@ public class FormConfiguration : IEntityTypeConfiguration<Form>
             .WithOne(s => s.Form)
             .HasForeignKey(s => s.FormId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(f => f.SourceContents)
+            .WithOne(s => s.Form)
+            .HasForeignKey(s => s.FormId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

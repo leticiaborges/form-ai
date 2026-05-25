@@ -35,6 +35,13 @@ public class FormRepository : IFormRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task AddAsync(Form form, IReadOnlyList<FormSourceContent> sourceContents, CancellationToken cancellationToken = default)
+    {
+        await _context.Forms.AddAsync(form, cancellationToken);
+        await _context.FormSourceContents.AddRangeAsync(sourceContents, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task UpdateAsync(Form form, CancellationToken cancellationToken = default)
     {
         //_context.Forms.Update(form);

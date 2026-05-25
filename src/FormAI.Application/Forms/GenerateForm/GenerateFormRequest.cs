@@ -9,6 +9,5 @@ public record GenerateFormRequest(
     int QuestionCount,
     QuestionType[]? AllowedTypes,
     string DifficultyLevel,
-    string? Context,
     bool IncludeCorrectAnswers
 );

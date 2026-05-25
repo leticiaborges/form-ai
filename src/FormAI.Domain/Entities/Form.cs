@@ -16,10 +16,11 @@ public class Form
     public User? Creator { get; private set; }
     public List<FormQuestion> Questions { get; private set; } = new();
     public List<Submission> Submissions { get; private set; } = new();
+    public List<FormSourceContent> SourceContents { get; private set; } = new();
 
     private Form() { }
 
-    public static Form Create(string title, string description, Guid createdBy, SourceType sourceType, 
+    public static Form Create(string title, string description, Guid createdBy, SourceType sourceType,
     bool isPublic, DateTime? expiresAt, bool showResultsAfterSubmit)
     {
         return new Form

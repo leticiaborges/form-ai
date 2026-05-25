@@ -1,12 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { RegisterSuccessPage } from  './pages/RegisterSuccessPage';
+import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
-import { LoginPage } from  './pages/LoginPage';
-import { DashboardPage } from  './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { FormEditorPage } from './pages/FormEditorPage';
 
-export default function App(){
+export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -15,6 +16,7 @@ export default function App(){
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/forms/:id/edit" element={<FormEditorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

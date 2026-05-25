@@ -6,7 +6,6 @@ public record GenerationParameters(
     int QuestionCount = 10,
     QuestionType[]? AllowedTypes = null,
     string DifficultyLevel = "medium",
-    string? Context = null,
     bool IncludeCorrectAnswers = false
 );
 
@@ -14,7 +13,7 @@ public record GeneratedQuestion(
     string Text,
     QuestionType Type,
     bool IsRequired,
-    decimal? Points,
+    int? Points,
     string? CorrectAnswer,
     IReadOnlyList<GeneratedOption> Options
 );

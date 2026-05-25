@@ -44,6 +44,8 @@ Implementation plans for this project live in `docs/plans/`. Each plan covers on
 | File | Covers |
 |---|---|
 | `docs/plans/phase-1-base.md` | EF Core setup, migrations, repositories, JWT auth, Form CRUD |
+| `docs/plans/phase-2-frontend.md` | React frontend, login/register pages, email verification |
+| `docs/plans/phase-3-ai-generation.md` | AI form generation via Anthropic API, provider abstraction, question editing |
 
 ## Commands
 

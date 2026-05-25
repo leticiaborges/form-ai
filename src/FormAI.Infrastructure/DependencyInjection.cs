@@ -3,6 +3,7 @@ using FormAI.Application.AI;
 using FormAI.Application.Forms.CloseForm;
 using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
+using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.UpdateForm;
 using FormAI.Application.Forms.UpdateQuestions;
@@ -35,6 +36,12 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserTokenConfirmationRepository, UserTokenConfirmationRepository>();
 
+        services.Configure<ClaudeSettings>(configuration.GetSection("Claude"));
+        services.AddHttpClient("claude", (client) =>
+        {
+            client.BaseAddress = new Uri("https://api.anthropic.com/");
+            client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+        });
         services.AddScoped<IFormGenerationService, ClaudeFormGenerationService>();
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -45,7 +52,7 @@ public static class DependencyInjection
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshTokenHandler>();
         services.AddScoped<VerifyEmailHandler>();
-        
+
         services.AddScoped<CreateFormHandler>();
         services.AddScoped<CloseFormHandler>();
         services.AddScoped<DeleteFormHandler>();
@@ -53,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<GetFormsByUserHandler>();
         services.AddScoped<UpdateFormHandler>();
         services.AddScoped<UpdateQuestionsHandler>();
+        services.AddScoped<GenerateFormHandler>();
 
         services.AddScoped<IJwtService, JwtService>();
 

@@ -28,15 +28,15 @@ public class GetFormHandler
         var formResponse = new GetFormResponse(form.Id, form.Title, form.Description,
         form.IsPublic, form.ExpiresAt, form.ShowResultsAfterSubmit, form.CreatedAt,
         BuildQuestionDTOList(form));
-        
+
         return formResponse;
     }
 
     private List<QuestionDTO> BuildQuestionDTOList(Form form)
     {
-        return form.Questions.Select(a => 
-            new QuestionDTO(a.Id,a.Text, a.Type, a.Order, a.IsRequired, a.Points, 
-            a.Options.Select(o => new OptionDTO(o.Id, o.Text, o.Order)).OrderBy(o => o.Order).ToList()))
+        return form.Questions.Select(a =>
+            new QuestionDTO(a.Id, a.Text, a.Type, a.Order, a.IsRequired, a.AiGenerated, a.Points, a.CorrectAnswer,
+            a.Options.Select(o => new OptionDTO(o.Id, o.Text, o.Order, o.IsCorrect)).OrderBy(o => o.Order).ToList()))
             .OrderBy(a => a.Order)
             .ToList();
     }
