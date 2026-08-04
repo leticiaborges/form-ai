@@ -4,6 +4,8 @@ import { RadioButtonList } from "./RadioButtonList";
 import { CheckBoxList } from "./CheckBoxList";
 import { TextInput } from "./TextInput";
 import { NumberInput } from "./NumberInput";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from '@dnd-kit/utilities';
 
 
 type QuestionType = FormQuestion['type'];
@@ -25,26 +27,29 @@ const TYPE_COLOR: Record<QuestionType, string> = {
 interface QuestionCardProps {
   question: FormQuestion;
   index: number;
-  total: number;
   onChange: (q: FormQuestion) => void;
   onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
 }
 
 export function QuestionCard({
   question,
   index,
-  total,
   onChange,
-  onRemove,
-  onMoveUp,
-  onMoveDown
+  onRemove
 }: QuestionCardProps) {
+
+  const { attributes, listeners, setNodeRef,
+    transform, transition, isDragging } =
+    useSortable({ id: question.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [labelDraft, setLabelDraft] = useState(question.text);
-
-  const hasOptions = question.type == 'Single' || question.type == 'Multiple';
 
   function commitLabel() {
     const trimmed = labelDraft.trim();
@@ -98,7 +103,8 @@ export function QuestionCard({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div ref={setNodeRef} style={style} {...attributes}
+      className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
         {/* Question number */}
         <span className="mt-1 min-w-[24px] text-sm font-semibold text-gray-400">
@@ -139,23 +145,16 @@ export function QuestionCard({
         </div>
 
         {/* Reorder + delete column */}
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <button
-            disabled={index === 0}
-            onClick={onMoveUp}
-            title="Move up"
-            className="rounded p-1 text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600"
+            title="Drag to reorder"
           >
-            ▲
-          </button>
-          <button
-            disabled={index === total - 1}
-            onClick={onMoveDown}
-            title="Move down"
-            className="rounded p-1 text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            ▼
-          </button>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M108,60A16,16,0,1,1,92,44,16,16,0,0,1,108,60Zm56,0a16,16,0,1,0-16-16A16,16,0,0,0,164,60ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,180a16,16,0,1,0,16,16A16,16,0,0,0,92,180Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,180Z" />
+            </svg>
+          </div>
           <button
             onClick={onRemove}
             title="Delete question"

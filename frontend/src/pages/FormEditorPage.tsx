@@ -5,6 +5,9 @@ import { getForm, updateQuestions } from '../api/forms';
 import { Button } from "../components/Button";
 import { QuestionCard } from "../components/editors/QuestionCard";
 import { AddQuestionModal } from "../components/editors/AddQuestionModal";
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 type PageState = 'loading' | 'ready' | 'saving' | 'error';
 
@@ -38,17 +41,27 @@ export function FormEditorPage() {
         setQuestions(qs => qs.filter((_, i) => i !== index));
     }
 
-    function moveQuestion(index: number, direction: -1 | 1) {
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
         setQuestions(qs => {
-            const next = [...qs];
-            const target = index + direction;
-            if (target < 0 || target >= next.length)
-                return qs;
-
-            [next[index], next[target]] = [next[target], next[index]];
-            return next;
+            const oldIndex = qs.findIndex(q => q.id === active.id);
+            const newIndex = qs.findIndex(q => q.id === over.id);
+            return arrayMove(qs, oldIndex, newIndex);
         });
     }
+
+    // function moveQuestion(index: number, direction: -1 | 1) {
+    //     setQuestions(qs => {
+    //         const next = [...qs];
+    //         const target = index + direction;
+    //         if (target < 0 || target >= next.length)
+    //             return qs;
+
+    //         [next[index], next[target]] = [next[target], next[index]];
+    //         return next;
+    //     });
+    // }
 
     function appendQuestion(question: FormQuestion) {
         setQuestions(qs => [...qs, question]);
@@ -119,18 +132,20 @@ export function FormEditorPage() {
                     </div>
                 )}
 
-                {questions.map((q, i) => (
-                    <QuestionCard
-                        key={q.id}
-                        question={q}
-                        index={i}
-                        total={questions.length}
-                        onChange={updated => updateQuestion(i, updated)}
-                        onRemove={() => removeQuestion(i)}
-                        onMoveUp={() => moveQuestion(i, -1)}
-                        onMoveDown={() => moveQuestion(i, 1)}
-                    />
-                ))}
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                        {questions.map((q, i) => (
+                            <QuestionCard
+                                key={q.id}
+                                question={q}
+                                index={i}
+                                onChange={updated => updateQuestion(i, updated)}
+                                onRemove={() => removeQuestion(i)}
+                            />
+                        ))}
+                    </SortableContext>
+                </DndContext>
+
 
                 {/* Add question trigger */}
                 <button
