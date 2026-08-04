@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { FormQuestion, FormOption } from '../../types/form';
-import { OptionRow } from "./OptionRow";
+import { RadioButtonList } from "./RadioButtonList";
+import { CheckBoxList } from "./CheckBoxList";
+import { TextInput } from "./TextInput";
+import { NumberInput } from "./NumberInput";
 
 
 type QuestionType = FormQuestion['type'];
@@ -53,26 +56,45 @@ export function QuestionCard({
     setIsEditingLabel(false);
   }
 
-  function updateOption(optionIndex: number, patch: Partial<FormOption>) {
-    onChange({
-      ...question,
-      options: question.options.map((o, i) => i === optionIndex ? { ...o, ...patch } : o)
-    })
-  }
-
-  function removeOption(optionIndex: number) {
-    onChange({ ...question, options: question.options.filter((_, i) => i != optionIndex) })
-  }
-
-  function addOption() {
-    const newOption: FormOption = {
-      id: crypto.randomUUID(),
-      text: 'New option',
-      order: question.options.length + 1,
-      isCorrect: false
-    };
-
-    onChange({ ...question, options: [...question.options, newOption] });
+  function renderAnswerEditor() {
+    switch (question.type) {
+      case 'Single':
+        return (
+          <RadioButtonList
+            options={question.options}
+            questionId={question.id}
+            onOptionsChange={(opts) => onChange({
+              ...question,
+              options: opts
+            })}
+          />
+        );
+      case 'Multiple':
+        return (<CheckBoxList
+          options={question.options}
+          questionId={question.id}
+          onOptionsChange={(opts) => onChange({
+            ...question,
+            options: opts
+          })}
+        />)
+      case 'Text':
+        return (
+          <TextInput
+            correctAnswer={question.correctAnswer}
+            onCorrectAnswerChange={(value) =>
+              onChange({ ...question, correctAnswer: value })}
+          />
+        );
+      case 'Numeric':
+        return (
+          <NumberInput
+            correctAnswer={question.correctAnswer}
+            onCorrectAnswerChange={(value) =>
+              onChange({ ...question, correctAnswer: value })}
+          />
+        );
+    }
   }
 
   return (
@@ -112,28 +134,8 @@ export function QuestionCard({
             {TYPE_LABEL[question.type]}
           </span>
 
-          {/* Options list */}
-          {hasOptions && (
-            <div className="mt-3 space-y-0.5">
-              {question.options.map((opt, oi) => (
-                <OptionRow
-                  key={opt.id}
-                  text={opt.text}
-                  isCorrect={opt.isCorrect}
-                  showCorrect={true}
-                  onTextChange={text => updateOption(oi, { text })}
-                  onCorrectChange={isCorrect => updateOption(oi, { isCorrect })}
-                  onRemove={() => removeOption(oi)}
-                />
-              ))}
-              <button
-                onClick={addOption}
-                className="mt-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
-              >
-                + Add option
-              </button>
-            </div>
-          )}
+          {/* Type-specific answer editor */}
+          {renderAnswerEditor()}
         </div>
 
         {/* Reorder + delete column */}
@@ -165,5 +167,4 @@ export function QuestionCard({
       </div>
     </div>
   );
-
 }

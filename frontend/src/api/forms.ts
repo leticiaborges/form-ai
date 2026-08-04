@@ -17,7 +17,7 @@ export async function updateQuestions(formId: string,
             isRequired: q.isRequired,
             aiGenerated: q.aiGenerated,
             points: q.points,
-            correctAnswers: q.correctAnswer,
+            correctAnswer: q.correctAnswer,
             options: q.options.map((o, oi) => ({
                 text: o.text,
                 order: oi + 1,

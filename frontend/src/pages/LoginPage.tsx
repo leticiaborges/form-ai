@@ -19,19 +19,19 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [ serverError, setServerError ] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }} =
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
-  async function onSubmit(data: LoginFormData){
+  async function onSubmit(data: LoginFormData) {
     setServerError(null);
 
-    try{
+    try {
       const response = await loginUser(data);
       const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
 
-      login(payload.accessToken, response.refreshToken, {
+      login(response.accessToken, response.refreshToken, {
         id: payload.sub,
         name: payload.name,
         email: payload.email,
@@ -39,7 +39,7 @@ export function LoginPage() {
 
       navigate('/dashboard');
     }
-    catch(err: unknown){
+    catch (err: unknown) {
       const e = err as CustomResponse;
       setServerError(e.response?.data?.message ?? 'Login failed. Check your credentials.');
     }

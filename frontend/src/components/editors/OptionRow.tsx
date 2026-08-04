@@ -3,7 +3,8 @@ import { useState } from "react";
 interface OptionRowProps {
   text: string;
   isCorrect: boolean;
-  showCorrect: boolean;
+  inputType: 'checkbox' | 'radio';
+  questionId: string;
   onTextChange: (text: string) => void;
   onCorrectChange: (isCorrect: boolean) => void;
   onRemove: () => void
@@ -12,7 +13,8 @@ interface OptionRowProps {
 export function OptionRow({
   text,
   isCorrect,
-  showCorrect,
+  inputType,
+  questionId,
   onTextChange,
   onCorrectChange,
   onRemove
@@ -31,14 +33,20 @@ export function OptionRow({
   }
 
   return (
-    <div className="flex items-center gap-2 py-1">
-      {showCorrect && (
+    <div className={`flex items-center gap-2 py-1 px-2 rounded-md transition-colors ${isCorrect ? 'bg-green-50' : ''}`}>
+
+      {inputType === 'checkbox' ? (
         <input
           type="checkbox"
-          checked={isCorrect}
-          onChange={e => onCorrectChange(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          title="Mark as correct answer"
+          readOnly
+          className="h-4 w-4 rounded border-gray-300 text-indigo-600 pointer-events-none"
+        />
+      ) : (
+        <input
+          type="radio"
+          name={questionId}
+          readOnly
+          className="h-4 w-4 border-gray-300 text-indigo-600 pointer-events-none"
         />
       )}
 
@@ -62,11 +70,28 @@ export function OptionRow({
       )}
 
       <button
+        onClick={() => onCorrectChange(!isCorrect)}
+        className={`border rounded px-2 py-0.5 text-xs transition-colors whitespace-nowrap ${isCorrect
+            ? 'bg-green-100 text-green-700 border-green-300'
+            : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
+          }`}
+        title="Mark as correct answer"
+      >
+        {isCorrect ? 'Correct' : 'Mark correct'}
+      </button>
+
+      <button
         onClick={onRemove}
         className="text-gray-400 hover:text-red-500 transition-colors"
         title="Remove option"
       >
-        ✕
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+          <path d="M10 11v6M14 11v6" />
+          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+        </svg>
       </button>
     </div>
   );

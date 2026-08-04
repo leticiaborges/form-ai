@@ -14,6 +14,7 @@ namespace FormAI.API.Controllers;
 
 [ApiController]
 [Route("api/forms")]
+[Authorize]
 public class FormsController : ControllerBase
 {
     private readonly CreateFormHandler _create;

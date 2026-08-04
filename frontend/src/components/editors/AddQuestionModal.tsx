@@ -2,10 +2,13 @@ import { useState } from "react";
 import type { FormQuestion, FormOption, QuestionType } from '../../types/form';
 import { Input } from "../Input";
 import { Button } from "../Button";
+import { RadioButtonList } from "./RadioButtonList";
+import { CheckBoxList } from "./CheckBoxList";
+
 
 interface AddQuestionModalProps {
   onAdd: (question: FormQuestion) => void;
-  onClose: () => void
+  onClose: () => void;
 }
 
 const TYPES: { value: QuestionType, label: string }[] = [
@@ -13,7 +16,7 @@ const TYPES: { value: QuestionType, label: string }[] = [
   { value: 'Multiple', label: 'Multiple choice' },
   { value: 'Text', label: 'Text' },
   { value: 'Numeric', label: 'Numeric' }
-]
+];
 
 function makeOption(): FormOption {
   return { id: crypto.randomUUID(), text: '', order: 0, isCorrect: false };
@@ -112,41 +115,21 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
           {hasOptions && (
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Options <span className="text-gray-400 font-normal">(check correct answers)</span>
+                Options <span className="text-gray-400 font-normal">(mark correct answers)</span>
               </label>
-              <div className="space-y-2">
-                {options.map((opt, i) => (
-                  <div key={opt.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={opt.isCorrect}
-                      onChange={() => toggleCorrect(i)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      title="Mark as correct"
-                    />
-                    <input
-                      value={opt.text}
-                      onChange={e => updateOptionText(i, e.target.value)}
-                      placeholder={`Option ${i + 1}`}
-                      className="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm
-                                 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <button
-                      onClick={() => removeOption(i)}
-                      disabled={options.length <= 2}
-                      className="text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={addOption}
-                  className="text-xs text-indigo-600 hover:underline"
-                >
-                  + Add option
-                </button>
-              </div>
+              {type === 'Single' ? (
+                <RadioButtonList
+                  options={options}
+                  questionId="modal-new-question"
+                  onOptionsChange={setOptions}
+                />
+              ) : (
+                <CheckBoxList
+                  options={options}
+                  questionId="modal-new-question"
+                  onOptionsChange={setOptions}
+                />
+              )}
             </div>
           )}
 
