@@ -18,8 +18,8 @@ const TYPE_LABEL: Record<QuestionType, string> = {
 };
 
 const TYPE_COLOR: Record<QuestionType, string> = {
-  Single: 'bg-indigo-100 text-indigo-700',
-  Multiple: 'bg-purple-100 text-purple-700',
+  Single: 'bg-brand-100 text-brand-700',
+  Multiple: 'bg-brand-100 text-brand-700',
   Text: 'bg-gray-100 text-gray-600',
   Numeric: 'bg-amber-100 text-amber-700',
 };
@@ -123,12 +123,12 @@ export function QuestionCard({
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitLabel(); }
               }}
               rows={2}
-              className="w-full resize-none rounded border border-indigo-400 px-2 py-1 text-sm
-                         font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full resize-none rounded border border-brand-400 px-2 py-1 text-sm
+                         font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           ) : (
             <p
-              className="cursor-text text-sm font-medium text-gray-900 hover:text-indigo-700"
+              className="cursor-text text-sm font-medium text-gray-900 hover:text-brand-700"
               onClick={() => { setLabelDraft(question.text); setIsEditingLabel(true); }}
             >
               {question.text}

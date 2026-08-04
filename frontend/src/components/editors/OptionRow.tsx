@@ -39,14 +39,14 @@ export function OptionRow({
         <input
           type="checkbox"
           readOnly
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 pointer-events-none"
+          className="h-4 w-4 rounded border-gray-300 text-brand-600 pointer-events-none"
         />
       ) : (
         <input
           type="radio"
           name={questionId}
           readOnly
-          className="h-4 w-4 border-gray-300 text-indigo-600 pointer-events-none"
+          className="h-4 w-4 border-gray-300 text-brand-600 pointer-events-none"
         />
       )}
 
@@ -57,8 +57,8 @@ export function OptionRow({
           onChange={e => setDraft(e.target.value)}
           onBlur={commitEdit}
           onKeyDown={e => e.key === 'Enter' && commitEdit()}
-          className="flex-1 rounded border border-indigo-400 px-2 py-0.5 text-sm
-                     focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="flex-1 rounded border border-brand-400 px-2 py-0.5 text-sm
+                     focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
       ) : (
         <span
@@ -72,8 +72,8 @@ export function OptionRow({
       <button
         onClick={() => onCorrectChange(!isCorrect)}
         className={`border rounded px-2 py-0.5 text-xs transition-colors whitespace-nowrap ${isCorrect
-            ? 'bg-green-100 text-green-700 border-green-300'
-            : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
+          ? 'bg-green-100 text-green-700 border-green-300'
+          : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
           }`}
         title="Mark as correct answer"
       >

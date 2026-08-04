@@ -152,7 +152,7 @@ export function FormEditorPage() {
                     onClick={() => setShowAddModal(true)}
                     className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed
                      border-gray-300 py-4 text-sm text-gray-500 transition-colors
-                     hover:border-indigo-400 hover:text-indigo-600"
+                     hover:border-brand-400 hover:text-brand-600"
                 >
                     + Add question
                 </button>

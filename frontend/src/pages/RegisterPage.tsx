@@ -52,24 +52,24 @@ export function RegisterPage() {
       if (fieldErrors && Object.keys(fieldErrors).length > 0) {
         const objectEntries = Object.entries(fieldErrors);
 
-          for (const [key, messages] of objectEntries) {
-            setError(key as keyof RegisterFormData, { type: "server", message: messages[0] });
-          }
+        for (const [key, messages] of objectEntries) {
+          setError(key as keyof RegisterFormData, { type: "server", message: messages[0] });
+        }
       }
-      else{
+      else {
         setServerError(
-            e.response?.data?.message ??
-              "Registration failed. Please try again.",
-          );
+          e.response?.data?.message ??
+          "Registration failed. Please try again.",
+        );
       }
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
-          <Link to="/" className="text-2xl font-bold text-indigo-600">
+          <Link to="/" className="text-2xl font-bold text-brand-600">
             FormAI
           </Link>
           <h1 className="mt-4 text-xl font-semibold text-gray-900">
@@ -77,7 +77,7 @@ export function RegisterPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Already have an account?{" "}
-            <Link to="/login" className="text-indigo-600 hover:underline">
+            <Link to="/login" className="text-brand-600 hover:underline">
               Log in
             </Link>
           </p>

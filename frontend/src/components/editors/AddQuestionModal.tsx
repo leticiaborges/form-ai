@@ -101,8 +101,8 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
                   key={t.value}
                   onClick={() => setType(t.value)}
                   className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${type === t.value
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-600 hover:border-indigo-400'
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-gray-300 bg-white text-gray-600 hover:border-brand-400'
                     }`}
                 >
                   {t.label}

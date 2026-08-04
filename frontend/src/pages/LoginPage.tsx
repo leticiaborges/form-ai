@@ -46,14 +46,14 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
-          <Link to="/" className="text-2xl font-bold text-indigo-600">FormAI</Link>
+          <Link to="/" className="text-2xl font-bold text-brand-600">FormAI</Link>
           <h1 className="mt-4 text-xl font-semibold text-gray-900">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1">
             Don't have an account?{' '}
-            <Link to="/register" className="text-indigo-600 hover:underline">Sign up</Link>
+            <Link to="/register" className="text-brand-600 hover:underline">Sign up</Link>
           </p>
         </div>
 

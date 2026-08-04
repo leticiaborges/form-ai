@@ -54,7 +54,7 @@ export function RadioButtonList({
 
       <button
         onClick={addOption}
-        className="mt-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+        className="mt-1 text-xs text-brand-600 hover:text-brand-800 hover:underline"
       >
         + Add option
       </button>
