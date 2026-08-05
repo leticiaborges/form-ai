@@ -8,7 +8,6 @@ export function NumberInput({ correctAnswer, onCorrectAnswerChange }: NumberInpu
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Preview</p>
         <input
           disabled
           type="number"

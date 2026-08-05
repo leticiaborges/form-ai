@@ -1,5 +1,13 @@
 export type QuestionType = 'Single' | 'Multiple' | 'Text' | 'Numeric';
 
+export interface FormSummary {
+    id: string;
+    title: string;
+    isPublic: boolean;
+    expiresAt: string | null;
+    createdAt: string;
+}
+
 export interface FormOption {
     id: string;
     text: string;

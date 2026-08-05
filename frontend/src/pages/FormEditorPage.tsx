@@ -106,9 +106,9 @@ export function FormEditorPage() {
             {/* Sticky top bar */}
             <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-3 shadow-sm flex items-center justify-between">
                 <div>
-                    <h1 className="max-w-xs truncate text-base font-semibold text-gray-900">
+                    <h3 className="max-w-xs truncate text-base font-semibold text-gray-900">
                         {form.title}
-                    </h1>
+                    </h3>
                     <p className="text-xs text-gray-400">
                         {questions.length} question{questions.length !== 1 ? 's' : ''}
                     </p>

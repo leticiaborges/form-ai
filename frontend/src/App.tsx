@@ -6,6 +6,7 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FormEditorPage } from './pages/FormEditorPage';
+import { CreateFormPage } from './pages/CreateFormPage';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/forms/new" element={<CreateFormPage />} />
       <Route path="/forms/:id/edit" element={<FormEditorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

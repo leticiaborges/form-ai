@@ -7,7 +7,6 @@ export function TextInput({ correctAnswer, onCorrectAnswerChange }: TextInputPro
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Preview</p>
         <textarea
           disabled
           rows={3}

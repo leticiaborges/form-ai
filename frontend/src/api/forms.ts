@@ -1,5 +1,35 @@
 import api from './axios';
-import type { FormDetail, FormQuestion } from '../types/form';
+import type { FormDetail, FormQuestion, FormSummary } from '../types/form';
+
+export interface GenerateFormPayload {
+    sourceText: string;
+    questionCount: number;
+    difficultyLevel: string;
+    includeCorrectAnswers: boolean;
+}
+
+export interface GenerateFormResult {
+    formId: string;
+    title: string;
+}
+
+export async function generateForm(payload: GenerateFormPayload): Promise<GenerateFormResult> {
+    const response = await api.post<GenerateFormResult>('/forms/generate/text', {
+        sourceText: payload.sourceText,
+        sourceType: 'Text',
+        sourceUrl: null,
+        questionCount: payload.questionCount,
+        allowedTypes: null,
+        difficultyLevel: payload.difficultyLevel,
+        includeCorrectAnswers: payload.includeCorrectAnswers,
+    });
+    return response.data;
+}
+
+export async function listForms(): Promise<FormSummary[]> {
+    const response = await api.get<FormSummary[]>('/forms');
+    return response.data;
+}
 
 export async function getForm(formId: string): Promise<FormDetail> {
     const response = await api.get<FormDetail>(`/forms/${formId}`);
