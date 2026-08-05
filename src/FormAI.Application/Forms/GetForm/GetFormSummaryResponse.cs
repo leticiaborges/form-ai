@@ -7,5 +7,6 @@ public record GetFormSummaryResponse(
     string Title,
     bool IsPublic,
     DateTime? ExpiresAt,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    int SubmissionCount
 );

@@ -18,7 +18,7 @@ public class GetFormsByUserHandler
     public async Task<List<GetFormSummaryResponse>> HandleAsync(Guid requestingUserId, CancellationToken cancellationToken)
     {
         var forms = await _formRepository.GetAllByUserIdAsync(requestingUserId, cancellationToken);
-        return forms.Select(f => 
-            new GetFormSummaryResponse(f.Id,f.Title, f.IsPublic, f.ExpiresAt, f.CreatedAt)).ToList();
+        return forms.Select(f =>
+            new GetFormSummaryResponse(f.Id, f.Title, f.IsPublic, f.ExpiresAt, f.CreatedAt, f.Submissions.Count)).ToList();
     }
 }

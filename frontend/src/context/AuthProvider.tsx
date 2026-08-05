@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { AuthUser } from '../types/auth';
 import { AuthContext } from './AuthContext';
 
-export function AuthProvider({ children } : { children: ReactNode }){
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(() => {
         const stored = localStorage.getItem('user');
         if (!stored) return null;
@@ -14,18 +14,19 @@ export function AuthProvider({ children } : { children: ReactNode }){
         }
     });
 
-    function login(accessToken: string, refreshToken: string, user: AuthUser){
+    function login(accessToken: string, refreshToken: string, user: AuthUser) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(user));
         setUser(user);
     }
 
-    function logout(){
+    function logout() {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         setUser(null);
+        window.location.href = "/";
     }
 
     return (

@@ -25,6 +25,7 @@ public class FormRepository : IFormRepository
     public async Task<IEnumerable<Form>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.Forms
+                .Include(f => f.Submissions)
                 .Where(a => a.CreatedBy == userId)
                 .OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
     }

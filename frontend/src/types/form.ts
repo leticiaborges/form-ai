@@ -6,6 +6,7 @@ export interface FormSummary {
     isPublic: boolean;
     expiresAt: string | null;
     createdAt: string;
+    submissionCount: number;
 }
 
 export interface FormOption {

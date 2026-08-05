@@ -5,6 +5,7 @@ import type { FormSummary } from "../types/form";
 import { useNavigate } from "react-router-dom";
 import { listForms } from "../api/forms";
 import { FormCard } from "../components/FormCard";
+import { SubmissionsPerFormChart } from "../components/SubmissionsPerFormChart";
 
 
 type PageState = 'loading' | 'ready' | 'error';
@@ -33,33 +34,36 @@ export function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">My forms</h2>
+        {state === 'ready' && <SubmissionsPerFormChart forms={forms} />}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">My forms</h2>
 
-        {state === 'loading' && (
-          <p className="text-gray-500">Loading your forms…</p>
-        )}
+          {state === 'loading' && (
+            <p className="text-gray-500">Loading your forms…</p>
+          )}
 
-        {state === 'error' && (
-          <p className="text-red-600">Couldn't load your forms. Please try again later.</p>
-        )}
+          {state === 'error' && (
+            <p className="text-red-600">Couldn't load your forms. Please try again later.</p>
+          )}
 
-        {state === 'ready' && forms.length === 0 && (
-          <div className="py-16 text-center text-gray-400">
-            <p className="text-lg">You haven't created any forms yet.</p>
-          </div>
-        )}
+          {state === 'ready' && forms.length === 0 && (
+            <div className="py-16 text-center text-gray-400">
+              <p className="text-lg">You haven't created any forms yet.</p>
+            </div>
+          )}
 
-        {state === 'ready' && forms.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {forms.map(form => (
-              <FormCard
-                key={form.id}
-                form={form}
-                onClick={() => navigate(`/forms/${form.id}/edit`)}
-              />
-            ))}
-          </div>
-        )}
+          {state === 'ready' && forms.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {forms.map(form => (
+                <FormCard
+                  key={form.id}
+                  form={form}
+                  onClick={() => navigate(`/forms/${form.id}/edit`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
