@@ -42,7 +42,6 @@ public class ClaudeFormGenerationService : IFormGenerationService
 
 
         var client = _httpClientFactory.CreateClient("claude");
-        Console.WriteLine("apikey = " + _settings.ApiKey);
         client.DefaultRequestHeaders.Add("x-api-key", _settings.ApiKey);
 
 
