@@ -8,7 +8,6 @@ using Microsoft.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
-//builder.Services.AddControllers();
 
 builder.Services.AddControllers()
      .AddJsonOptions(options =>

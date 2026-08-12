@@ -8,17 +8,17 @@ namespace FormAI.IntegrationTests;
 
 public class UserRepositoryTests : IAsyncLifetime
 {
-     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18")
-     .Build();
-    
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18")
+    .Build();
+
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
     }
-   
+
     public async Task DisposeAsync()
     {
-         await _postgres.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     [Fact]
@@ -31,11 +31,11 @@ public class UserRepositoryTests : IAsyncLifetime
         await context.Database.MigrateAsync();
 
         var repo = new UserRepository(context);
-        var user = User.Create("Leticia", "test@example.com", "hash");
+        var user = User.Create("Test User", "test@example.com", "hash");
         await repo.AddAsync(user);
 
         var foundUser = await repo.GetByEmailAsync("test@example.com");
         Assert.NotNull(foundUser);
-        Assert.Equal("Leticia", foundUser.Name);
+        Assert.Equal("Test User", foundUser.Name);
     }
 }
