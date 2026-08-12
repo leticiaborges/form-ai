@@ -1,6 +1,10 @@
+#!/bin/sh
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -v app_db_password="$APP_DB_PASSWORD" <<-'EOSQL'
 CREATE ROLE form_ai_app WITH
 LOGIN
-PASSWORD 'form_ai_app123'
+PASSWORD :'app_db_password'
 NOSUPERUSER
 NOCREATEDB
 NOCREATEROLE
@@ -10,7 +14,7 @@ ALTER DATABASE form_ai OWNER TO form_ai_app;
 
 GRANT ALL PRIVILEGES ON DATABASE form_ai TO form_ai_app;
 
-\c form_ai;
+\c form_ai
 
 ALTER SCHEMA public OWNER TO form_ai_app;
 
@@ -28,3 +32,4 @@ GRANT ALL PRIVILEGES ON SEQUENCES TO form_ai_app;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT ALL PRIVILEGES ON FUNCTIONS TO form_ai_app;
+EOSQL
