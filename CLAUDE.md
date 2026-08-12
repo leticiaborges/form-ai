@@ -108,7 +108,7 @@ Each use case lives in its own folder named after the operation (`Forms/CreateFo
 
 | Variable | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` | Claude API key for form generation and result analysis |
+| `Claude__ApiKey` | Claude API key for form generation and result analysis |
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
 | `Jwt__Secret` | JWT signing key |
 | `Jwt__Issuer` / `Jwt__Audience` | JWT validation params |

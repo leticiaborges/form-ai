@@ -39,6 +39,7 @@ appsettings.Local.json
 secrets.json
 *.pfx
 *.p12
+.env
 
 ## Rider / JetBrains
 .idea/
@@ -59,5 +60,4 @@ TestResults/
 *.coveragexml
 coverage*/
 
-docs/
 .claude/
