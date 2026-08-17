@@ -11,7 +11,7 @@ export function SubmissionsPerFormChart({ forms }: Readonly<SubmissionsPerFormCh
     const max = Math.max(1, ...sorted.map(f => f.submissionCount));
 
     return (
-        <section className="bg-white rounded-2xl shadow-md p-6">
+        <section className="bg-white rounded-2xl shadow-md p-6 cursor-pointer">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Submissions per form</h2>
             <ul className="flex flex-col gap-3">
                 {sorted.map(form => (
