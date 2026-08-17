@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { CustomResponse } from "../types/CustomResponse";
 
 const createFormSchema = z.object({
+  title: z.string().max(255, "Title must be at most 255 characters").optional(),
+  description: z.string().max(1024, "Description must be at most 1024 characters").optional(),
   sourceText: z.string().min(50, "Source text must be at least 50 characters long"),
   questionCount: z.coerce.number().int().min(1, "At least 1 question.").
     max(20, "At most 20 questions."),
@@ -57,6 +59,46 @@ export function CreateFormPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="title" className="text-sm font-medium text-gray-700">
+              Form title <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              id="title"
+              type="text"
+              maxLength={255}
+              className={
+                'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
+                'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
+                (errors.title ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+              }
+              placeholder="Leave blank to use a generated title"
+              {...register('title')}
+            />
+            {errors.title && (
+              <span className="text-xs text-red-500">{errors.title.message}</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="description" className="text-sm font-medium text-gray-700">
+              Description <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              id="description"
+              rows={2}
+              maxLength={1024}
+              className={
+                'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
+                'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
+                (errors.description ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+              }
+              placeholder="A short note about what this form is for…"
+              {...register('description')}
+            />
+            {errors.description && (
+              <span className="text-xs text-red-500">{errors.description.message}</span>
+            )}
+          </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="sourceText" className="text-sm font-medium text-gray-700">
               Source content

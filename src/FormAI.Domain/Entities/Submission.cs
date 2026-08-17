@@ -14,7 +14,7 @@ public class Submission
 
     public Form? Form { get; private set; }
     public User? User { get; private set; }
-    public List<Answer>? Answers { get; private set; }
+    public List<Answer> Answers { get; private set; } = new();
 
     private Submission() { }
 
@@ -31,5 +31,11 @@ public class Submission
             SubmittedAt = DateTime.UtcNow,
             Score = score
         };
+    }
+
+    public void SetAnswers(List<Answer> answers)
+    {
+        Answers.Clear();
+        Answers.AddRange(answers);
     }
 }

@@ -5,9 +5,13 @@ using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
+using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Forms.UpdateForm;
 using FormAI.Application.Forms.UpdateQuestions;
 using FormAI.Application.Interfaces;
+using FormAI.Application.Submissions.GetFormToAnswer;
+using FormAI.Application.Submissions.GetMySubmission;
+using FormAI.Application.Submissions.SubmitForm;
 using FormAI.Application.Users.Auth;
 using FormAI.Infrastructure.AI;
 using FormAI.Infrastructure.Data;
@@ -35,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserTokenConfirmationRepository, UserTokenConfirmationRepository>();
+        services.AddScoped<ISubmissionRepository, SubmissionRepository>();
 
         services.Configure<ClaudeSettings>(configuration.GetSection("Claude"));
         services.AddHttpClient("claude", (client) =>
@@ -61,6 +66,10 @@ public static class DependencyInjection
         services.AddScoped<UpdateFormHandler>();
         services.AddScoped<UpdateQuestionsHandler>();
         services.AddScoped<GenerateFormHandler>();
+        services.AddScoped<SaveFormEditorHandler>();
+        services.AddScoped<GetFormToAnswerHandler>();
+        services.AddScoped<GetMySubmissionHandler>();
+        services.AddScoped<SubmitFormHandler>();
 
         services.AddScoped<IJwtService, JwtService>();
 

@@ -2,6 +2,8 @@ import api from './axios';
 import type { FormDetail, FormQuestion, FormSummary } from '../types/form';
 
 export interface GenerateFormPayload {
+    title?: string;
+    description?: string;
     sourceText: string;
     questionCount: number;
     difficultyLevel: string;
@@ -13,8 +15,46 @@ export interface GenerateFormResult {
     title: string;
 }
 
+export interface UpdateFormPayload {
+    title: string;
+    description: string;
+    isPublic: boolean;
+    expiresAt: string | null;
+    showResultsAfterSubmit: boolean;
+}
+
+export interface SaveFormEditorPayload {
+    title: string;
+    description: string;
+    isPublic: boolean;
+    questions: FormQuestion[];
+}
+
+export async function saveFormEditor(formId: string, payload: SaveFormEditorPayload): Promise<void> {
+    await api.put(`/forms/${formId}/editor`, {
+        title: payload.title,
+        description: payload.description?.trim() || null,
+        isPublic: payload.isPublic,
+        questions: payload.questions.map((q, i) => ({
+            text: q.text,
+            type: q.type,
+            order: i + 1,
+            isRequired: q.isRequired,
+            aiGenerated: q.aiGenerated,
+            points: q.points,
+            correctAnswer: q.correctAnswer,
+            options: q.options.map((o, oi) => ({
+                text: o.text,
+                order: oi + 1,
+                isCorrect: o.isCorrect
+            }))
+        }))
+    });
+}
+
 export async function generateForm(payload: GenerateFormPayload): Promise<GenerateFormResult> {
     const response = await api.post<GenerateFormResult>('/forms/generate/text', {
+        title: payload.title?.trim() || null,
         sourceText: payload.sourceText,
         sourceType: 'Text',
         sourceUrl: null,
@@ -57,4 +97,8 @@ export async function updateQuestions(formId: string,
     };
 
     await api.put(`/forms/${formId}/questions`, payload);
+}
+
+export async function updateForm(formId: string, payload: UpdateFormPayload): Promise<void> {
+    await api.put(`/forms/${formId}`, payload);
 }

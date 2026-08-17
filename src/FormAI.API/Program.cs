@@ -19,6 +19,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
+    c.CustomSchemaIds(type => type.FullName);
+
     var scheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",

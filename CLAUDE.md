@@ -46,6 +46,9 @@ Implementation plans for this project live in `docs/plans/`. Each plan covers on
 | `docs/plans/phase-1-base.md` | EF Core setup, migrations, repositories, JWT auth, Form CRUD |
 | `docs/plans/phase-2-frontend.md` | React frontend, login/register pages, email verification |
 | `docs/plans/phase-3-ai-generation.md` | AI form generation via Anthropic API, provider abstraction, question editing |
+| `docs/plans/phase-9-form-title-editing.md` | User-settable form title on create/generate, editable title on the form editor |
+| `docs/plans/phase-10-form-visibility-default.md` | Default new forms to private, public/private checkbox on the form editor |
+| `docs/plans/phase-11-public-form-response.md` | Public form-response flow: anonymous/authenticated respondents view and submit answers via a new read-only respond page |
 
 ## Commands
 

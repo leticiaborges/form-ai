@@ -3,6 +3,7 @@ using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
+using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Forms.UpdateForm;
 using FormAI.Application.Forms.UpdateQuestions;
 using Microsoft.AspNetCore.Authorization;
@@ -25,13 +26,14 @@ public class FormsController : ControllerBase
     private readonly CloseFormHandler _close;
     private readonly UpdateQuestionsHandler _updateQuestions;
     private readonly GenerateFormHandler _generateForm;
-
+    private readonly SaveFormEditorHandler _saveFormEditor;
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
     UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
     UpdateQuestionsHandler updateQuestions,
-    GenerateFormHandler generateForm)
+    GenerateFormHandler generateForm,
+    SaveFormEditorHandler saveFormEditor)
     {
         _create = create;
         _getById = getById;
@@ -41,6 +43,17 @@ public class FormsController : ControllerBase
         _close = close;
         _updateQuestions = updateQuestions;
         _generateForm = generateForm;
+        _saveFormEditor = saveFormEditor;
+    }
+
+    [HttpPut("{id:guid}/editor")]
+    public async Task<IActionResult> SaveEditor(Guid id,
+    [FromBody] SaveFormEditorRequest request,
+    CancellationToken cancellationToken)
+    {
+        var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
+        await _saveFormEditor.HandleAsync(cmd, cancellationToken);
+        return NoContent();
     }
 
     private Guid CurrentUserId =>

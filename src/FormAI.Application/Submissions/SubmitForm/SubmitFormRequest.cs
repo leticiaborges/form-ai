@@ -6,11 +6,17 @@ public record SubmitFormRequest(
     IReadOnlyList<AnswerRequest> Answers
 );
 
+public record SubmitFormRequestCommand(
+    Guid FormId,
+    Guid? UserId,
+    string IpAddress,
+    Guid RespondentToken,
+    IReadOnlyList<AnswerRequest> Answers
+);
+
 public record AnswerRequest(
     Guid QuestionId,
     Guid[]? SelectedOptionIds,
     string? TextValue,
     decimal? NumericValue
 );
-
-public record SubmitFormResponse(Guid SubmissionId, decimal? Score);

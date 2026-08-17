@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { FormDetail, FormQuestion } from "../types/form";
-import { getForm, updateQuestions } from '../api/forms';
+import { getForm, updateForm, updateQuestions, saveFormEditor } from '../api/forms';
 import { Button } from "../components/Button";
 import { QuestionCard } from "../components/editors/QuestionCard";
 import { AddQuestionModal } from "../components/editors/AddQuestionModal";
@@ -15,12 +15,18 @@ export function FormEditorPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-
     const [state, setState] = useState<PageState>('loading');
     const [form, setForm] = useState<FormDetail | null>(null);
     const [questions, setQuestions] = useState<FormQuestion[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [saveError, setSaveError] = useState('');
+
+    const [isPublic, setIsPublic] = useState(false);
+    const [title, setTitle] = useState('');
+    const [titleError, setTitleError] = useState('');
+
+    const [description, setDescription] = useState('');
+    const [descriptionError, setDescriptionError] = useState('');
 
     useEffect(() => {
         if (!id)
@@ -29,6 +35,9 @@ export function FormEditorPage() {
         getForm(id).then(data => {
             setForm(data);
             setQuestions(data.questions);
+            setTitle(data.title);
+            setDescription(data.description ?? '');
+            setIsPublic(data.isPublic);
             setState('ready');
         }).catch(() => setState('error'));
     }, [id]);
@@ -51,18 +60,6 @@ export function FormEditorPage() {
         });
     }
 
-    // function moveQuestion(index: number, direction: -1 | 1) {
-    //     setQuestions(qs => {
-    //         const next = [...qs];
-    //         const target = index + direction;
-    //         if (target < 0 || target >= next.length)
-    //             return qs;
-
-    //         [next[index], next[target]] = [next[target], next[index]];
-    //         return next;
-    //     });
-    // }
-
     function appendQuestion(question: FormQuestion) {
         setQuestions(qs => [...qs, question]);
     }
@@ -71,11 +68,37 @@ export function FormEditorPage() {
         if (!id)
             return;
 
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) {
+            setTitleError('Title is required.');
+            return;
+        }
+        if (trimmedTitle.length > 255) {
+            setTitleError('Title must be at most 255 characters.');
+            return;
+        }
+
+        const trimmedDescription = description.trim();
+        if (trimmedDescription.length > 1024) {
+            setDescriptionError('Description must be at most 1024 characters.');
+            return;
+        }
+
         setSaveError('');
         setState('saving');
 
         try {
-            await updateQuestions(id, questions);
+            await saveFormEditor(id, {
+                title: trimmedTitle,
+                description: trimmedDescription,
+                isPublic,
+                questions
+            });
+            setForm(f => f ? {
+                ...f, title: trimmedTitle,
+                description: trimmedDescription,
+                isPublic
+            } : f);
             setState('ready');
         }
         catch {
@@ -106,9 +129,18 @@ export function FormEditorPage() {
             {/* Sticky top bar */}
             <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-3 shadow-sm flex items-center justify-between">
                 <div>
-                    <h3 className="max-w-xs truncate text-base font-semibold text-gray-900">
-                        {form.title}
-                    </h3>
+                    <input
+                        value={title}
+                        maxLength={255}
+                        onChange={e => { setTitle(e.target.value); setTitleError(''); }}
+                        className={
+                            'max-w-xs truncate text-base font-semibold text-gray-900 bg-transparent ' +
+                            'border border-transparent rounded px-1 -mx-1 outline-none ' +
+                            'hover:border-gray-200 focus:border-brand-400 focus:ring-1 focus:ring-brand-400 ' +
+                            (titleError ? 'border-red-400' : '')
+                        }
+                    />
+                    {titleError && <p className="text-xs text-red-500 px-1">{titleError}</p>}
                     <p className="text-xs text-gray-400">
                         {questions.length} question{questions.length !== 1 ? 's' : ''}
                     </p>
@@ -131,6 +163,31 @@ export function FormEditorPage() {
                         <p className="mt-1 text-sm">Use the button below to add one.</p>
                     </div>
                 )}
+
+                <textarea
+                    value={description}
+                    maxLength={1024}
+                    rows={4}
+                    onChange={e => { setDescription(e.target.value); setDescriptionError(''); }}
+                    placeholder="Add a description…"
+                    className={
+                        'block w-full resize-none text-xs text-gray-500 bg-transparent ' +
+                        'border border-transparent rounded px-1 -mx-1 outline-none ' +
+                        'hover:border-gray-200 focus:border-brand-400 focus:ring-1 focus:ring-brand-400 ' +
+                        (descriptionError ? 'border-red-400' : '')
+                    }
+                />
+                {descriptionError && <p className="text-xs text-red-500 px-1">{descriptionError}</p>}
+
+                <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={isPublic}
+                        onChange={e => setIsPublic(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                    />
+                    Public
+                </label>
 
                 <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>

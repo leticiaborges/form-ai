@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FormEditorPage } from './pages/FormEditorPage';
 import { CreateFormPage } from './pages/CreateFormPage';
+import { FormRespondPage } from './pages/FormAnswerPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/forms/new" element={<CreateFormPage />} />
       <Route path="/forms/:id/edit" element={<FormEditorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/forms/:id/respond" element={<FormRespondPage />} />
     </Routes>
   );
 }

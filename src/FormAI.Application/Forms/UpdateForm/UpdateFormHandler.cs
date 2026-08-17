@@ -21,9 +21,15 @@ public class UpdateFormHandler
             throw new NotFoundException("Form not found");
 
         if (form.CreatedBy != request.RequestingUserId)
-             throw new ForbiddenException("You do not own this form.");
+            throw new ForbiddenException("You do not own this form.");
 
-        form.Update(request.Title, request.Description ?? string.Empty, request.IsPublic,
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new ArgumentException("Title is required.");
+
+        if (request.Title.Length > 255)
+            throw new ArgumentException("Title must be at most 255 characters.");
+
+        form.Update(request.Title.Trim(), request.Description ?? string.Empty, request.IsPublic,
         request.ExpiresAt, request.ShowResultsAfterSubmit);
 
         await _formRepository.UpdateAsync(form, cancellationToken);

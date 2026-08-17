@@ -23,6 +23,13 @@ public class GenerateFormHandler
     Guid requestingUserId,
     CancellationToken cancellationToken = default)
     {
+        var title = string.IsNullOrWhiteSpace(request.Title)
+            ? $"Generated Form – {DateTime.UtcNow:yyyy-MM-dd HH:mm}"
+            : request.Title.Trim();
+
+        if (title.Length > 255)
+            throw new ArgumentException("Title must be at most 255 characters.");
+
         if (string.IsNullOrWhiteSpace(request.SourceText))
             throw new ArgumentException("Source text is required to generate a form.");
 
@@ -37,12 +44,19 @@ public class GenerateFormHandler
 
         var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, cancellationToken);
 
+        var description = string.IsNullOrWhiteSpace(request.Description)
+            ? null
+            : request.Description.Trim();
+
+        if (description?.Length > 1024)
+            throw new ArgumentException("Description must be at most 1024 characters.");
+
         var form = Form.Create(
-            title: $"Generated Form – {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
-            description: null,
+            title: title,
+            description: description ?? string.Empty,
             createdBy: requestingUserId,
             sourceType: SourceType.Text,
-            isPublic: true,
+            isPublic: false,
             expiresAt: DateTime.UtcNow.AddDays(15),
             showResultsAfterSubmit: false
         );
