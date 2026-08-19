@@ -172,7 +172,7 @@ export function FormAnswerPage() {
         <BasePage>
             <main className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-4">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">{form.title}</h1>
+                    <h3 className="text-xl font-bold text-gray-900">{form.title}</h3>
                     {form.description && <p className="mt-1 text-sm text-gray-500">{form.description}</p>}
                 </div>
 

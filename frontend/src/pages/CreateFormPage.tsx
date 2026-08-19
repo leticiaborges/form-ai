@@ -52,139 +52,139 @@ export function CreateFormPage() {
     <BasePage>
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900">Create a new form</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Paste the content you want to turn into questions, and the AI will
-            generate a draft form for you to edit.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="title" className="text-sm font-medium text-gray-700">
-              Form title <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              maxLength={255}
-              className={
-                'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                (errors.title ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
-              }
-              placeholder="Leave blank to use a generated title"
-              {...register('title')}
-            />
-            {errors.title && (
-              <span className="text-xs text-red-500">{errors.title.message}</span>
-            )}
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="description" className="text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <textarea
-              id="description"
-              rows={2}
-              maxLength={1024}
-              className={
-                'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                (errors.description ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
-              }
-              placeholder="A short note about what this form is for…"
-              {...register('description')}
-            />
-            {errors.description && (
-              <span className="text-xs text-red-500">{errors.description.message}</span>
-            )}
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="sourceText" className="text-sm font-medium text-gray-700">
-              Source content
-            </label>
-            <textarea
-              id="sourceText"
-              rows={8}
-              className={
-                'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                (errors.sourceText ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
-              }
-              placeholder="Paste an article, study notes, or any text you want questions generated from…"
-              {...register('sourceText')}
-            />
-            {errors.sourceText && (
-              <span className="text-xs text-red-500">{errors.sourceText.message}</span>
-            )}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Create a new form</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Paste the content you want to turn into questions, and the AI will
+              generate a draft form for you to edit.
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <label htmlFor="questionCount" className="text-sm font-medium text-gray-700">
-                Number of questions
+              <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                Form title <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
-                id="questionCount"
-                type="number"
-                min={1}
-                max={20}
+                id="title"
+                type="text"
+                maxLength={255}
                 className={
                   'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
                   'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                  (errors.questionCount ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                  (errors.title ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
                 }
-                {...register('questionCount')}
+                placeholder="Leave blank to use a generated title"
+                {...register('title')}
               />
-              {errors.questionCount && (
-                <span className="text-xs text-red-500">{errors.questionCount.message}</span>
+              {errors.title && (
+                <span className="text-xs text-red-500">{errors.title.message}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                Description <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="description"
+                rows={2}
+                maxLength={1024}
+                className={
+                  'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
+                  'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
+                  (errors.description ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                }
+                placeholder="A short note about what this form is for…"
+                {...register('description')}
+              />
+              {errors.description && (
+                <span className="text-xs text-red-500">{errors.description.message}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="sourceText" className="text-sm font-medium text-gray-700">
+                Source content
+              </label>
+              <textarea
+                id="sourceText"
+                rows={8}
+                className={
+                  'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
+                  'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
+                  (errors.sourceText ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                }
+                placeholder="Paste an article, study notes, or any text you want questions generated from…"
+                {...register('sourceText')}
+              />
+              {errors.sourceText && (
+                <span className="text-xs text-red-500">{errors.sourceText.message}</span>
               )}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label htmlFor="difficultyLevel" className="text-sm font-medium text-gray-700">
-                Difficulty
-              </label>
-              <select
-                id="difficultyLevel"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm outline-none
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="questionCount" className="text-sm font-medium text-gray-700">
+                  Number of questions
+                </label>
+                <input
+                  id="questionCount"
+                  type="number"
+                  min={1}
+                  max={20}
+                  className={
+                    'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
+                    'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
+                    (errors.questionCount ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                  }
+                  {...register('questionCount')}
+                />
+                {errors.questionCount && (
+                  <span className="text-xs text-red-500">{errors.questionCount.message}</span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="difficultyLevel" className="text-sm font-medium text-gray-700">
+                  Difficulty
+                </label>
+                <select
+                  id="difficultyLevel"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm outline-none
                   focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                {...register('difficultyLevel')}
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
+                  {...register('difficultyLevel')}
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-              {...register('includeCorrectAnswers')}
-            />
-            Include correct answers (for graded forms)
-          </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                {...register('includeCorrectAnswers')}
+              />
+              Include correct answers (for graded forms)
+            </label>
 
-          {serverError && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {serverError}
+            {serverError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {serverError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mt-2">
+              <Link to="/dashboard" className="text-sm text-gray-500 hover:underline">
+                Cancel
+              </Link>
+              <Button type="submit" isLoading={isSubmitting}>
+                Generate form
+              </Button>
             </div>
-          )}
-
-          <div className="flex items-center justify-between mt-2">
-            <Link to="/dashboard" className="text-sm text-gray-500 hover:underline">
-              Cancel
-            </Link>
-            <Button type="submit" isLoading={isSubmitting}>
-              Generate form
-            </Button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
       </div>
     </BasePage>
   );
