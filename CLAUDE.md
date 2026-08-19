@@ -14,13 +14,13 @@ FormAI uses AI to automatically generate question forms from content uploaded by
 - **Form** — the generated form; holds source metadata (`sourceType`, `sourceContent`, `sourceUrl`), generation context (`aiPromptContext`), and publication settings (`isPublic`, `expiresAt`, `showResultsAfterSubmit`)
 - **FormQuestion** — belongs to a Form; types: `Single`, `Multiple`, `Text`, `Numeric`; carries `order`, `points`, `correctAnswer`, and `aiGenerated` flag
 - **QuestionOption** — choices for `Single`/`Multiple` questions; has `isCorrect` for grading
-- **Submission** — one complete response set per respondent; anonymous respondents are identified by `respondentToken` (UUID from localStorage) + IP
+- **Submission** — one complete response set per respondent; anonymous respondents are identified by `respondentToken` (UUID from localStorage)
 - **Answer** — one row per question per Submission; stores `selectedOptions` in a child table, `textValue`, or `numericValue`
 
 ### Business rules
 
 - Expired forms reject new submissions
-- Duplicate submission blocked by `userId` (authenticated) or `respondentToken` + IP (anonymous)
+- Duplicate submission blocked by `userId` (authenticated) or `respondentToken`
 - Only the form creator can edit, close, or view individual submission results
 - Private forms return `403` to unauthenticated users
 - Answer key and scores are hidden until the form is closed (configurable)

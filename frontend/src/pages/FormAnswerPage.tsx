@@ -25,7 +25,7 @@ function isAnswered(question: AnswerQuestion,
     }
 }
 
-export function FormRespondPage() {
+export function FormAnswerPage() {
     const { id } = useParams<{ id: string }>();
     const [respondentToken] = useState(getRespondentToken());
 
