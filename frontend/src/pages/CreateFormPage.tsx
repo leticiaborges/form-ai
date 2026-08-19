@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../components/Button";
+import { BasePage } from "../components/BasePage";
 import { Link, useNavigate } from "react-router-dom";
 import { generateForm } from "../api/forms";
 import z from "zod";
@@ -48,8 +49,9 @@ export function CreateFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8">
+    <BasePage>
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8">
         <div className="mb-6">
           <h1 className="text-xl font-semibold text-gray-900">Create a new form</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -183,6 +185,7 @@ export function CreateFormPage() {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </BasePage>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../components/Button";
+import { BasePage } from "../components/BasePage";
 import { useAuth } from "../context/useAuth";
 import type { FormSummary } from "../types/form";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +12,7 @@ import { SubmissionsPerFormChart } from "../components/SubmissionsPerFormChart";
 type PageState = 'loading' | 'ready' | 'error';
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [state, setState] = useState<PageState>('loading');
@@ -26,17 +27,17 @@ export function DashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? 'User'}!</h1>
+    <BasePage>
+      <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? 'User'}!</h3>
         <Button onClick={() => navigate('/forms/new')}>New form</Button>
-        <Button variant="outline" onClick={logout}>Log out</Button>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">Submissions per form</h4>
         {state === 'ready' && <SubmissionsPerFormChart forms={forms} />}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">My forms</h2>
+        <div style={{ marginTop: "10px" }}>
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">My forms</h4>
 
           {state === 'loading' && (
             <p className="text-gray-500">Loading your forms…</p>
@@ -65,6 +66,6 @@ export function DashboardPage() {
           )}
         </div>
       </main>
-    </div>
+    </BasePage >
   );
 }

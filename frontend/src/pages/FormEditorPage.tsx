@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { FormDetail, FormQuestion } from "../types/form";
 import { getForm, updateForm, updateQuestions, saveFormEditor } from '../api/forms';
 import { Button } from "../components/Button";
+import { BasePage } from "../components/BasePage";
 import { QuestionCard } from "../components/editors/QuestionCard";
 import { AddQuestionModal } from "../components/editors/AddQuestionModal";
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -27,6 +28,8 @@ export function FormEditorPage() {
 
     const [description, setDescription] = useState('');
     const [descriptionError, setDescriptionError] = useState('');
+
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         if (!id)
@@ -62,6 +65,16 @@ export function FormEditorPage() {
 
     function appendQuestion(question: FormQuestion) {
         setQuestions(qs => [...qs, question]);
+    }
+
+    async function handleCopyLink(url: string) {
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {
+            // clipboard API unavailable/denied — silently ignore
+        }
     }
 
     async function handleSave() {
@@ -110,22 +123,26 @@ export function FormEditorPage() {
 
     if (state === 'loading') {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-gray-500">Loading form…</p>
-            </div>
+            <BasePage>
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-gray-500">Loading form…</p>
+                </div>
+            </BasePage>
         );
     }
 
     if (state === 'error' || !form) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-red-600">Form not found or you don't have access.</p>
-            </div>
+            <BasePage>
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-red-600">Form not found or you don't have access.</p>
+                </div>
+            </BasePage>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <BasePage>
             {/* Sticky top bar */}
             <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-3 shadow-sm flex items-center justify-between">
                 <div>
@@ -179,15 +196,48 @@ export function FormEditorPage() {
                 />
                 {descriptionError && <p className="text-xs text-red-500 px-1">{descriptionError}</p>}
 
-                <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={isPublic}
-                        onChange={e => setIsPublic(e.target.checked)}
-                        className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-                    />
-                    Public
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={isPublic}
+                            onChange={e => setIsPublic(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                        />
+                        Public
+                    </label>
+
+                    {form.isPublic && (() => {
+                        const answerUrl = `${window.location.origin}/forms/${form.id}/answer`;
+                        return (
+                            <div className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500">
+                                <svg className="h-3.5 w-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" />
+                                </svg>
+                                <span className="max-w-[220px] truncate" title={answerUrl}>{answerUrl}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCopyLink(answerUrl)}
+                                    className="flex items-center gap-1 rounded px-1 text-gray-400 hover:text-brand-600"
+                                    title="Copy link"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <svg className="h-3.5 w-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span className="text-green-600">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })()}
+                </div>
 
                 <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
@@ -225,6 +275,6 @@ export function FormEditorPage() {
                     onClose={() => setShowAddModal(false)}
                 />
             )}
-        </div>
+        </BasePage>
     );
 }

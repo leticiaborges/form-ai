@@ -5,6 +5,7 @@ import { getRespondentToken } from "../utils/respondentToken";
 import { getFormToAnswer, getMySubmission, submitForm } from "../api/submissions";
 import type { CustomResponse } from "../types/CustomResponse";
 import { Button } from "../components/Button";
+import { BasePage } from "../components/BasePage";
 import { QuestionAnswerCard } from "../components/respond/QuestionAnswerCard";
 
 type PageState = 'loading' | 'alreadySubmitted' |
@@ -144,9 +145,11 @@ export function FormAnswerPage() {
 
     if (state === 'loading') {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-gray-500">Loading form…</p>
-            </div>
+            <BasePage>
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-gray-500">Loading form…</p>
+                </div>
+            </BasePage>
         );
     }
 
@@ -157,14 +160,16 @@ export function FormAnswerPage() {
         status == 'submitted' || status == 'error' || !form) {
         message = getMessageBasedOnState(state);
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-gray-600">{message}</p>
-            </div>
+            <BasePage>
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-gray-600">{message}</p>
+                </div>
+            </BasePage>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <BasePage>
             <main className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-4">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">{form.title}</h1>
@@ -191,7 +196,7 @@ export function FormAnswerPage() {
                     Submit
                 </Button>
             </main>
-        </div>
+        </BasePage>
     );
 }
 

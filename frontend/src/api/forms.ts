@@ -55,6 +55,7 @@ export async function saveFormEditor(formId: string, payload: SaveFormEditorPayl
 export async function generateForm(payload: GenerateFormPayload): Promise<GenerateFormResult> {
     const response = await api.post<GenerateFormResult>('/forms/generate/text', {
         title: payload.title?.trim() || null,
+        description: payload.description?.trim(),
         sourceText: payload.sourceText,
         sourceType: 'Text',
         sourceUrl: null,
