@@ -49,6 +49,7 @@ Implementation plans for this project live in `docs/plans/`. Each plan covers on
 | `docs/plans/phase-9-form-title-editing.md` | User-settable form title on create/generate, editable title on the form editor |
 | `docs/plans/phase-10-form-visibility-default.md` | Default new forms to private, public/private checkbox on the form editor |
 | `docs/plans/phase-11-public-form-response.md` | Public form-response flow: anonymous/authenticated respondents view and submit answers via a new read-only respond page |
+| `docs/plans/phase-12-toast-notifications.md` | Shared toast notification pattern (sonner) for success/error/warning feedback across CreateFormPage, DashboardPage, FormEditorPage, FormAnswerPage |
 
 ## Commands
 
