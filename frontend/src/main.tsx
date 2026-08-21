@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
 import App from './App';
 import './index.css'
+import { Toaster } from 'sonner';
 
 
 const rootElement = document.getElementById('root');
@@ -16,6 +17,8 @@ createRoot(rootElement).render(
     <BrowserRouter>
       <AuthProvider>
         <App></App>
+        <Toaster position='top-right' richColors closeButton duration={4000} theme="light">
+        </Toaster>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

@@ -144,12 +144,12 @@ public class SubmitFormHandler
             return (null, Array.Empty<Guid>());
 
         var selectedIds = answer.SelectedOptionIds ?? Array.Empty<Guid>();
-        var isGraded = question.Options.Any(o => o.IsCorrect);
+        var isGraded = question.Options.Any(o => o.IsCorrect.GetValueOrDefault());
 
         if (!isGraded)
             return (null, selectedIds);
 
-        var correctIds = question.Options.Where(o => o.IsCorrect)
+        var correctIds = question.Options.Where(o => o.IsCorrect.GetValueOrDefault())
         .Select(o => o.Id).ToHashSet();
 
         var isCorrect = selectedIds.ToHashSet().SetEquals(correctIds);

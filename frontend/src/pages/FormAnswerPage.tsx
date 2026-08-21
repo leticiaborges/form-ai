@@ -3,10 +3,11 @@ import type { AnswerForm, AnswerPayload, AnswerQuestion } from "../types/submiss
 import { useEffect, useState } from "react";
 import { getRespondentToken } from "../utils/respondentToken";
 import { getFormToAnswer, getMySubmission, submitForm } from "../api/submissions";
-import type { CustomResponse } from "../types/CustomResponse";
 import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
 import { QuestionAnswerCard } from "../components/respond/QuestionAnswerCard";
+import { getErrorMessage } from "../utils/getErrorMessage";
+import { showError } from "../utils/toast";
 
 type PageState = 'loading' | 'alreadySubmitted' |
     'expired' | 'ready' | 'submitting' | 'submitted' | 'error';
@@ -35,7 +36,6 @@ export function FormAnswerPage() {
 
     const [answers, setAnswers] = useState<Record<string, AnswerPayload>>({});
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-    const [submitError, setSubmitError] = useState('');
 
     useEffect(() => {
         if (!id) return;
@@ -119,7 +119,6 @@ export function FormAnswerPage() {
         }
 
         setFieldErrors({});
-        setSubmitError('');
         setState('submitting');
 
         try {
@@ -135,10 +134,7 @@ export function FormAnswerPage() {
             setState('submitted');
         }
         catch (err: unknown) {
-            const e = err as CustomResponse;
-            setSubmitError(e.response?.data?.message
-                ?? 'Failed to submit. Please try again.'
-            );
+            showError(getErrorMessage(err, 'Failed to submit. Please try again.'));
             setState('ready');
         }
     }
@@ -189,8 +185,6 @@ export function FormAnswerPage() {
                         onNumericChange={value => setNumericAnswer(q.id, value)}
                     />
                 ))}
-
-                {submitError && <p className="text-center text-sm text-red-600">{submitError}</p>}
 
                 <Button onClick={handleSubmit} isLoading={state === 'submitting'}>
                     Submit

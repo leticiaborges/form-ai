@@ -13,7 +13,7 @@ export interface FormOption {
     id: string;
     text: string;
     order: number;
-    isCorrect: boolean;
+    isCorrect: boolean | null;
 }
 
 export interface FormQuestion {

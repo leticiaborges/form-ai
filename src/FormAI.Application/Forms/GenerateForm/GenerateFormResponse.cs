@@ -26,5 +26,5 @@ public record GeneratedOptionResponse(
     Guid OptionId,
     string Text,
     int Order,
-    bool IsCorrect
+    bool? IsCorrect
 );

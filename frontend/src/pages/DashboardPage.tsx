@@ -8,7 +8,6 @@ import { listForms } from "../api/forms";
 import { FormCard } from "../components/FormCard";
 import { SubmissionsPerFormChart } from "../components/SubmissionsPerFormChart";
 
-
 type PageState = 'loading' | 'ready' | 'error';
 
 export function DashboardPage() {
@@ -22,7 +21,9 @@ export function DashboardPage() {
     listForms().then(data => {
       setForms(data);
       setState('ready');
-    }).catch(() => setState('error'));
+    }).catch(() => {
+      setState('error');
+    });
   }, []);
 
 

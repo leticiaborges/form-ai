@@ -22,8 +22,7 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         builder.Property(s => s.Score)
             .IsRequired(false);
 
-        builder.HasIndex(s => new { s.FormId, s.RespondentToken, s.IpAddress })
-            .IsUnique();
+        builder.HasIndex(s => new { s.FormId, s.RespondentToken });
 
         builder.HasIndex(s => new { s.FormId, s.UserId })
             .IsUnique()

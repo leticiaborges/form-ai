@@ -9,6 +9,8 @@ import { AddQuestionModal } from "../components/editors/AddQuestionModal";
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { getErrorMessage } from "../utils/getErrorMessage";
+import { showSuccess, showError } from "../utils/toast";
 
 type PageState = 'loading' | 'ready' | 'saving' | 'error';
 
@@ -20,7 +22,6 @@ export function FormEditorPage() {
     const [form, setForm] = useState<FormDetail | null>(null);
     const [questions, setQuestions] = useState<FormQuestion[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [saveError, setSaveError] = useState('');
 
     const [isPublic, setIsPublic] = useState(false);
     const [title, setTitle] = useState('');
@@ -28,8 +29,6 @@ export function FormEditorPage() {
 
     const [description, setDescription] = useState('');
     const [descriptionError, setDescriptionError] = useState('');
-
-    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         if (!id)
@@ -70,10 +69,9 @@ export function FormEditorPage() {
     async function handleCopyLink(url: string) {
         try {
             await navigator.clipboard.writeText(url);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            showSuccess('Link copied to clipboard.');
         } catch {
-            // clipboard API unavailable/denied — silently ignore
+            showError('Could not copy link. Please copy it manually.');
         }
     }
 
@@ -97,7 +95,6 @@ export function FormEditorPage() {
             return;
         }
 
-        setSaveError('');
         setState('saving');
 
         try {
@@ -112,10 +109,12 @@ export function FormEditorPage() {
                 description: trimmedDescription,
                 isPublic
             } : f);
+
+            showSuccess('Form saved.');
             setState('ready');
         }
-        catch {
-            setSaveError('Failed to save. Please try again');
+        catch (err: unknown) {
+            showError(getErrorMessage(err, 'Failed to save. Please try again.'));
             setState('ready');
         }
     }
@@ -219,20 +218,12 @@ export function FormEditorPage() {
                                     type="button"
                                     onClick={() => handleCopyLink(answerUrl)}
                                     className="flex items-center gap-1 rounded px-1 text-gray-400 hover:text-brand-600"
-                                    title="Copy link"
-                                >
-                                    {copied ? (
-                                        <>
-                                            <svg className="h-3.5 w-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            <span className="text-green-600">Copied!</span>
-                                        </>
-                                    ) : (
-                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
-                                    )}
+                                    title="Copy link">
+
+                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+
                                 </button>
                             </div>
                         );
@@ -263,10 +254,6 @@ export function FormEditorPage() {
                 >
                     + Add question
                 </button>
-
-                {saveError && (
-                    <p className="text-center text-sm text-red-600">{saveError}</p>
-                )}
             </main>
 
             {showAddModal && (

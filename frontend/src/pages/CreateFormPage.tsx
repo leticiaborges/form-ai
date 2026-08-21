@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,7 +5,8 @@ import { generateForm } from "../api/forms";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CustomResponse } from "../types/CustomResponse";
+import { getErrorMessage } from "../utils/getErrorMessage";
+import { showSuccess, showError } from "../utils/toast";
 
 const createFormSchema = z.object({
   title: z.string().max(255, "Title must be at most 255 characters").optional(),
@@ -22,7 +22,6 @@ type CreateFormData = z.infer<typeof createFormSchema>;
 
 export function CreateFormPage() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,13 +37,12 @@ export function CreateFormPage() {
   });
 
   async function onSubmit(data: CreateFormData) {
-    setServerError(null);
     try {
       const result = await generateForm(data);
+      showSuccess('Form generated successfully.');
       navigate(`/forms/${result.formId}/edit`);
     } catch (err: unknown) {
-      const e = err as CustomResponse;
-      setServerError(e.response?.data?.message ?? "Failed to generate form. Please try again.");
+      showError(getErrorMessage(err, "Failed to generate form. Please try again."));
     }
   }
 
@@ -168,12 +166,6 @@ export function CreateFormPage() {
               />
               Include correct answers (for graded forms)
             </label>
-
-            {serverError && (
-              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                {serverError}
-              </div>
-            )}
 
             <div className="flex items-center justify-between mt-2">
               <Link to="/dashboard" className="text-sm text-gray-500 hover:underline">

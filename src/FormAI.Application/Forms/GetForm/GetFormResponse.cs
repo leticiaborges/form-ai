@@ -29,5 +29,5 @@ public record OptionDTO(
     Guid Id,
     string? Text,
     int Order,
-    bool IsCorrect
+    bool? IsCorrect
 );

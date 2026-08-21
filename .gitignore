@@ -61,3 +61,5 @@ TestResults/
 coverage*/
 
 .claude/
+
+migration.sql
