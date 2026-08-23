@@ -43,8 +43,10 @@ public class SubmitFormHandler
             r.Question.Id, null, r.Answer.TextValue,
             (double?)r.Answer.NumericValue, r.Score);
 
-            answer.SetSelectedOptions(r.SelectedOptionsIds.
-                Select(id => AnswerSelectedOption.Create(answer.Id, id))
+            var optionTextById = r.Question.Options.ToDictionary(o => o.Id, o => o.Text);
+
+            answer.SetSelectedOptions(r.SelectedOptionsIds
+                .Select(id => AnswerSelectedOption.Create(answer.Id, optionTextById[id]))
                 .ToList());
 
             return answer;
@@ -114,6 +116,26 @@ public class SubmitFormHandler
 
             if (!isAnswered)
                 continue;
+
+            if (question.Type is QuestionType.Single or QuestionType.Multiple)
+            {
+                var knownOptionIds = question.Options.Select(o => o.Id).ToHashSet();
+                var submittedIds = answer!.SelectedOptionIds ?? Array.Empty<Guid>();
+
+                if (submittedIds.Any(id => !knownOptionIds.Contains(id)))
+                {
+                    errors[question.Id.ToString()] =
+                        new[] { "One or more selected options don't belong to this question." };
+                    continue;
+                }
+
+                if (question.Type == QuestionType.Single && submittedIds.Length > 1)
+                {
+                    errors[question.Id.ToString()] =
+                        new[] { "This question accepts only one option." };
+                    continue;
+                }
+            }
 
             var (score, selectedOptionsIds) = ScoreAnswer(question, answer);
             results.Add(new QuestionResult(question, answer!, score, selectedOptionsIds));

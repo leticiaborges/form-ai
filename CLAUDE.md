@@ -50,6 +50,7 @@ Implementation plans for this project live in `docs/plans/`. Each plan covers on
 | `docs/plans/phase-10-form-visibility-default.md` | Default new forms to private, public/private checkbox on the form editor |
 | `docs/plans/phase-11-public-form-response.md` | Public form-response flow: anonymous/authenticated respondents view and submit answers via a new read-only respond page |
 | `docs/plans/phase-12-toast-notifications.md` | Shared toast notification pattern (sonner) for success/error/warning feedback across CreateFormPage, DashboardPage, FormEditorPage, FormAnswerPage |
+| `docs/plans/phase-13-answer-option-history.md` | `answer_selected_options` reworked to `id` PK + `option_text` snapshot so renaming/deleting an option preserves submitted answers; option text required + unique per question (app-level only) |
 
 ## Commands
 
