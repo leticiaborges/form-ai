@@ -18,7 +18,7 @@ public record GeneratedQuestion(
     IReadOnlyList<GeneratedOption> Options
 );
 
-public record GeneratedOption(string Text, bool IsCorrect);
+public record GeneratedOption(string Text, bool? IsCorrect);
 
 public interface IFormGenerationService
 {

@@ -17,7 +17,7 @@ export function NumberInput({ correctAnswer, onCorrectAnswerChange }: NumberInpu
       </div>
       <div>
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-          AI suggested answer
+          Suggested answer
         </p>
         <input
           type="number"

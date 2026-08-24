@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormAI.Application.AI;
 using FormAI.Domain.Enums;
+using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Options;
@@ -68,6 +69,7 @@ public class ClaudeFormGenerationService : IFormGenerationService
         prompt = prompt.Replace("{questionCount}", parameters.QuestionCount.ToString());
         prompt = prompt.Replace("{allowedTypes}", allowedTypes);
         prompt = prompt.Replace("{difficultyLevel}", parameters.DifficultyLevel);
+        prompt = prompt.Replace("{markCorrect}", parameters.IncludeCorrectAnswers.ToString());
 
         return prompt;
     }
@@ -98,17 +100,17 @@ public class ClaudeFormGenerationService : IFormGenerationService
             var questionType = Enum.Parse<QuestionType>(question.GetProperty("type").GetString() ?? "");
 
             var options = question.GetProperty("options").EnumerateArray().Select(q =>
-            new GeneratedOption(q.GetProperty("text").GetString()!,
-             q.GetProperty("isCorrect").GetBoolean())).ToList();
+            new GeneratedOption(q.GetProperty("text").GetString()!.Truncate(1024),
+             q.GetProperty("isCorrect").GetString() == null ? null : q.GetProperty("isCorrect").GetBoolean())).ToList();
 
             results.Add(new GeneratedQuestion(
-                Text: question.GetProperty("text").GetString()!,
+                Text: question.GetProperty("text").GetString()!.Truncate(1024),
                 Type: questionType,
                 IsRequired: true,
                 Points: question.TryGetProperty("points", out var pointsObj) && pointsObj.ValueKind
                 != JsonValueKind.Null ? pointsObj.GetInt32() : null,
                 CorrectAnswer: question.TryGetProperty("correctAnswer", out var correctAnswer) && correctAnswer.ValueKind
-                != JsonValueKind.Null ? correctAnswer.GetString() : null,
+                != JsonValueKind.Null ? correctAnswer.GetString().Truncate(1024) : null,
                 Options: options
             ));
         }

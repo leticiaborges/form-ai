@@ -270,7 +270,7 @@ export function TextInput({ correctAnswer, onCorrectAnswerChange }: TextInputPro
       </div>
       <div>
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-          AI suggested answer
+          Suggested answer
         </p>
         <input
           type="text"
@@ -311,7 +311,7 @@ export function NumberInput({ correctAnswer, onCorrectAnswerChange }: NumberInpu
       </div>
       <div>
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-          AI suggested answer
+          Suggested answer
         </p>
         <input
           type="number"
@@ -671,7 +671,7 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
 2. Log in, open an existing form in the editor.
 3. **Multiple question:** checkboxes appear; multiple options can be marked green/correct; trash icons work; clicking a label enters edit mode and saves on blur.
 4. **Single question:** radio buttons appear; marking one correct automatically unmarks all others.
-5. **Text question:** disabled preview textarea visible; "AI suggested answer" input is editable and persists on save.
+5. **Text question:** disabled preview textarea visible; "Suggested answer" input is editable and persists on save.
 6. **Numeric question:** same as Text but with number inputs.
 7. Open "Add question" modal — confirm the updated option list UX works for both Single and Multiple.
 8. Save the form and reload to confirm changes persisted via the API.
