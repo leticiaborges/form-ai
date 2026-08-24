@@ -36,6 +36,7 @@ export async function saveFormEditor(formId: string, payload: SaveFormEditorPayl
         description: payload.description?.trim() || null,
         isPublic: payload.isPublic,
         questions: payload.questions.map((q, i) => ({
+            id: q.id,
             text: q.text,
             type: q.type,
             order: i + 1,
@@ -44,6 +45,7 @@ export async function saveFormEditor(formId: string, payload: SaveFormEditorPayl
             points: q.points,
             correctAnswer: q.correctAnswer,
             options: q.options.map((o, oi) => ({
+                id: o.id,
                 text: o.text,
                 order: oi + 1,
                 isCorrect: o.isCorrect

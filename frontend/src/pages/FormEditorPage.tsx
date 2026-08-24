@@ -30,19 +30,24 @@ export function FormEditorPage() {
     const [description, setDescription] = useState('');
     const [descriptionError, setDescriptionError] = useState('');
 
+    function setFormData(data: FormDetail) {
+        setForm(data);
+        setQuestions(data.questions);
+        setTitle(data.title);
+        setDescription(data.description ?? '');
+        setIsPublic(data.isPublic);
+    }
+
     useEffect(() => {
         if (!id)
             return;
 
         getForm(id).then(data => {
-            setForm(data);
-            setQuestions(data.questions);
-            setTitle(data.title);
-            setDescription(data.description ?? '');
-            setIsPublic(data.isPublic);
+            setFormData(data);
             setState('ready');
         }).catch(() => setState('error'));
     }, [id]);
+
 
     function updateQuestion(index: number, updated: FormQuestion) {
         setQuestions(qs => qs.map((q, i) => i === index ? updated : q));
@@ -104,11 +109,9 @@ export function FormEditorPage() {
                 isPublic,
                 questions
             });
-            setForm(f => f ? {
-                ...f, title: trimmedTitle,
-                description: trimmedDescription,
-                isPublic
-            } : f);
+
+            const refreshedForm = await getForm(id);
+            setFormData(refreshedForm);
 
             showSuccess('Form saved.');
             setState('ready');

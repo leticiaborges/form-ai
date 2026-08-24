@@ -7,7 +7,6 @@ using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Forms.UpdateForm;
-using FormAI.Application.Forms.UpdateQuestions;
 using FormAI.Application.Interfaces;
 using FormAI.Application.Submissions.GetFormToAnswer;
 using FormAI.Application.Submissions.GetMySubmission;
@@ -64,7 +63,6 @@ public static class DependencyInjection
         services.AddScoped<GetFormHandler>();
         services.AddScoped<GetFormsByUserHandler>();
         services.AddScoped<UpdateFormHandler>();
-        services.AddScoped<UpdateQuestionsHandler>();
         services.AddScoped<GenerateFormHandler>();
         services.AddScoped<SaveFormEditorHandler>();
         services.AddScoped<GetFormToAnswerHandler>();

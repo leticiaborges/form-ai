@@ -55,4 +55,8 @@ public class Form
         Questions.Clear();
         Questions.AddRange(questions);
     }
+
+    public void AddQuestion(FormQuestion question) => Questions.Add(question);
+
+    public void RemoveQuestion(FormQuestion question) => Questions.Remove(question);
 }

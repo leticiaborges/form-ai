@@ -5,7 +5,6 @@ using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Forms.UpdateForm;
-using FormAI.Application.Forms.UpdateQuestions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -24,14 +23,12 @@ public class FormsController : ControllerBase
     private readonly UpdateFormHandler _update;
     private readonly DeleteFormHandler _delete;
     private readonly CloseFormHandler _close;
-    private readonly UpdateQuestionsHandler _updateQuestions;
     private readonly GenerateFormHandler _generateForm;
     private readonly SaveFormEditorHandler _saveFormEditor;
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
     UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
-    UpdateQuestionsHandler updateQuestions,
     GenerateFormHandler generateForm,
     SaveFormEditorHandler saveFormEditor)
     {
@@ -41,7 +38,6 @@ public class FormsController : ControllerBase
         _update = update;
         _delete = delete;
         _close = close;
-        _updateQuestions = updateQuestions;
         _generateForm = generateForm;
         _saveFormEditor = saveFormEditor;
     }
@@ -117,15 +113,6 @@ public class FormsController : ControllerBase
     public async Task<IActionResult> Close(Guid id, CancellationToken cancellationToken)
     {
         await _close.HandleAsync(new CloseFormRequest(id, CurrentUserId), cancellationToken);
-        return NoContent();
-    }
-
-    // PUT /api/forms/{id}/questions
-    [HttpPut("{id:guid}/questions")]
-    public async Task<IActionResult> UpdateQuestions(Guid id, [FromBody] UpdateQuestionsRequest request, CancellationToken cancellationToken)
-    {
-        var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
-        await _updateQuestions.HandleAsync(cmd, cancellationToken);
         return NoContent();
     }
 

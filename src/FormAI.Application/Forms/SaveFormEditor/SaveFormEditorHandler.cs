@@ -1,5 +1,4 @@
 using FormAI.Application.Common.Exceptions;
-using FormAI.Application.Forms.UpdateQuestions;
 using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
@@ -46,23 +45,64 @@ public class SaveFormEditorHandler
         if (errors.Count > 0)
             throw new ValidationException(errors);
 
-        form.Update(request.Title.Trim(), request.Description?.Trim() ?? string.Empty, request.IsPublic,
+        form.Update(request.Title.Trim(),
+         request.Description?.Trim() ?? string.Empty,
+          request.IsPublic,
             form.ExpiresAt, form.ShowResultsAfterSubmit);
 
-        var questions = request.Questions.Select(q =>
+        var diff = FormEditorDiffer.DiffQuestions(form.Questions, request.Questions);
+
+        foreach (var question in diff.Removed)
+            form.RemoveQuestion(question);
+
+        foreach (var (question, input) in diff.Modified)
         {
-            var question = FormQuestion.Create(request.FormId,
-                q.Text, q.Type, q.Order, q.IsRequired, q.AiGenerated, q.Points, q.CorrectAnswer);
+            question.Update(input.Text.Trim(),
+            input.Type, input.Order, input.IsRequired,
+            input.AiGenerated, input.Points, input.CorrectAnswer?.Trim());
+        }
 
-            var options = q.Options.Select(o => QuestionOption.Create(question.Id, o.Text.Trim(), o.Order, o.IsCorrect))
-                        .ToList();
+        foreach (var input in diff.Added)
+        {
+            form.AddQuestion(BuildQuestion(form.Id, input));
+        }
 
-            question.SetOptions(options);
-            return question;
-        }).ToList();
-
-        form.ReplaceQuestions(questions);
+        foreach (var (question, input) in diff.KeepExisting)
+            SyncOptions(question, input);
 
         await _forms.UpdateAsync(form, cancellationToken);
+    }
+
+    private static FormQuestion BuildQuestion(Guid formId,
+    QuestionInput input)
+    {
+        var question = FormQuestion.Create(formId,
+        input.Text.Trim(), input.Type,
+        input.Order, input.IsRequired, input.AiGenerated,
+        input.Points, input.CorrectAnswer?.Trim());
+
+        question.SetOptions(input.Options.Select(o =>
+        QuestionOption.Create(question.Id, o.Text.Trim(),
+        o.Order, o.IsCorrect)).ToList());
+
+        return question;
+    }
+
+    private static void SyncOptions(FormQuestion question,
+    QuestionInput input)
+    {
+        var diff = FormEditorDiffer.DiffOptions(question.Options,
+        input.Options);
+
+        foreach (var option in diff.Removed)
+            question.RemoveOption(option);
+
+        foreach (var (option, o) in diff.Modified)
+            option.Update(o.Text.Trim(), o.Order,
+            o.IsCorrect);
+
+        foreach (var o in diff.Added)
+            question.AddOption(QuestionOption.Create(question.Id,
+            o.Text.Trim(), o.Order, o.IsCorrect));
     }
 }

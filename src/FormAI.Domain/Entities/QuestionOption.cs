@@ -24,4 +24,11 @@ public class QuestionOption
             IsCorrect = isCorrect
         };
     }
+
+    public void Update(string text, int order, bool? isCorrect)
+    {
+        Text = text;
+        Order = order;
+        IsCorrect = isCorrect;
+    }
 }

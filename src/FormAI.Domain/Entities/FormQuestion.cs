@@ -41,4 +41,20 @@ public class FormQuestion
         Options.Clear();
         Options.AddRange(options);
     }
+
+    public void Update(string text, QuestionType type, int order, bool isRequired,
+    bool aiGenerated, int? points, string? correctAnswer)
+    {
+        Text = text;
+        Type = type;
+        Order = order;
+        IsRequired = isRequired;
+        AiGenerated = aiGenerated;
+        Points = points;
+        CorrectAnswer = correctAnswer;
+    }
+
+    public void AddOption(QuestionOption option) => Options.Add(option);
+
+    public void RemoveOption(QuestionOption option) => Options.Remove(option);
 }
