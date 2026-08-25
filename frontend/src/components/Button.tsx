@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline';
+  variant?: 'primary' | 'outline' | 'danger';
   isLoading?: boolean,
 }
 
@@ -15,12 +15,13 @@ export function Button({
 }: Readonly<ButtonProps>) {
   const base =
     'inline-flex items-center justify-center rounded-lg px-4 py-1.5 text-sm font-semibold ' +
-    'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ' +
+    'transition-colors focus-visible:outline-none focus-visible:ring-2 ' +
     'disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800',
-    outline: 'border border-brand-600 text-brand-600 bg-transparent hover:bg-brand-50',
+    primary: 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 focus-visible:ring-brand-500',
+    outline: 'border border-brand-600 text-brand-600 bg-transparent hover:bg-brand-50 focus-visible:ring-brand-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500',
   };
 
   return (

@@ -3,6 +3,7 @@ using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
+using FormAI.Application.Forms.GetSubmissionCount;
 using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Forms.UpdateForm;
 using Microsoft.AspNetCore.Authorization;
@@ -25,12 +26,14 @@ public class FormsController : ControllerBase
     private readonly CloseFormHandler _close;
     private readonly GenerateFormHandler _generateForm;
     private readonly SaveFormEditorHandler _saveFormEditor;
+    private readonly GetSubmissionCountHandler _getSubmissionCount;
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
     UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
     GenerateFormHandler generateForm,
-    SaveFormEditorHandler saveFormEditor)
+    SaveFormEditorHandler saveFormEditor,
+    GetSubmissionCountHandler submissionCount)
     {
         _create = create;
         _getById = getById;
@@ -40,6 +43,7 @@ public class FormsController : ControllerBase
         _close = close;
         _generateForm = generateForm;
         _saveFormEditor = saveFormEditor;
+        _getSubmissionCount = submissionCount;
     }
 
     [HttpPut("{id:guid}/editor")]
@@ -124,6 +128,16 @@ public class FormsController : ControllerBase
     {
         var response = await _generateForm.HandleAsync(request, CurrentUserId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = response.FormId }, response);
+    }
+
+    // GET /api/forms/{id}/submissions/count
+    [HttpGet("{id:guid}/submissions/count")]
+    public async Task<IActionResult> GetSubmissionCount(Guid id,
+    CancellationToken cancellationToken)
+    {
+        var response = await _getSubmissionCount.HandleAsync(new GetSubmissionCountRequest(id, CurrentUserId), cancellationToken);
+
+        return Ok(response);
     }
 
     // POST   /api/forms/generate/text

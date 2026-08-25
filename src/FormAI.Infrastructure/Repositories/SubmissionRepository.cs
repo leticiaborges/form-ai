@@ -31,4 +31,9 @@ public class SubmissionRepository : ISubmissionRepository
         await _context.Submissions.AddAsync(submission, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<int> CountByFormAsync(Guid formId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions.CountAsync(s => s.FormId == formId, cancellationToken);
+    }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { FormDetail, FormQuestion } from "../types/form";
-import { getForm, updateForm, updateQuestions, saveFormEditor } from '../api/forms';
+import { getForm, saveFormEditor, deleteForm, getSubmissionCount } from '../api/forms';
 import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
 import { QuestionCard } from "../components/editors/QuestionCard";
@@ -11,8 +11,9 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
+import { DeleteFormModal } from "../components/editors/DeleteFormModal";
 
-type PageState = 'loading' | 'ready' | 'saving' | 'error';
+type PageState = 'loading' | 'ready' | 'saving' | 'deleting' | 'error';
 
 export function FormEditorPage() {
     const { id } = useParams<{ id: string }>();
@@ -29,6 +30,9 @@ export function FormEditorPage() {
 
     const [description, setDescription] = useState('');
     const [descriptionError, setDescriptionError] = useState('');
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [submissionCount, setSubmissionCount] = useState<number | null>(null);
 
     function setFormData(data: FormDetail) {
         setForm(data);
@@ -77,6 +81,37 @@ export function FormEditorPage() {
             showSuccess('Link copied to clipboard.');
         } catch {
             showError('Could not copy link. Please copy it manually.');
+        }
+    }
+
+    function openDeleteModal() {
+        if (!id)
+            return;
+
+        setSubmissionCount(null);
+        setShowDeleteModal(true);
+
+        getSubmissionCount(id)
+            .then(count => setSubmissionCount(count))
+            .catch(() => setSubmissionCount(null));
+    }
+
+    async function handleDelete() {
+        if (!id)
+            return;
+
+        setState('deleting');
+
+        try {
+            await deleteForm(id);
+
+            showSuccess('Form deleted');
+            navigate('/dashboard', { replace: true });
+        }
+        catch (err: unknown) {
+            showError(getErrorMessage(err, 'Failed to delete the form. Please try again.'));
+            setState('ready');
+            setShowDeleteModal(false);
         }
     }
 
@@ -168,8 +203,14 @@ export function FormEditorPage() {
                     <Button variant="outline" onClick={() => navigate('/dashboard')}>
                         Back
                     </Button>
-                    <Button onClick={handleSave} isLoading={state === 'saving'}>
+                    <Button onClick={handleSave} isLoading={state === 'saving'} disabled={state === 'deleting'}>
                         Save
+                    </Button>
+                    <Button variant="danger"
+                        onClick={openDeleteModal}
+                        disabled={state === 'saving' || state === 'deleting'}
+                    >
+                        Delete
                     </Button>
                 </div>
             </header>
@@ -264,6 +305,16 @@ export function FormEditorPage() {
                     onAdd={appendQuestion}
                     onClose={() => setShowAddModal(false)}
                 />
+            )}
+
+            {showDeleteModal && (
+                <DeleteFormModal
+                    formTitle={form.title}
+                    questionCount={questions.length}
+                    submissionCount={submissionCount}
+                    isDeleting={state === 'deleting'}
+                    onConfirm={handleDelete}
+                    onClose={() => setShowDeleteModal(false)} />
             )}
         </BasePage>
     );

@@ -105,3 +105,14 @@ export async function updateQuestions(formId: string,
 export async function updateForm(formId: string, payload: UpdateFormPayload): Promise<void> {
     await api.put(`/forms/${formId}`, payload);
 }
+
+export async function deleteForm(formId: string): Promise<void> {
+    await api.delete(`/forms/${formId}`);
+}
+
+export async function getSubmissionCount(formId: string): Promise<number> {
+    const response = await api.get<{ submissionCount: number }>
+        (`/forms/${formId}/submissions/count`);
+
+    return response.data.submissionCount;
+}
