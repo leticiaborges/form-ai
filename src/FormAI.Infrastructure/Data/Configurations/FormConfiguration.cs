@@ -30,6 +30,10 @@ public class FormConfiguration : IEntityTypeConfiguration<Form>
         builder.Property(u => u.ShowResultsAfterSubmit)
         .IsRequired();
 
+        builder.Property(u => u.IsGraded)
+        .IsRequired()
+        .HasDefaultValue(false);
+
         builder.Property(u => u.CreatedAt)
         .IsRequired();
 

@@ -13,7 +13,6 @@ public record GeneratedQuestion(
     string Text,
     QuestionType Type,
     bool IsRequired,
-    int? Points,
     string? CorrectAnswer,
     IReadOnlyList<GeneratedOption> Options
 );

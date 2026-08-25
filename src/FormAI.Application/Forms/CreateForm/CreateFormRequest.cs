@@ -7,7 +7,8 @@ public record CreateFormRequest(
     string? Description,
     bool IsPublic,
     DateTime? ExpiresAt,
-    bool ShowResultsAfterSubmit
+    bool ShowResultsAfterSubmit,
+    bool IsGraded
 );
 
 public record CreateFormResponse(Guid Id, string Title);

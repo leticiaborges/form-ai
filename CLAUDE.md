@@ -8,14 +8,15 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 FormAI turns text supplied by a user into a question form. Claude generates the questions, the user edits them, and the form is answered through a shared link.
 
-**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → the owner sees a submission count on the dashboard.
+**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard.
 
 ## Vocabulary
 
 Read [`CONTEXT.md`](./CONTEXT.md) before naming anything. Points worth repeating because the code still disagrees in places:
 
 - A form is **published** or **private**. There is no draft, and no closing — a form stops accepting submissions when it **expires**.
-- **Answer key** (`IsCorrect`) is for options; **suggested answer** (`CorrectAnswer`) is for Text and Numeric questions. They are different things.
+- A form is **graded** or it is not (`IsGraded`). Only a graded form has points, an answer key and scores.
+- **Answer key** (`IsCorrect`) is for options; **suggested answer** (`CorrectAnswer`) is for Text and Numeric questions. They are different things, and both exist only on a graded form.
 - A **submission** is a whole pass through a form; an **answer** is one question within it. Never call either a "response" — that word is reserved for the `...Response` DTO suffix.
 
 ## Data model
@@ -23,7 +24,7 @@ Read [`CONTEXT.md`](./CONTEXT.md) before naming anything. Points worth repeating
 Ten entities in `FormAI.Domain/Entities`. Six are the domain proper:
 
 - **User** — account with hashed password and an email-confirmation state
-- **Form** — `Title`, `Description`, `CreatedBy`, `SourceType`, `IsPublic`, `ExpiresAt`, `ShowResultsAfterSubmit`, `CreatedAt`. Owns its questions, submissions and source contents. The extracted text is **not** on `Form` — it lives in `FormSourceContent`
+- **Form** — `Title`, `Description`, `CreatedBy`, `SourceType`, `IsPublic`, `ExpiresAt`, `ShowResultsAfterSubmit`, `IsGraded`, `CreatedAt`. Owns its questions, submissions and source contents. The extracted text is **not** on `Form` — it lives in `FormSourceContent`
 - **FormQuestion** — belongs to a Form; `Type` (`Single`, `Multiple`, `Text`, `Numeric`), `Order`, `IsRequired`, `Points`, `CorrectAnswer`, `AiGenerated`
 - **QuestionOption** — a choice for a `Single`/`Multiple` question; `Text`, `Order`, `IsCorrect` (nullable — null means "not marked")
 - **Submission** — one respondent's pass through a form; `UserId` (null when anonymous), `RespondentToken`, `IpAddress`, `SubmittedAt`, `Score`
@@ -31,7 +32,9 @@ Ten entities in `FormAI.Domain/Entities`. Six are the domain proper:
 
 The rest are supporting: **FormSourceContent** (extracted text per source, with `SourceType`, `FileName`, `Order`), **RefreshToken**, **UserConfirmationToken**.
 
-Entities use private constructors plus a static `Create()` factory, and every property has a `private set`. EF Core hydrates through the private constructor. Mutation goes through explicit methods (`Update`, `SetOptions`, `ReplaceQuestions`), never property assignment.
+Entities use private constructors plus a static `Create()` factory, and every property has a `private set`. EF Core hydrates through the private constructor. Mutation goes through explicit methods (`Update`, `SetOptions`, `ReplaceQuestions`, `ClearGradingIfUngraded`), never property assignment.
+
+`FormAI.Domain/Scoring/` holds the scoring rules as pure functions over those entities: `SubmissionScorer` (what an answer and a submission are worth), `ScoredAnswer` (an answer in the shape both scoring paths share) and `GradingFingerprint` (whether a save needs a rescore).
 
 ## Business rules (as implemented)
 
@@ -39,6 +42,7 @@ Access and ownership:
 
 - A **private form is invisible to everyone but its owner** — viewing, answering and submitting all check `!IsPublic && CreatedBy != requestingUserId` and throw `NotFoundException`, so the client sees **404, not 403**. This applies to signed-in users too, not only anonymous ones.
 - Only the owner may edit, update, delete or expire a form (`ForbiddenException` → 403 when the form is visible but not yours).
+- **`GET /api/forms/{id}` is owner-only even when the form is published**, because it is the editor's response and carries the answer key and the suggested answers. Respondents read a form through `GET {id}/answer`, which leaves both out.
 - Everything under `/api/forms` requires a token except `GET {id}/answer`, `GET {id}/my-submission` and `POST {id}/submit`, which are `[AllowAnonymous]`.
 
 Submitting:
@@ -55,6 +59,18 @@ Forms and questions:
 - Saving the editor diffs against what is stored and **preserves question and option ids** ([ADR 0002](./docs/adr/0002-id-preserving-editor-save.md)). Never regenerate them.
 - Generated forms are created **private**, with `ShowResultsAfterSubmit = false` and an expiry **15 days out**.
 - Source files are never stored — only the extracted text, in `FormSourceContent`.
+
+Grading and scoring:
+
+- **The owner sets points; the server validates them.** The editor sends `Points` per question. On a graded form they are required and must be between `QuestionPointsValidator.MinPoints` (0) and `MaxPoints` (100) — a question with no points is rejected, not defaulted, because the editor coerces the field before sending. Zero is allowed: a question that is part of a graded form but does not count.
+- `Form.DefaultQuestionPoints` (1) is what a question starts at — on generation, and when the owner ticks "Graded form" in the editor. It is a starting value, not a rule.
+- `Form.ClearGradingIfUngraded()` runs on generation and on every editor save. On an ungraded form it nulls every `IsCorrect`, `CorrectAnswer` and `Points`; on a graded form it does nothing, because the points there are the owner's.
+- **Turning grading off is lossy and irreversible.** Saving a form with `IsGraded = false` nulls every `IsCorrect`, every `CorrectAnswer` and every `Points`, and nulls the scores of the submissions already made. Nothing warns the owner first.
+- A graded form may be saved with questions that have no answer key. Those questions can never be earned and score 0.
+- **Scores are derived, not snapshots** ([ADR 0004](./docs/adr/0004-scores-recomputed-from-current-form.md)). `SaveFormEditorHandler` compares a `GradingFingerprint` from before and after the save and calls `RescoreFormSubmissionsHandler` when it differs, in the same transaction. The fingerprint covers only the questions that already existed, so adding a question never rescores; deleting one does. Renaming an option does too, and will silently change who counts as correct.
+- Scoring matches Single and Multiple answers on **option text**, not ids, so submitting and rescoring share one code path. Text is compared trimmed and case-insensitively; numeric suggested answers are parsed with `InvariantCulture`, never the machine's culture.
+- A Single or Multiple question is all-or-nothing: the selected texts must equal the correct texts exactly. There is no partial credit.
+- An unanswered question in a graded form scores 0, not null. `null` means "this form is not graded"; `0` means "graded, earned nothing".
 
 ## Architecture
 
@@ -81,16 +97,15 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | Endpoint | Notes |
 |---|---|
 | `POST /api/auth/register` · `login` · `refresh` · `verify-email` | JWT + refresh token; registration sends a confirmation email |
-| `POST /api/forms` · `GET /api/forms` · `GET/PUT/DELETE /api/forms/{id}` | Owner-only |
-| `PUT /api/forms/{id}/editor` | The editor save — diffed, id-preserving |
+| `POST /api/forms` · `GET /api/forms` · `GET/DELETE /api/forms/{id}` | Owner-only. `GET {id}` returns the answer key, so it is owner-only even for a published form |
+| `PUT /api/forms/{id}/editor` | The editor save — diffed, id-preserving, applies grading and rescores |
 | `POST /api/forms/generate/text` | The only generation endpoint |
 | `GET /api/forms/{id}/submissions/count` | Owner-only; the only results endpoint that exists |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
-| `PATCH /api/forms/{id}/close` | ⚠️ Unused by the UI and slated for removal — see known gaps |
 
 ### AI integration
 
-`IFormGenerationService` in `Application/AI/` is the boundary; `ClaudeFormGenerationService` in Infrastructure is the only class that calls the Anthropic API, via a named `HttpClient` ("claude") pointed at `https://api.anthropic.com/`. `GenerationParameters` carries `QuestionCount`, `AllowedTypes`, `DifficultyLevel` and `IncludeCorrectAnswers` — there is no free-text context parameter. The system prompt is a template at `Infrastructure/AI/Prompt/PromptGenerateForm.txt` with placeholders filled at request time; Claude returns JSON that is parsed into `GeneratedQuestion`/`GeneratedOption` and mapped to entities by `GenerateFormHandler`. Model and token limit come from the `Claude` configuration section.
+`IFormGenerationService` in `Application/AI/` is the boundary; `ClaudeFormGenerationService` in Infrastructure is the only class that calls the Anthropic API, via a named `HttpClient` ("claude") pointed at `https://api.anthropic.com/`. `GenerationParameters` carries `QuestionCount`, `AllowedTypes`, `DifficultyLevel` and `IncludeCorrectAnswers` (fed from the new form's `IsGraded` — asking Claude for an answer key is the AI-side name for the same decision) — there is no free-text context parameter. Claude is never asked for points: what a question is worth is the owner's decision, so `GeneratedQuestion` has no such field. The system prompt is a template at `Infrastructure/AI/Prompt/PromptGenerateForm.txt` with placeholders filled at request time; Claude returns JSON that is parsed into `GeneratedQuestion`/`GeneratedOption` and mapped to entities by `GenerateFormHandler`. Model and token limit come from the `Claude` configuration section.
 
 `IAnalysisService` is declared but has no implementation.
 
@@ -145,4 +160,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, aggregated results for the owner, editable expiry, unit tests — **none of these are built**. Scoring is unfinished and unverified; `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form; the close endpoint is dead code awaiting removal.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, aggregated results for the owner, editable expiry, editable points, unit tests — **none of these are built**. Scores are computed and stored but nothing displays them; `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form.

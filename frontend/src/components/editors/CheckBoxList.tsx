@@ -4,6 +4,7 @@ import { OptionList } from './OptionsList';
 interface CheckBoxListProps {
   options: FormOption[];
   questionId: string;
+  isGraded: boolean;
   onOptionsChange: (options: FormOption[]) => void;
 }
 

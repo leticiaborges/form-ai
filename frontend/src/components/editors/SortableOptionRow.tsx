@@ -8,6 +8,7 @@ interface SortableOptionsRowProps {
     option: FormOption;
     inputType: 'checkbox' | 'radio';
     questionId: string;
+    isGraded: boolean;
     onTextChange: (text: string) => void;
     onCorrectChange: (isCorrect: boolean) => void;
     onRemove: () => void;
@@ -17,6 +18,7 @@ export function SortableOptionRow({
     option,
     inputType,
     questionId,
+    isGraded,
     onTextChange,
     onCorrectChange,
     onRemove
@@ -40,6 +42,7 @@ export function SortableOptionRow({
                 isCorrect={option.isCorrect}
                 inputType={inputType}
                 questionId={questionId}
+                isGraded={isGraded}
                 onTextChange={onTextChange}
                 onCorrectChange={onCorrectChange}
                 onRemove={onRemove}

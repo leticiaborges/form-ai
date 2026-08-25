@@ -107,8 +107,6 @@ public class ClaudeFormGenerationService : IFormGenerationService
                 Text: question.GetProperty("text").GetString()!.Truncate(1024),
                 Type: questionType,
                 IsRequired: true,
-                Points: question.TryGetProperty("points", out var pointsObj) && pointsObj.ValueKind
-                != JsonValueKind.Null ? pointsObj.GetInt32() : null,
                 CorrectAnswer: question.TryGetProperty("correctAnswer", out var correctAnswer) && correctAnswer.ValueKind
                 != JsonValueKind.Null ? correctAnswer.GetString().Truncate(1024) : null,
                 Options: options

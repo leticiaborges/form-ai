@@ -7,11 +7,12 @@ interface OptionListProps {
     options: FormOption[];
     questionId: string;
     inputType: 'checkbox' | 'radio'
+    isGraded: boolean;
     onOptionsChange: (options: FormOption[]) => void
 }
 
 export function OptionList({
-    options, questionId, inputType, onOptionsChange
+    options, questionId, inputType, isGraded, onOptionsChange
 }: OptionListProps) {
 
     function updateOption(index: number,
@@ -43,7 +44,8 @@ export function OptionList({
                 id: crypto.randomUUID(),
                 text: 'New option',
                 order: options.length + 1,
-                isCorrect: false
+                // Null means "not marked": an ungraded form has no answer key at all.
+                isCorrect: isGraded ? false : null
             }
         ])
     }
@@ -68,6 +70,7 @@ export function OptionList({
                             option={opt}
                             inputType={inputType}
                             questionId={questionId}
+                            isGraded={isGraded}
                             onTextChange={(text) => updateOption(i, { text })}
                             onCorrectChange={(isCorrect) => setCorrect(i, isCorrect)}
                             onRemove={() => removeOption(i)}

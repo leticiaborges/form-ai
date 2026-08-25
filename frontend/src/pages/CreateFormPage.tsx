@@ -15,7 +15,7 @@ const createFormSchema = z.object({
   questionCount: z.coerce.number().int().min(1, "At least 1 question.").
     max(20, "At most 20 questions."),
   difficultyLevel: z.enum(["Easy", "Medium", "Hard"], "Difficulty level must be one of Easy, Medium, or Hard."),
-  includeCorrectAnswers: z.boolean()
+  isGraded: z.boolean()
 });
 
 type CreateFormData = z.infer<typeof createFormSchema>;
@@ -32,7 +32,7 @@ export function CreateFormPage() {
     defaultValues: {
       questionCount: 5,
       difficultyLevel: "Medium",
-      includeCorrectAnswers: false
+      isGraded: false
     }
   });
 
@@ -162,9 +162,9 @@ export function CreateFormPage() {
               <input
                 type="checkbox"
                 className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                {...register('includeCorrectAnswers')}
+                {...register('isGraded')}
               />
-              Include correct answers (for graded forms)
+              Graded form
             </label>
 
             <div className="flex items-center justify-between mt-2">

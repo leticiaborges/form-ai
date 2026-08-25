@@ -1,9 +1,11 @@
 interface TextInputProps {
   correctAnswer: string | null;
+  /** Only a graded form has a suggested answer to compare against. */
+  isGraded: boolean;
   onCorrectAnswerChange: (value: string | null) => void;
 }
 
-export function TextInput({ correctAnswer, onCorrectAnswerChange }: TextInputProps) {
+export function TextInput({ correctAnswer, isGraded, onCorrectAnswerChange }: TextInputProps) {
   return (
     <div className="mt-3 space-y-3">
       <div>
@@ -14,7 +16,7 @@ export function TextInput({ correctAnswer, onCorrectAnswerChange }: TextInputPro
           className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 cursor-not-allowed"
         />
       </div>
-      <div>
+      {isGraded && (<div>
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
           Suggested answer
         </p>
@@ -26,7 +28,7 @@ export function TextInput({ correctAnswer, onCorrectAnswerChange }: TextInputPro
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         />
-      </div>
+      </div>)}
     </div>
   );
 }

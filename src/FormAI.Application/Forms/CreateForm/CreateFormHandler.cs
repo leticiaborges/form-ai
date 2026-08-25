@@ -18,7 +18,7 @@ public class CreateFormHandler
     {
         var form = Form.Create(request.Title, request.Description ?? string.Empty,
         createdByUserId, SourceType.Text, request.IsPublic, request.ExpiresAt,
-        request.ShowResultsAfterSubmit);
+        request.ShowResultsAfterSubmit, request.IsGraded);
 
         await _formRepository.AddAsync(form, cancellationToken);
 

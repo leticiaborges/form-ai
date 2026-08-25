@@ -37,4 +37,6 @@ public class Answer
         SelectedOptions.Clear();
         SelectedOptions.AddRange(options);
     }
+
+    public void SetScore(int? score) => Score = score;
 }

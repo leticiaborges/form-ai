@@ -35,6 +35,7 @@ export interface FormDetail {
     isPublic: boolean;
     expiresAt: string | null;
     showResultsAfterSubmit: boolean;
+    isGraded: boolean;
     createdAt: string;
     questions: FormQuestion[];
 }

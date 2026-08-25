@@ -12,6 +12,7 @@ public class Form
     public bool IsPublic { get; private set; }
     public DateTime? ExpiresAt { get; private set; }
     public bool ShowResultsAfterSubmit { get; private set; }
+    public bool IsGraded { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public User? Creator { get; private set; }
     public List<FormQuestion> Questions { get; private set; } = new();
@@ -21,7 +22,7 @@ public class Form
     private Form() { }
 
     public static Form Create(string title, string description, Guid createdBy, SourceType sourceType,
-    bool isPublic, DateTime? expiresAt, bool showResultsAfterSubmit)
+    bool isPublic, DateTime? expiresAt, bool showResultsAfterSubmit, bool isGraded)
     {
         return new Form
         {
@@ -33,22 +34,39 @@ public class Form
             IsPublic = isPublic,
             ExpiresAt = expiresAt,
             ShowResultsAfterSubmit = showResultsAfterSubmit,
+            IsGraded = isGraded,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void Update(string title, string description, bool isPublic, DateTime? expiresAt, bool showResultsAfterSubmit)
+    public void Update(string title, string description, bool isPublic, DateTime? expiresAt,
+    bool showResultsAfterSubmit, bool isGraded)
     {
         Title = title;
         Description = description;
         IsPublic = isPublic;
         ExpiresAt = expiresAt;
         ShowResultsAfterSubmit = showResultsAfterSubmit;
+        IsGraded = isGraded;
     }
 
-    public void Close() => ExpiresAt = DateTime.UtcNow;
-
     public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
+
+    /// <summary>
+    /// Makes an ungraded form ungraded: the answer key, the suggested answers and the points are
+    /// discarded, which is what makes turning grading off lossy. A graded form is left alone —
+    /// its points are the owner's to set.
+    /// </summary>
+    public void ClearGradingIfUngraded()
+    {
+        if (IsGraded)
+            return;
+
+        foreach (var question in Questions)
+            question.ClearAnswerKey();
+    }
+
+    public const int DefaultQuestionPoints = 1;
 
     public void ReplaceQuestions(List<FormQuestion> questions)
     {

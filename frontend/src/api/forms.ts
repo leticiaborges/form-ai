@@ -7,7 +7,7 @@ export interface GenerateFormPayload {
     sourceText: string;
     questionCount: number;
     difficultyLevel: string;
-    includeCorrectAnswers: boolean;
+    isGraded: boolean;
 }
 
 export interface GenerateFormResult {
@@ -15,18 +15,11 @@ export interface GenerateFormResult {
     title: string;
 }
 
-export interface UpdateFormPayload {
-    title: string;
-    description: string;
-    isPublic: boolean;
-    expiresAt: string | null;
-    showResultsAfterSubmit: boolean;
-}
-
 export interface SaveFormEditorPayload {
     title: string;
     description: string;
     isPublic: boolean;
+    isGraded: boolean;
     questions: FormQuestion[];
 }
 
@@ -35,6 +28,7 @@ export async function saveFormEditor(formId: string, payload: SaveFormEditorPayl
         title: payload.title,
         description: payload.description?.trim() || null,
         isPublic: payload.isPublic,
+        isGraded: payload.isGraded,
         questions: payload.questions.map((q, i) => ({
             id: q.id,
             text: q.text,
@@ -64,7 +58,7 @@ export async function generateForm(payload: GenerateFormPayload): Promise<Genera
         questionCount: payload.questionCount,
         allowedTypes: null,
         difficultyLevel: payload.difficultyLevel,
-        includeCorrectAnswers: payload.includeCorrectAnswers,
+        isGraded: payload.isGraded,
     });
     return response.data;
 }
@@ -77,33 +71,6 @@ export async function listForms(): Promise<FormSummary[]> {
 export async function getForm(formId: string): Promise<FormDetail> {
     const response = await api.get<FormDetail>(`/forms/${formId}`);
     return response.data;
-}
-
-export async function updateQuestions(formId: string,
-    questions: FormQuestion[]): Promise<void> {
-
-    const payload = {
-        questions: questions.map((q, i) => ({
-            text: q.text,
-            type: q.type,
-            order: i + 1,
-            isRequired: q.isRequired,
-            aiGenerated: q.aiGenerated,
-            points: q.points,
-            correctAnswer: q.correctAnswer,
-            options: q.options.map((o, oi) => ({
-                text: o.text,
-                order: oi + 1,
-                isCorrect: o.isCorrect
-            }))
-        }))
-    };
-
-    await api.put(`/forms/${formId}/questions`, payload);
-}
-
-export async function updateForm(formId: string, payload: UpdateFormPayload): Promise<void> {
-    await api.put(`/forms/${formId}`, payload);
 }
 
 export async function deleteForm(formId: string): Promise<void> {

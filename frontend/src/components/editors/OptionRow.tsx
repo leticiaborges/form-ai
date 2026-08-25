@@ -5,6 +5,8 @@ interface OptionRowProps {
   isCorrect: boolean | null;
   inputType: 'checkbox' | 'radio';
   questionId: string;
+  /** Only a graded form has an answer key, so only a graded form shows the marker. */
+  isGraded: boolean;
   onTextChange: (text: string) => void;
   onCorrectChange: (isCorrect: boolean) => void;
   onRemove: () => void
@@ -15,6 +17,7 @@ export function OptionRow({
   isCorrect,
   inputType,
   questionId,
+  isGraded,
   onTextChange,
   onCorrectChange,
   onRemove
@@ -33,7 +36,7 @@ export function OptionRow({
   }
 
   return (
-    <div className={`flex flex-1 min-w-0 items-center gap-2 py-1 px-2 rounded-md transition-colors ${isCorrect ? 'bg-green-50' : ''}`}>
+    <div className={`flex flex-1 min-w-0 items-center gap-2 py-1 px-2 rounded-md transition-colors ${isGraded && isCorrect ? 'bg-green-50' : ''}`}>
 
       {inputType === 'checkbox' ? (
         <input
@@ -69,16 +72,18 @@ export function OptionRow({
         </span>
       )}
 
-      <button
-        onClick={() => onCorrectChange(!isCorrect)}
-        className={`border rounded px-2 py-0.5 text-xs transition-colors whitespace-nowrap ${isCorrect
-          ? 'bg-green-100 text-green-700 border-green-300'
-          : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
-          }`}
-        title="Mark as correct answer"
-      >
-        {isCorrect ? 'Correct' : 'Mark correct'}
-      </button>
+      {isGraded && (
+        <button
+          onClick={() => onCorrectChange(!isCorrect)}
+          className={`border rounded px-2 py-0.5 text-xs transition-colors whitespace-nowrap ${isCorrect
+            ? 'bg-green-100 text-green-700 border-green-300'
+            : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
+            }`}
+          title="Mark as correct answer"
+        >
+          {isCorrect ? 'Correct' : 'Mark correct'}
+        </button>
+      )}
 
       <button
         onClick={onRemove}

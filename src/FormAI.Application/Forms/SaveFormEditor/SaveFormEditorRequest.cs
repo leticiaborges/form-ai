@@ -8,6 +8,7 @@ public record SaveFormEditorRequest(
     string Title,
     string? Description,
     bool IsPublic,
+    bool IsGraded,
     List<QuestionInput> Questions
 );
 

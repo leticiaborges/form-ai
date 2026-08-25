@@ -36,4 +36,14 @@ public class SubmissionRepository : ISubmissionRepository
     {
         return await _context.Submissions.CountAsync(s => s.FormId == formId, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Submission>> GetByFormForScoringAsync(Guid formId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions
+            .Include(s => s.Answers)
+                .ThenInclude(a => a.SelectedOptions)
+            .Where(s => s.FormId == formId)
+            .ToListAsync(cancellationToken);
+    }
 }

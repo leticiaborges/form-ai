@@ -38,4 +38,6 @@ public class Submission
         Answers.Clear();
         Answers.AddRange(answers);
     }
+
+    public void SetScore(int? score) => Score = score;
 }

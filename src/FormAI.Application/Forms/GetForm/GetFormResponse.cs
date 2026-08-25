@@ -9,6 +9,7 @@ public record GetFormResponse(
     bool IsPublic,
     DateTime? ExpiresAt,
     bool ShowResultsAfterSubmit,
+    bool IsGraded,
     DateTime CreatedAt,
     List<QuestionDTO> Questions
 );

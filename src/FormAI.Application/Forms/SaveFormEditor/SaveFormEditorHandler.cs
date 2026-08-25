@@ -1,18 +1,22 @@
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
+using FormAI.Application.Submissions.RescoreForm;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
+using FormAI.Domain.Scoring;
 
 namespace FormAI.Application.Forms.SaveFormEditor;
 
 public class SaveFormEditorHandler
 {
     private readonly IFormRepository _forms;
+    private readonly RescoreFormSubmissionsHandler _rescore;
 
-    public SaveFormEditorHandler(IFormRepository forms)
+    public SaveFormEditorHandler(IFormRepository forms, RescoreFormSubmissionsHandler rescore)
     {
         _forms = forms;
+        _rescore = rescore;
     }
 
     public async Task HandleAsync(SaveFormEditorRequest request, CancellationToken cancellationToken = default)
@@ -40,15 +44,26 @@ public class SaveFormEditorHandler
 
             if (q.Type is QuestionType.Single or QuestionType.Multiple)
                 QuestionOptionValidator.Validate(i, q.Options.Select(o => o.Text).ToList(), errors);
+
+            // Points only mean anything on a graded form; on an ungraded one whatever arrives is
+            // discarded a few lines below, so there is nothing to validate.
+            if (request.IsGraded)
+                QuestionPointsValidator.Validate(i, q.Points, errors);
         }
 
         if (errors.Count > 0)
             throw new ValidationException(errors);
 
+        // Taken before anything changes, over the questions that exist right now: a question the
+        // save adds was answered by nobody, so it cannot move a stored score and is left out of
+        // the comparison. See ADR 0004.
+        var questionIdsBeforeSave = form.Questions.Select(q => q.Id).ToList();
+        var fingerprintBeforeSave = GradingFingerprint.Of(form, questionIdsBeforeSave);
+
         form.Update(request.Title.Trim(),
          request.Description?.Trim() ?? string.Empty,
           request.IsPublic,
-            form.ExpiresAt, form.ShowResultsAfterSubmit);
+            form.ExpiresAt, form.ShowResultsAfterSubmit, request.IsGraded);
 
         var diff = FormEditorDiffer.DiffQuestions(form.Questions, request.Questions);
 
@@ -70,6 +85,17 @@ public class SaveFormEditorHandler
         foreach (var (question, input) in diff.KeepExisting)
             SyncOptions(question, input);
 
+        // A graded form keeps the points the owner typed; an ungraded one loses its answer key,
+        // suggested answers and points.
+        form.ClearGradingIfUngraded();
+
+        var fingerprintAfterSave = GradingFingerprint.Of(form, questionIdsBeforeSave);
+
+        if (fingerprintBeforeSave != fingerprintAfterSave)
+            await _rescore.HandleAsync(form, cancellationToken);
+
+        // Both the form and the rescored submissions are tracked by the same context, so this
+        // commits the edit and the new scores together.
         await _forms.UpdateAsync(form, cancellationToken);
     }
 

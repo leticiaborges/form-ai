@@ -1,11 +1,9 @@
-using FormAI.Application.Forms.CloseForm;
 using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.GetSubmissionCount;
 using FormAI.Application.Forms.SaveFormEditor;
-using FormAI.Application.Forms.UpdateForm;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -21,16 +19,14 @@ public class FormsController : ControllerBase
     private readonly CreateFormHandler _create;
     private readonly GetFormHandler _getById;
     private readonly GetFormsByUserHandler _getByUser;
-    private readonly UpdateFormHandler _update;
     private readonly DeleteFormHandler _delete;
-    private readonly CloseFormHandler _close;
     private readonly GenerateFormHandler _generateForm;
     private readonly SaveFormEditorHandler _saveFormEditor;
     private readonly GetSubmissionCountHandler _getSubmissionCount;
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
-    UpdateFormHandler update, DeleteFormHandler delete, CloseFormHandler close,
+    DeleteFormHandler delete,
     GenerateFormHandler generateForm,
     SaveFormEditorHandler saveFormEditor,
     GetSubmissionCountHandler submissionCount)
@@ -38,9 +34,7 @@ public class FormsController : ControllerBase
         _create = create;
         _getById = getById;
         _getByUser = getByUser;
-        _update = update;
         _delete = delete;
-        _close = close;
         _generateForm = generateForm;
         _saveFormEditor = saveFormEditor;
         _getSubmissionCount = submissionCount;
@@ -79,29 +73,13 @@ public class FormsController : ControllerBase
     }
 
     // GET /api/forms/{id}
+    // The editor's endpoint: it returns the answer key, so it is owner-only and never anonymous.
+    // Respondents read a form through GET /api/forms/{id}/answer instead.
     [HttpGet("{id:guid}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        // Try to get userId from JWT if present; anonymous users get null
-        Guid? userId = null;
-        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier)
-               ?? User.FindFirstValue("sub");
-        if (sub is not null) userId = Guid.Parse(sub);
-
-        var response = await _getById.HandleAsync(id, userId, cancellationToken);
+        var response = await _getById.HandleAsync(id, CurrentUserId, cancellationToken);
         return Ok(response);
-    }
-
-    // PUT /api/forms/{id}
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id,
-    [FromBody] UpdateFormRequest request,
-    CancellationToken cancellationToken)
-    {
-        var cmd = request with { FormId = id, RequestingUserId = CurrentUserId };
-        await _update.HandleAsync(cmd, cancellationToken);
-        return NoContent();
     }
 
     // DELETE /api/forms/{id}
@@ -109,14 +87,6 @@ public class FormsController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await _delete.HandleAsync(new DeleteFormRequest(id, CurrentUserId), cancellationToken);
-        return NoContent();
-    }
-
-    // PATCH /api/forms/{id}/close
-    [HttpPatch("{id:guid}/close")]
-    public async Task<IActionResult> Close(Guid id, CancellationToken cancellationToken)
-    {
-        await _close.HandleAsync(new CloseFormRequest(id, CurrentUserId), cancellationToken);
         return NoContent();
     }
 
@@ -140,17 +110,8 @@ public class FormsController : ControllerBase
         return Ok(response);
     }
 
-    // POST   /api/forms/generate/text
     // POST   /api/forms/generate/file
     // POST   /api/forms/generate/url
     // POST   /api/forms/generate/image
-
-    // POST   /api/forms
-    // GET    /api/forms
-    // GET    /api/forms/{id}
-    // PUT    /api/forms/{id}
-    // DELETE /api/forms/{id}
-    // PATCH  /api/forms/{id}/close
-    // PUT    /api/forms/{id}/questions
     // POST   /api/forms/{id}/analyze
 }

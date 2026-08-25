@@ -36,6 +36,11 @@ _Code alias_: `ExpiresAt`.
 A form whose expiry has passed. It can still be opened and read by the owner; but it can no longer be submitted to or read by others.
 _Avoid_: closed, finished, archived. FormAI has no concept of *closing* a form — see [docs/known-gaps.md](./docs/known-gaps.md).
 
+**Graded form**:
+A form whose questions carry points and an answer key, and whose submissions are scored. A form is graded or it is not; turning grading off discards the answer key and the suggested answers.
+_Code alias_: `IsGraded`.
+_Avoid_: quiz, test, exam, scored form.
+
 **Form editor**:
 The owner-facing screen where a form's questions are written, retyped, reordered and removed before and after sharing.
 
@@ -54,16 +59,16 @@ _Code alias_: `QuestionOption`.
 _Avoid_: choice, alternative, answer.
 
 **Answer key**:
-The marking of which options of a Single or Multiple question are the right ones.
-_Code alias_: `IsCorrect`.
+The marking of which options of a Single or Multiple question are the right ones. Exists only on a graded form.
+_Code alias_: `IsCorrect`. An unmarked option is null, which is not the same as marked wrong.
 
 **Suggested answer**:
-The expected response to a Text or Numeric question, written by the owner and never shown to the respondent.
+The expected response to a Text or Numeric question, written by the owner and never shown to the respondent. Exists only on a graded form.
 _Code alias_: `CorrectAnswer`.
 _Avoid_: correct answer — that phrase belongs to the answer key.
 
 **Points**:
-The value the owner assigns to a question, used to score it.
+The value a question is worth in a graded form, chosen by the owner. A question may be worth nothing, which keeps it in a graded form without letting it affect the score. A question in an ungraded form has no points at all.
 
 **AI-generated**:
 A marking on a question saying Claude wrote it rather than the owner. It survives the owner editing the question.
@@ -91,7 +96,10 @@ An option a respondent picked, recorded as the option's text at the moment of su
 _Code alias_: `AnswerSelectedOption`. See [ADR 0001](./docs/adr/0001-selected-option-text-snapshot.md).
 
 **Score**:
-The points earned by an answer, and the sum of those for a submission. Scoring is incomplete — see [docs/known-gaps.md](./docs/known-gaps.md).
+The points a respondent earned: for one answer, and summed for the submission. A score is recomputed from the form as it stands rather than frozen at the moment of submission, so correcting an answer key changes the scores of the submissions already made — see [ADR 0004](./docs/adr/0004-scores-recomputed-from-current-form.md). An unanswered question earns nothing. A submission to an ungraded form has no score at all.
+
+**Rescoring**:
+Recomputing the scores of every submission of a form, because something that decides them has changed.
 
 ### Generation
 
@@ -105,5 +113,5 @@ _Code alias_: `FormSourceContent`.
 _Avoid_: source content, upload.
 
 **Generation parameters**:
-What the owner asks Claude for: how many questions, which question types are allowed, the difficulty, and whether to fill in the answer key and suggested answers.
+What the owner asks Claude for: how many questions, which question types are allowed, the difficulty, and whether to fill in the answer key and suggested answers — which follows from whether the form being created is graded.
 _Code alias_: `GenerationParameters`.

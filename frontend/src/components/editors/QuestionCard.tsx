@@ -7,6 +7,7 @@ import { NumberInput } from "./NumberInput";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
 import { DragHandleRail } from "./DragHandleRail";
+import { PointsInput } from "./PointsInput";
 
 
 type QuestionType = FormQuestion['type'];
@@ -28,6 +29,8 @@ const TYPE_COLOR: Record<QuestionType, string> = {
 interface QuestionCardProps {
   question: FormQuestion;
   index: number;
+  /** Whether the form is graded: the answer key and suggested answer only exist if it is. */
+  isGraded: boolean;
   onChange: (q: FormQuestion) => void;
   onRemove: () => void;
 }
@@ -35,6 +38,7 @@ interface QuestionCardProps {
 export function QuestionCard({
   question,
   index,
+  isGraded,
   onChange,
   onRemove
 }: QuestionCardProps) {
@@ -69,6 +73,7 @@ export function QuestionCard({
           <RadioButtonList
             options={question.options}
             questionId={question.id}
+            isGraded={isGraded}
             onOptionsChange={(opts) => onChange({
               ...question,
               options: opts
@@ -79,6 +84,7 @@ export function QuestionCard({
         return (<CheckBoxList
           options={question.options}
           questionId={question.id}
+          isGraded={isGraded}
           onOptionsChange={(opts) => onChange({
             ...question,
             options: opts
@@ -88,6 +94,7 @@ export function QuestionCard({
         return (
           <TextInput
             correctAnswer={question.correctAnswer}
+            isGraded={isGraded}
             onCorrectAnswerChange={(value) =>
               onChange({ ...question, correctAnswer: value })}
           />
@@ -96,6 +103,7 @@ export function QuestionCard({
         return (
           <NumberInput
             correctAnswer={question.correctAnswer}
+            isGraded={isGraded}
             onCorrectAnswerChange={(value) =>
               onChange({ ...question, correctAnswer: value })}
           />
@@ -137,10 +145,19 @@ export function QuestionCard({
               </p>
             )}
 
-            {/* Type badge */}
-            <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[question.type]}`}>
-              {TYPE_LABEL[question.type]}
-            </span>
+            {/* Type badge on the left, what the question is worth on the right */}
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[question.type]}`}>
+                {TYPE_LABEL[question.type]}
+              </span>
+
+              {isGraded && (
+                <PointsInput
+                  points={question.points}
+                  onChange={points => onChange({ ...question, points })}
+                />
+              )}
+            </div>
 
             {/* Type-specific answer editor */}
             {renderAnswerEditor()}

@@ -4,6 +4,7 @@ import { OptionList } from './OptionsList';
 interface RadioButtonListProps {
   options: FormOption[];
   questionId: string;
+  isGraded: boolean;
   onOptionsChange: (options: FormOption[]) => void;
 }
 

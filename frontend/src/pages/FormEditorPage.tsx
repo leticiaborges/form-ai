@@ -12,6 +12,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
 import { DeleteFormModal } from "../components/editors/DeleteFormModal";
+import { DEFAULT_POINTS } from "../components/editors/PointsInput";
 
 type PageState = 'loading' | 'ready' | 'saving' | 'deleting' | 'error';
 
@@ -25,6 +26,7 @@ export function FormEditorPage() {
     const [showAddModal, setShowAddModal] = useState(false);
 
     const [isPublic, setIsPublic] = useState(false);
+    const [isGraded, setIsGraded] = useState(false);
     const [title, setTitle] = useState('');
     const [titleError, setTitleError] = useState('');
 
@@ -40,6 +42,7 @@ export function FormEditorPage() {
         setTitle(data.title);
         setDescription(data.description ?? '');
         setIsPublic(data.isPublic);
+        setIsGraded(data.isGraded);
     }
 
     useEffect(() => {
@@ -52,6 +55,19 @@ export function FormEditorPage() {
         }).catch(() => setState('error'));
     }, [id]);
 
+
+    /**
+     * Turning grading on gives every question the default points, so the fields the owner is
+     * about to see already hold a usable value rather than appearing empty. Turning it off leaves
+     * the points alone — saving is what discards them, so an accidental tick can still be undone
+     * by ticking it back before saving.
+     */
+    function toggleGraded(next: boolean) {
+        setIsGraded(next);
+
+        if (next)
+            setQuestions(qs => qs.map(q => q.points === null ? { ...q, points: DEFAULT_POINTS } : q));
+    }
 
     function updateQuestion(index: number, updated: FormQuestion) {
         setQuestions(qs => qs.map((q, i) => i === index ? updated : q));
@@ -142,6 +158,7 @@ export function FormEditorPage() {
                 title: trimmedTitle,
                 description: trimmedDescription,
                 isPublic,
+                isGraded,
                 questions
             });
 
@@ -240,15 +257,27 @@ export function FormEditorPage() {
                 {descriptionError && <p className="text-xs text-red-500 px-1">{descriptionError}</p>}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={isPublic}
-                            onChange={e => setIsPublic(e.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-                        />
-                        Public
-                    </label>
+                    <div className="flex flex-wrap items-center gap-4">
+                        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={e => setIsPublic(e.target.checked)}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                            />
+                            Public
+                        </label>
+
+                        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isGraded}
+                                onChange={e => toggleGraded(e.target.checked)}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                            />
+                            Graded form
+                        </label>
+                    </div>
 
                     {form.isPublic && (() => {
                         const answerUrl = `${window.location.origin}/forms/${form.id}/answer`;
@@ -281,6 +310,7 @@ export function FormEditorPage() {
                                 key={q.id}
                                 question={q}
                                 index={i}
+                                isGraded={isGraded}
                                 onChange={updated => updateQuestion(i, updated)}
                                 onRemove={() => removeQuestion(i)}
                             />
@@ -302,6 +332,7 @@ export function FormEditorPage() {
 
             {showAddModal && (
                 <AddQuestionModal
+                    isGraded={isGraded}
                     onAdd={appendQuestion}
                     onClose={() => setShowAddModal(false)}
                 />

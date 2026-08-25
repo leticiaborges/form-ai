@@ -17,7 +17,7 @@ public record GeneratedQuestionResponse(
     int Order,
     bool IsRequired,
     bool AiGenerated,
-    decimal? Points,
+    int? Points,
     string? CorrectAnswer,
     IReadOnlyList<GeneratedOptionResponse> Options
 );

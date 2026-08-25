@@ -31,4 +31,9 @@ public class QuestionOption
         Order = order;
         IsCorrect = isCorrect;
     }
+
+    /// <summary>
+    /// Unmarks the option. Null means "not marked", which is not the same as marked wrong.
+    /// </summary>
+    public void ClearAnswerKey() => IsCorrect = null;
 }

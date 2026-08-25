@@ -2,6 +2,7 @@ using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
+using FormAI.Domain.Scoring;
 
 namespace FormAI.Application.Submissions.SubmitForm;
 
@@ -23,15 +24,18 @@ public class SubmitFormHandler
 
         var errors = await ValidateFormAsync(form, request, cancellationToken);
 
-        var answersByQuestion = request.Answers.ToDictionary(a => a.QuestionId);
-
-        var questionResults = await ValidateAnswers(form!, request, errors, cancellationToken);
+        var questionResults = ValidateAnswers(form!, request, errors);
         if (errors.Count > 0)
             throw new ValidationException(errors);
 
-        int? totalScore = questionResults.Any(r => r.Score is not null)
-          ? questionResults.Sum(r => r.Score ?? 0)
-          : null;
+        // Scoring runs on option text so that submitting and rescoring share one set of rules,
+        // so the selected ids are resolved to text before anything is graded. See ADR 0004.
+        var scoredAnswers = questionResults.ToDictionary(
+            r => r.Question.Id,
+            r => new ScoredAnswer(r.Answer.TextValue, (double?)r.Answer.NumericValue,
+                r.SelectedOptionTexts));
+
+        var totalScore = SubmissionScorer.ScoreSubmission(form!, scoredAnswers);
 
         var submission = Submission.Create(form!.Id,
         request.UserId, request.RespondentToken, request.IpAddress,
@@ -39,14 +43,14 @@ public class SubmitFormHandler
 
         var answers = questionResults.Select(r =>
         {
+            var score = SubmissionScorer.ScoreAnswer(form, r.Question, scoredAnswers[r.Question.Id]);
+
             var answer = Answer.Create(submission.Id,
             r.Question.Id, null, r.Answer.TextValue,
-            (double?)r.Answer.NumericValue, r.Score);
+            (double?)r.Answer.NumericValue, score);
 
-            var optionTextById = r.Question.Options.ToDictionary(o => o.Id, o => o.Text);
-
-            answer.SetSelectedOptions(r.SelectedOptionsIds
-                .Select(id => AnswerSelectedOption.Create(answer.Id, optionTextById[id]))
+            answer.SetSelectedOptions(r.SelectedOptionTexts
+                .Select(text => AnswerSelectedOption.Create(answer.Id, text))
                 .ToList());
 
             return answer;
@@ -94,9 +98,8 @@ public class SubmitFormHandler
         return errors;
     }
 
-    private async Task<List<QuestionResult>> ValidateAnswers(Form form, SubmitFormRequestCommand request,
-        Dictionary<string, string[]> errors,
-        CancellationToken cancellationToken = default)
+    private static List<QuestionResult> ValidateAnswers(Form form, SubmitFormRequestCommand request,
+        Dictionary<string, string[]> errors)
     {
         var results = new List<QuestionResult>();
         var answersByQuestion = request.Answers.ToDictionary(a => a.QuestionId);
@@ -117,12 +120,14 @@ public class SubmitFormHandler
             if (!isAnswered)
                 continue;
 
+            var selectedOptionTexts = Array.Empty<string>();
+
             if (question.Type is QuestionType.Single or QuestionType.Multiple)
             {
-                var knownOptionIds = question.Options.Select(o => o.Id).ToHashSet();
+                var optionTextById = question.Options.ToDictionary(o => o.Id, o => o.Text);
                 var submittedIds = answer!.SelectedOptionIds ?? Array.Empty<Guid>();
 
-                if (submittedIds.Any(id => !knownOptionIds.Contains(id)))
+                if (submittedIds.Any(id => !optionTextById.ContainsKey(id)))
                 {
                     errors[question.Id.ToString()] =
                         new[] { "One or more selected options don't belong to this question." };
@@ -135,73 +140,15 @@ public class SubmitFormHandler
                         new[] { "This question accepts only one option." };
                     continue;
                 }
+
+                selectedOptionTexts = submittedIds.Select(id => optionTextById[id]).ToArray();
             }
 
-            var (score, selectedOptionsIds) = ScoreAnswer(question, answer);
-            results.Add(new QuestionResult(question, answer!, score, selectedOptionsIds));
+            results.Add(new QuestionResult(question, answer!, selectedOptionTexts));
         }
 
         return results;
     }
-
-    private static (int? Score, Guid[] SelectedOptionsIds) ScoreAnswer(FormQuestion question, AnswerRequest? answer)
-    {
-        switch (question.Type)
-        {
-            case QuestionType.Single:
-            case QuestionType.Multiple:
-                return ScoreSingleOrMultiple(question, answer);
-            case QuestionType.Numeric:
-                return ScoreNumeric(question, answer);
-            case QuestionType.Text:
-                return ScoreText(question, answer);
-            default:
-                return (null, Array.Empty<Guid>());
-        }
-    }
-
-    private static (int? Score, Guid[] SelectedOptionIds) ScoreSingleOrMultiple(FormQuestion question, AnswerRequest? answer)
-    {
-        if (answer is null)
-            return (null, Array.Empty<Guid>());
-
-        var selectedIds = answer.SelectedOptionIds ?? Array.Empty<Guid>();
-        var isGraded = question.Options.Any(o => o.IsCorrect.GetValueOrDefault());
-
-        if (!isGraded)
-            return (null, selectedIds);
-
-        var correctIds = question.Options.Where(o => o.IsCorrect.GetValueOrDefault())
-        .Select(o => o.Id).ToHashSet();
-
-        var isCorrect = selectedIds.ToHashSet().SetEquals(correctIds);
-
-        return (isCorrect ? (question.Points ?? 0) : 0, selectedIds);
-    }
-
-    private static (int? Score, Guid[] SelectedOptionIds) ScoreText(FormQuestion question, AnswerRequest? answer)
-    {
-        if (string.IsNullOrWhiteSpace(question.CorrectAnswer))
-            return (null, Array.Empty<Guid>());
-
-        var textMatch = string.Equals(answer?.TextValue?.Trim(),
-        question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
-
-        return (textMatch ? (question.Points ?? 0) : 0, Array.Empty<Guid>());
-    }
-
-
-    private static (int? Score, Guid[] SelectedOptionIds) ScoreNumeric(FormQuestion question, AnswerRequest? answer)
-    {
-        if (answer == null || string.IsNullOrWhiteSpace(question.CorrectAnswer) || answer.NumericValue is null)
-            return (null, Array.Empty<Guid>());
-
-        var numericMatch = double.TryParse(question.CorrectAnswer,
-        out var expected) && (double)answer.NumericValue.Value == expected;
-
-        return (numericMatch ? (question.Points ?? 0) : 0, Array.Empty<Guid>());
-    }
-
 
     private static bool IsAnswered(QuestionType type, AnswerRequest? answer)
     {
@@ -226,6 +173,5 @@ public class SubmitFormHandler
 public record QuestionResult(
     FormQuestion Question,
     AnswerRequest Answer,
-    int? Score,
-    Guid[] SelectedOptionsIds
+    IReadOnlyCollection<string> SelectedOptionTexts
 );

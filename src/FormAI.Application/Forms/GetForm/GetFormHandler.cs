@@ -15,18 +15,29 @@ public class GetFormHandler
         _formRepository = formRepository;
     }
 
+    /// <summary>
+    /// The form as its owner sees it in the editor, answer key and suggested answers included.
+    /// Owner-only for that reason: this is the one response that carries the answers, and a
+    /// respondent must not be able to read it. Answering uses <c>GetFormToAnswerHandler</c>,
+    /// which leaves the key out.
+    /// </summary>
     public async Task<GetFormResponse> HandleAsync(Guid formId,
-        Guid? requestingUserId, CancellationToken cancellationToken)
+        Guid requestingUserId, CancellationToken cancellationToken)
     {
         var form = await _formRepository.GetByIdAsync(formId, cancellationToken);
         if (form == null)
             throw new NotFoundException("Form not found.");
 
+        // A private form is hidden from everyone but its owner; a published one exists, but its
+        // answer key still belongs to the owner alone.
         if (!form.IsPublic && form.CreatedBy != requestingUserId)
             throw new NotFoundException("You don't have access to this form.");
 
+        if (form.CreatedBy != requestingUserId)
+            throw new ForbiddenException("You do not own this form.");
+
         var formResponse = new GetFormResponse(form.Id, form.Title, form.Description,
-        form.IsPublic, form.ExpiresAt, form.ShowResultsAfterSubmit, form.CreatedAt,
+        form.IsPublic, form.ExpiresAt, form.ShowResultsAfterSubmit, form.IsGraded, form.CreatedAt,
         BuildQuestionDTOList(form));
 
         return formResponse;

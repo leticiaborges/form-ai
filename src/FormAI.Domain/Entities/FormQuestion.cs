@@ -57,4 +57,17 @@ public class FormQuestion
     public void AddOption(QuestionOption option) => Options.Add(option);
 
     public void RemoveOption(QuestionOption option) => Options.Remove(option);
+
+    /// <summary>
+    /// Discards everything that only exists on a graded form: the suggested answer, the points
+    /// and the answer key on every option. Options themselves are kept — only their marking goes.
+    /// </summary>
+    public void ClearAnswerKey()
+    {
+        Points = null;
+        CorrectAnswer = null;
+
+        foreach (var option in Options)
+            option.ClearAnswerKey();
+    }
 }

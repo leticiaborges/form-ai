@@ -13,7 +13,6 @@ Return ONLY a valid JSON object with this exact structure. No markdown, no expla
     {{
         "text": "question text here",
         "type": "Single",
-        "points": null,
         "correctAnswer": null,
         "options": [
         {{ "text": "option A", "isCorrect": true }},

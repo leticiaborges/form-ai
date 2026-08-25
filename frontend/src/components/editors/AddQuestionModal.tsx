@@ -4,9 +4,12 @@ import { Input } from "../Input";
 import { Button } from "../Button";
 import { RadioButtonList } from "./RadioButtonList";
 import { CheckBoxList } from "./CheckBoxList";
+import { DEFAULT_POINTS, PointsInput } from "./PointsInput";
 
 
 interface AddQuestionModalProps {
+  /** Whether the form is graded, so the new question offers an answer key or does not. */
+  isGraded: boolean;
   onAdd: (question: FormQuestion) => void;
   onClose: () => void;
 }
@@ -18,14 +21,16 @@ const TYPES: { value: QuestionType, label: string }[] = [
   { value: 'Numeric', label: 'Numeric' }
 ];
 
-function makeOption(): FormOption {
-  return { id: crypto.randomUUID(), text: '', order: 0, isCorrect: false };
+function makeOption(isGraded: boolean): FormOption {
+  // Null means "not marked": an ungraded form has no answer key at all.
+  return { id: crypto.randomUUID(), text: '', order: 0, isCorrect: isGraded ? false : null };
 }
 
-export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
+export function AddQuestionModal({ isGraded, onAdd, onClose }: AddQuestionModalProps) {
   const [text, setText] = useState('');
   const [type, setType] = useState<QuestionType>('Single');
-  const [options, setOptions] = useState<FormOption[]>([makeOption(), makeOption()]);
+  const [points, setPoints] = useState(DEFAULT_POINTS);
+  const [options, setOptions] = useState<FormOption[]>([makeOption(isGraded), makeOption(isGraded)]);
   const [error, setError] = useState('');
 
   const hasOptions = type === 'Single' || type === 'Multiple';
@@ -64,7 +69,7 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
       order: 0,
       isRequired: true,
       aiGenerated: false,
-      points: null,
+      points: isGraded ? points : null,
       correctAnswer: null,
       options: hasOptions ? options.map((o, i) => ({ ...o, order: i + 1 })) : []
     };
@@ -87,9 +92,12 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
             placeholder="e.g. What is the capital of France?"
           />
 
-          {/* Type selector */}
+          {/* Type selector, with what the question is worth at the right of its label row */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Type</label>
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              {isGraded && <PointsInput points={points} onChange={setPoints} />}
+            </div>
             <div className="flex flex-wrap gap-2">
               {TYPES.map(t => (
                 <button
@@ -110,18 +118,21 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
           {hasOptions && (
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Options <span className="text-gray-400 font-normal">(mark correct answers)</span>
+                Options
+                {isGraded && <span className="text-gray-400 font-normal"> (mark correct answers)</span>}
               </label>
               {type === 'Single' ? (
                 <RadioButtonList
                   options={options}
                   questionId="modal-new-question"
+                  isGraded={isGraded}
                   onOptionsChange={setOptions}
                 />
               ) : (
                 <CheckBoxList
                   options={options}
                   questionId="modal-new-question"
+                  isGraded={isGraded}
                   onOptionsChange={setOptions}
                 />
               )}

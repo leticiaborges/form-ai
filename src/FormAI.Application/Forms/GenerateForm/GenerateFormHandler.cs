@@ -36,9 +36,10 @@ public class GenerateFormHandler
             new SourceItem(request.SourceText, SourceType.Text)
         };
 
+        // A graded form is the only reason to ask Claude for an answer key, so one flag drives both.
         var parameters = new GenerationParameters(request.QuestionCount,
         request.AllowedTypes, request.DifficultyLevel,
-        request.IncludeCorrectAnswers);
+        request.IsGraded);
 
         var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, cancellationToken);
 
@@ -56,7 +57,8 @@ public class GenerateFormHandler
             sourceType: SourceType.Text,
             isPublic: false,
             expiresAt: DateTime.UtcNow.AddDays(15),
-            showResultsAfterSubmit: false
+            showResultsAfterSubmit: false,
+            isGraded: request.IsGraded
         );
 
         var sourceContents = sourceItems.Select((s, i) =>
@@ -66,8 +68,11 @@ public class GenerateFormHandler
 
         var questions = generatedQuestions.Select((q, i) =>
         {
+            // A generated question starts at the default; the owner changes it in the editor.
+            var points = request.IsGraded ? Form.DefaultQuestionPoints : (int?)null;
+
             var question = FormQuestion.Create(form.Id, q.Text, q.Type, i + 1,
-            q.IsRequired, true, q.Points, q.CorrectAnswer);
+            q.IsRequired, true, points, q.CorrectAnswer);
 
 
             var options = new List<QuestionOption>();
@@ -93,6 +98,10 @@ public class GenerateFormHandler
         }).ToList();
 
         form.ReplaceQuestions(questions);
+
+        // Discards anything the AI marked when the owner asked for an ungraded form.
+        form.ClearGradingIfUngraded();
+
         await _repository.AddAsync(form, cancellationToken);
 
         return new GenerateFormResponse(form.Id,
