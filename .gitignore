@@ -63,3 +63,4 @@ coverage*/
 .claude/
 
 migration.sql
+appsettings.Development.json 

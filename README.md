@@ -1,14 +1,37 @@
 # FormAI
 
-FormAI uses AI to automatically generate question forms from content you upload — PDFs, Word documents, pasted text, images, or web URLs. Upload source material, set the generation context, and Claude turns it into a structured quiz, test, or assessment you can edit, publish, and share via a link. Respondents answer through that link, and the owner gets aggregated results plus an AI-generated analysis.
+FormAI turns text into a question form. Paste your source material, tell Claude how many questions you want and how hard they should be, and it generates a structured quiz you can edit, reorder and share by link. Respondents answer through that link — signed in or anonymously — and you see the responses come in.
 
-**Core flow:** upload source material → set context and parameters → Claude generates a structured form → review/edit/reorder questions → publish and share via link → respondents answer → owner views results and AI analysis.
+**Core flow:** paste source text → set the generation parameters → Claude generates the questions → review, edit and reorder them → publish and share the link → respondents answer.
+
+This is a work in progress. See [what works](#what-works-today) and [what doesn't yet](#roadmap) before trying it.
+
+## What works today
+
+- **Accounts** — register with email confirmation, log in, JWT with refresh tokens
+- **Generation from pasted text** — question count, allowed question types, difficulty, and whether Claude should fill in the answer key
+- **Four question types** — single choice, multiple choice, free text, numeric
+- **Form editor** — edit question text and type, add and delete questions and options, drag to reorder both. Saves are diffed, so editing a form that already has responses doesn't invalidate them
+- **Publishing** — forms start private and are answerable only once you publish them; forms expire on a date
+- **Responding** — anonymous or signed in, one submission per respondent, required-question and option validation
+- **Dashboard** — your forms and how many submissions each has
+
+## Roadmap
+
+Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
+
+- AI analysis of results
+- Generation from PDF, Word, images and URLs (only pasted text works today)
+- A results view for the owner beyond the submission count
+- Working grading and score display
+- Realtime submission and generation updates
+- Rate limiting on generation
 
 ## Tech stack
 
-- **Backend** — .NET 10, Clean Architecture (`Domain` → `Application` → `Infrastructure`/`API`), EF Core + PostgreSQL, JWT auth, SignalR
+- **Backend** — .NET 10, Clean Architecture (`Domain` → `Application` → `Infrastructure`/`API`), EF Core + PostgreSQL, JWT auth
 - **Frontend** — React 19, TypeScript, Vite, Tailwind CSS
-- **AI** — Anthropic Claude API (form generation and result analysis)
+- **AI** — Anthropic Claude API
 - **Local dev infra** — Docker Compose (PostgreSQL, Mailpit for email testing)
 
 ## Prerequisites
@@ -47,9 +70,14 @@ FormAI uses AI to automatically generate question forms from content you upload 
    dotnet user-secrets set "Jwt:Issuer" "formai"
    dotnet user-secrets set "Jwt:Audience" "formai"
    dotnet user-secrets set "Claude:ApiKey" "<your Anthropic API key>"
+   dotnet user-secrets set "Email:SmtpHost" "localhost"
+   dotnet user-secrets set "Email:SmtpPort" "1025"
+   dotnet user-secrets set "Email:FromAddress" "noreply@formai.local"
+   dotnet user-secrets set "Email:FromName" "FormAI"
+   dotnet user-secrets set "Email:FrontendBaseUrl" "http://localhost:5173"
    ```
 
-   See [Required environment variables](#required-environment-variables) below for the equivalent environment-variable names if you'd rather set them that way (e.g. for a deployed environment).
+   Without the `Email` settings, registration can't send its confirmation link and no account can be verified.
 
 4. **Apply database migrations**
 
@@ -73,16 +101,20 @@ FormAI uses AI to automatically generate question forms from content you upload 
    npm run dev
    ```
 
-   Frontend available at `http://localhost:5173`.
+   Frontend available at `http://localhost:5173`. Vite proxies `/api` to the backend, so no extra configuration is needed.
 
-## Required environment variables
+## Configuration reference
 
 | Variable | Purpose |
 |---|---|
-| `Claude__ApiKey` | Claude API key for form generation and result analysis |
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
 | `Jwt__Secret` | JWT signing key |
 | `Jwt__Issuer` / `Jwt__Audience` | JWT validation params |
+| `Claude__ApiKey` | Anthropic API key for form generation |
+| `Claude__Model` / `Claude__MaxTokens` | Optional; defaults in `appsettings.json` |
+| `Email__SmtpHost` / `Email__SmtpPort` | SMTP server for confirmation emails (Mailpit locally) |
+| `Email__FromAddress` / `Email__FromName` | Sender identity |
+| `Email__FrontendBaseUrl` | Base URL used to build confirmation links |
 
 Docker Compose also reads `POSTGRES_PASSWORD` and `APP_DB_PASSWORD` from `.env` (see `.env.example`) — these only apply to the local PostgreSQL container, not the backend app itself.
 
@@ -98,12 +130,6 @@ dotnet run --project src/FormAI.API
 # Run all tests
 dotnet test FormAI.sln
 
-# Run only unit tests
-dotnet test tests/FormAI.UnitTests
-
-# Run only integration tests
-dotnet test tests/FormAI.IntegrationTests
-
 # EF Core migrations (run from repo root)
 dotnet ef migrations add <MigrationName> --project src/FormAI.Infrastructure --startup-project src/FormAI.API
 dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API
@@ -115,11 +141,20 @@ dotnet ef database update --project src/FormAI.Infrastructure --startup-project 
 FormAI.Domain          entities, enums — zero dependencies
 FormAI.Application     use cases, DTOs, interfaces
 FormAI.Infrastructure  EF Core, repositories, Claude API integration
-FormAI.API             controllers, SignalR hub, DI wiring
+FormAI.API             controllers, middleware, DI wiring
 frontend/              React + TypeScript + Vite app
 ```
 
-See [`CLAUDE.md`](./CLAUDE.md) for a deeper architecture and data-model overview, and [`docs/plans/`](./docs/plans/) for implementation plans by phase.
+## Documentation
+
+| File | What it holds |
+|---|---|
+| [`CONTEXT.md`](./CONTEXT.md) | The glossary — what each domain term means |
+| [`CLAUDE.md`](./CLAUDE.md) | Architecture, business rules as implemented, conventions |
+| [`docs/adr/`](./docs/adr/) | Why the non-obvious decisions were made |
+| [`docs/known-gaps.md`](./docs/known-gaps.md) | What isn't built, what's provisional, what's dead code |
+
+`docs/plans/` holds historical phase plans written before the code existed. They are not maintained and don't describe current behaviour.
 
 ## License
 
