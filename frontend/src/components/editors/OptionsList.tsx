@@ -20,6 +20,18 @@ export function OptionList({
             i == index ? { ...o, ...patch } : o));
     }
 
+    function setCorrect(index: number, isCorrect: boolean) {
+        // A Single question has at most one answer key, so marking an option
+        // clears every other one. A Multiple question allows N.
+        if (inputType === 'radio') {
+            onOptionsChange(options.map((o, i) =>
+                ({ ...o, isCorrect: isCorrect && i === index })));
+            return;
+        }
+
+        updateOption(index, { isCorrect });
+    }
+
     function removeOption(index: number) {
         onOptionsChange(options.filter((_, i) => i !== index));
     }
@@ -57,7 +69,7 @@ export function OptionList({
                             inputType={inputType}
                             questionId={questionId}
                             onTextChange={(text) => updateOption(i, { text })}
-                            onCorrectChange={(isCorrect) => updateOption(i, { isCorrect })}
+                            onCorrectChange={(isCorrect) => setCorrect(i, isCorrect)}
                             onRemove={() => removeOption(i)}
                         />
                     ))}

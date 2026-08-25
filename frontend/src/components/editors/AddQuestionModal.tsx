@@ -30,6 +30,17 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
 
   const hasOptions = type === 'Single' || type === 'Multiple';
 
+  function changeType(next: QuestionType) {
+    setType(next);
+
+    // Switching to Single narrows the answer key to the first marked option.
+    if (next === 'Single') {
+      const firstCorrect = options.findIndex(o => o.isCorrect);
+      if (firstCorrect >= 0)
+        setOptions(opts => opts.map((o, i) => ({ ...o, isCorrect: i === firstCorrect })));
+    }
+  }
+
   function handleSubmit() {
     if (!text.trim()) {
       setError('Question text is required.');
@@ -83,7 +94,7 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
               {TYPES.map(t => (
                 <button
                   key={t.value}
-                  onClick={() => setType(t.value)}
+                  onClick={() => changeType(t.value)}
                   className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${type === t.value
                     ? 'border-brand-600 bg-brand-600 text-white'
                     : 'border-gray-300 bg-white text-gray-600 hover:border-brand-400'

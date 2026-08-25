@@ -1,5 +1,3 @@
-using System.Formats.Asn1;
-using System.Reflection.Metadata;
 using FormAI.Application.AI;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
@@ -71,9 +69,24 @@ public class GenerateFormHandler
             var question = FormQuestion.Create(form.Id, q.Text, q.Type, i + 1,
             q.IsRequired, true, q.Points, q.CorrectAnswer);
 
-            var options = q.Options
-            .Select((o, i) => QuestionOption.Create(question.Id, o.Text, i + 1, o.IsCorrect))
-            .ToList();
+
+            var options = new List<QuestionOption>();
+            var alreadyHasCorrectOption = false;
+
+            foreach (var (o, optionIndex) in q.Options.Select((o, index) => (o, index)))
+            {
+                var isCorrect = o.IsCorrect;
+
+                // A Single question has at most one answer key: keep the first option
+                // the AI marked and clear every other one it marked.
+                if (question.Type == QuestionType.Single && isCorrect == true)
+                {
+                    isCorrect = !alreadyHasCorrectOption;
+                    alreadyHasCorrectOption = true;
+                }
+
+                options.Add(QuestionOption.Create(question.Id, o.Text, optionIndex + 1, isCorrect));
+            }
 
             question.SetOptions(options);
             return question;
