@@ -6,6 +6,7 @@ import { TextInput } from "./TextInput";
 import { NumberInput } from "./NumberInput";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
+import { DragHandleRail } from "./DragHandleRail";
 
 
 type QuestionType = FormQuestion['type'];
@@ -156,17 +157,7 @@ export function QuestionCard({
       </div>
 
       {/* Drag handle rail, attached to the card via a divider */}
-      <div
-        {...listeners}
-        style={{ touchAction: 'none' }}
-        title="Drag to reorder"
-        className="flex w-10 shrink-0 items-center justify-center border-l border-gray-200
-                   bg-gray-50 text-gray-400 cursor-grab active:cursor-grabbing hover:bg-gray-100 hover:text-gray-600"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
-          <path d="M108,60A16,16,0,1,1,92,44,16,16,0,0,1,108,60Zm56,0a16,16,0,1,0-16-16A16,16,0,0,0,164,60ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,180a16,16,0,1,0,16,16A16,16,0,0,0,92,180Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,180Z" />
-        </svg>
-      </div>
+      <DragHandleRail listeners={listeners} />
     </div>
   );
 }

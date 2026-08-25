@@ -52,6 +52,7 @@ Implementation plans for this project live in `docs/plans/`. Each plan covers on
 | `docs/plans/phase-12-toast-notifications.md` | Shared toast notification pattern (sonner) for success/error/warning feedback across CreateFormPage, DashboardPage, FormEditorPage, FormAnswerPage |
 | `docs/plans/phase-13-answer-option-history.md` | `answer_selected_options` reworked to `id` PK + `option_text` snapshot so renaming/deleting an option preserves submitted answers; option text required + unique per question (app-level only) |
 | `docs/plans/phase-14-incremental-form-save.md` | Form editor saves only what actually changed: `FormEditorDiffer` (question/option specific), question/option ids carried in the payload, ids preserved on rename/reorder so submitted answers survive |
+| `docs/plans/phase-16-option-reordering.md` | Drag-and-drop reordering of `Single`/`Multiple` question options in `QuestionCard` and `AddQuestionModal`; shared `DragHandleRail` + `OptionList` (dnd-kit, frontend-only) |
 
 ## Commands
 

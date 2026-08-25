@@ -30,22 +30,6 @@ export function AddQuestionModal({ onAdd, onClose }: AddQuestionModalProps) {
 
   const hasOptions = type === 'Single' || type === 'Multiple';
 
-  function updateOptionText(index: number, value: string) {
-    setOptions(opts => opts.map((o, i) => i === index ? { ...o, text: value } : o));
-  }
-
-  function toggleCorrect(index: number) {
-    setOptions(opts => opts.map((o, i) => i === index ? { ...o, isCorrect: !o.isCorrect } : o));
-  }
-
-  function addOption() {
-    setOptions(opts => [...opts, makeOption()]);
-  }
-
-  function removeOption(index: number) {
-    setOptions((opts) => opts.filter((o, i) => i !== index));
-  }
-
   function handleSubmit() {
     if (!text.trim()) {
       setError('Question text is required.');

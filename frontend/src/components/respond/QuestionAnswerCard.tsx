@@ -1,5 +1,4 @@
 import type { AnswerPayload, AnswerQuestion } from "../../types/submission";
-import type { FormSummary } from "../types/form";
 
 interface AnswerQuestionCardProps {
     question: AnswerQuestion;

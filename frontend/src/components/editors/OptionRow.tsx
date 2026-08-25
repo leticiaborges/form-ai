@@ -2,7 +2,7 @@ import { useState } from "react";
 
 interface OptionRowProps {
   text: string;
-  isCorrect: boolean;
+  isCorrect: boolean | null;
   inputType: 'checkbox' | 'radio';
   questionId: string;
   onTextChange: (text: string) => void;
@@ -33,7 +33,7 @@ export function OptionRow({
   }
 
   return (
-    <div className={`flex items-center gap-2 py-1 px-2 rounded-md transition-colors ${isCorrect ? 'bg-green-50' : ''}`}>
+    <div className={`flex flex-1 min-w-0 items-center gap-2 py-1 px-2 rounded-md transition-colors ${isCorrect ? 'bg-green-50' : ''}`}>
 
       {inputType === 'checkbox' ? (
         <input
