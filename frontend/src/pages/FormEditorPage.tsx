@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { FormDetail, FormQuestion } from "../types/form";
 import { getForm, saveFormEditor, deleteForm, getSubmissionCount } from '../api/forms';
 import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
-import { QuestionCard } from "../components/editors/QuestionCard";
-import { AddQuestionModal } from "../components/editors/AddQuestionModal";
-import { DndContext, closestCenter } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
 import { DeleteFormModal } from "../components/editors/DeleteFormModal";
 import { DEFAULT_POINTS } from "../components/editors/PointsInput";
+import { Tabs, type TabDefinition } from "../components/Tabs";
+import { FormEditorTab } from "../components/FormEditorTab";
+import { ResultsTab } from "../components/results/ResultsTab";
 
 type PageState = 'loading' | 'ready' | 'saving' | 'deleting' | 'error';
+
 
 export function FormEditorPage() {
     const { id } = useParams<{ id: string }>();
@@ -23,7 +22,20 @@ export function FormEditorPage() {
     const [state, setState] = useState<PageState>('loading');
     const [form, setForm] = useState<FormDetail | null>(null);
     const [questions, setQuestions] = useState<FormQuestion[]>([]);
-    const [showAddModal, setShowAddModal] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const TABS: TabDefinition[] = [
+        { id: 'editor', label: 'Edit form' },
+        { id: 'results', label: 'Results' }
+    ];
+
+    const activeTab = searchParams.get('tab') === 'results' ?
+        'results' : 'editor';
+
+    function changeTab(id: string) {
+        setSearchParams(id == 'editor' ? {} : { tab: id },
+            { replace: true });
+    }
 
     const [isPublic, setIsPublic] = useState(false);
     const [isGraded, setIsGraded] = useState(false);
@@ -67,37 +79,6 @@ export function FormEditorPage() {
 
         if (next)
             setQuestions(qs => qs.map(q => q.points === null ? { ...q, points: DEFAULT_POINTS } : q));
-    }
-
-    function updateQuestion(index: number, updated: FormQuestion) {
-        setQuestions(qs => qs.map((q, i) => i === index ? updated : q));
-    }
-
-    function removeQuestion(index: number) {
-        setQuestions(qs => qs.filter((_, i) => i !== index));
-    }
-
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event;
-        if (!over || active.id === over.id) return;
-        setQuestions(qs => {
-            const oldIndex = qs.findIndex(q => q.id === active.id);
-            const newIndex = qs.findIndex(q => q.id === over.id);
-            return arrayMove(qs, oldIndex, newIndex);
-        });
-    }
-
-    function appendQuestion(question: FormQuestion) {
-        setQuestions(qs => [...qs, question]);
-    }
-
-    async function handleCopyLink(url: string) {
-        try {
-            await navigator.clipboard.writeText(url);
-            showSuccess('Link copied to clipboard.');
-        } catch {
-            showError('Could not copy link. Please copy it manually.');
-        }
     }
 
     function openDeleteModal() {
@@ -233,110 +214,26 @@ export function FormEditorPage() {
             </header>
 
             {/* Editor area */}
-            <main className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-4">
-                {questions.length === 0 && (
-                    <div className="py-16 text-center text-gray-400">
-                        <p className="text-lg">No questions yet.</p>
-                        <p className="mt-1 text-sm">Use the button below to add one.</p>
-                    </div>
+            <main className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-6">
+                <Tabs tabs={TABS} activeTab={activeTab} onTabChange={changeTab} />
+
+                {activeTab === 'editor' ? (
+                    <FormEditorTab
+                        form={form}
+                        questions={questions}
+                        onQuestionsChange={setQuestions}
+                        description={description}
+                        onDescriptionChange={value => { setDescription(value); setDescriptionError(''); }}
+                        descriptionError={descriptionError}
+                        isPublic={isPublic}
+                        onIsPublicChange={setIsPublic}
+                        isGraded={isGraded}
+                        onIsGradedChange={toggleGraded} />
+                ) : (
+                    <ResultsTab formId={form.id} />
                 )}
-
-                <textarea
-                    value={description}
-                    maxLength={1024}
-                    rows={4}
-                    onChange={e => { setDescription(e.target.value); setDescriptionError(''); }}
-                    placeholder="Add a description…"
-                    className={
-                        'block w-full resize-none text-xs text-gray-500 bg-transparent ' +
-                        'border border-transparent rounded px-1 -mx-1 outline-none ' +
-                        'hover:border-gray-200 focus:border-brand-400 focus:ring-1 focus:ring-brand-400 ' +
-                        (descriptionError ? 'border-red-400' : '')
-                    }
-                />
-                {descriptionError && <p className="text-xs text-red-500 px-1">{descriptionError}</p>}
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isPublic}
-                                onChange={e => setIsPublic(e.target.checked)}
-                                className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-                            />
-                            Public
-                        </label>
-
-                        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isGraded}
-                                onChange={e => toggleGraded(e.target.checked)}
-                                className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-                            />
-                            Graded form
-                        </label>
-                    </div>
-
-                    {form.isPublic && (() => {
-                        const answerUrl = `${window.location.origin}/forms/${form.id}/answer`;
-                        return (
-                            <div className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500">
-                                <svg className="h-3.5 w-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" />
-                                </svg>
-                                <span className="max-w-[220px] truncate" title={answerUrl}>{answerUrl}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleCopyLink(answerUrl)}
-                                    className="flex items-center gap-1 rounded px-1 text-gray-400 hover:text-brand-600"
-                                    title="Copy link">
-
-                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-
-                                </button>
-                            </div>
-                        );
-                    })()}
-                </div>
-
-                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
-                        {questions.map((q, i) => (
-                            <QuestionCard
-                                key={q.id}
-                                question={q}
-                                index={i}
-                                isGraded={isGraded}
-                                onChange={updated => updateQuestion(i, updated)}
-                                onRemove={() => removeQuestion(i)}
-                            />
-                        ))}
-                    </SortableContext>
-                </DndContext>
-
-
-                {/* Add question trigger */}
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed
-                     border-gray-300 py-4 text-sm text-gray-500 transition-colors
-                     hover:border-brand-400 hover:text-brand-600"
-                >
-                    + Add question
-                </button>
             </main>
 
-            {showAddModal && (
-                <AddQuestionModal
-                    isGraded={isGraded}
-                    onAdd={appendQuestion}
-                    onClose={() => setShowAddModal(false)}
-                />
-            )}
 
             {showDeleteModal && (
                 <DeleteFormModal
