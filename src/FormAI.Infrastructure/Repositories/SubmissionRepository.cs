@@ -46,4 +46,14 @@ public class SubmissionRepository : ISubmissionRepository
             .Where(s => s.FormId == formId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Submission>> GetByFormWithAnswersAsync(Guid formId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions
+        .AsNoTracking().AsSplitQuery()
+        .Include(a => a.Answers)
+        .ThenInclude(a => a.SelectedOptions)
+        .Where(a => a.FormId == formId)
+        .ToListAsync(cancellationToken);
+    }
 }

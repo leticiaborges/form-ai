@@ -8,7 +8,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 FormAI turns text supplied by a user into a question form. Claude generates the questions, the user edits them, and the form is answered through a shared link.
 
-**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard.
+**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard and can read the aggregated results over the API. **No screen shows those results yet** — `GET /api/forms/{id}/results` exists and the Results tab is still a placeholder.
 
 ## Vocabulary
 
@@ -34,7 +34,9 @@ The rest are supporting: **FormSourceContent** (extracted text per source, with 
 
 Entities use private constructors plus a static `Create()` factory, and every property has a `private set`. EF Core hydrates through the private constructor. Mutation goes through explicit methods (`Update`, `SetOptions`, `ReplaceQuestions`, `ClearGradingIfUngraded`), never property assignment.
 
-`FormAI.Domain/Scoring/` holds the scoring rules as pure functions over those entities: `SubmissionScorer` (what an answer and a submission are worth), `ScoredAnswer` (an answer in the shape both scoring paths share) and `GradingFingerprint` (whether a save needs a rescore).
+`FormAI.Domain/Scoring/` holds the scoring rules as pure functions over those entities: `SubmissionScorer` (what an answer and a submission are worth, and whether one is correct at all), `ScoredAnswer` (an answer in the shape every scoring path shares, built from an `Answer` by `ScoredAnswer.From`) and `GradingFingerprint` (whether a save needs a rescore).
+
+`FormAI.Domain/Results/` holds the owner's view of what has been submitted, in the same pure style: `FormResultsCalculator.Calculate(form, submissions)` is a plain function with no EF, no DTOs and no async, and `FormResults` is the model it returns (`ScoreBucket`, `QuestionResults`, `OptionResults`, `ValueResults`). It holds the `FormQuestion` entity rather than copying its text and type, leaving the Application layer to decide what to expose.
 
 ## Business rules (as implemented)
 
@@ -43,6 +45,7 @@ Access and ownership:
 - A **private form is invisible to everyone but its owner** — viewing, answering and submitting all check `!IsPublic && CreatedBy != requestingUserId` and throw `NotFoundException`, so the client sees **404, not 403**. This applies to signed-in users too, not only anonymous ones.
 - Only the owner may edit, update, delete or expire a form (`ForbiddenException` → 403 when the form is visible but not yours).
 - **`GET /api/forms/{id}` is owner-only even when the form is published**, because it is the editor's response and carries the answer key and the suggested answers. Respondents read a form through `GET {id}/answer`, which leaves both out.
+- **`GET /api/forms/{id}/results` is owner-only for the same reason** — it carries the answer key too. It runs the same two-step check as `GetFormHandler`: `NotFoundException` when the form is private and not yours (its existence stays hidden), `ForbiddenException` when it is published and not yours.
 - Everything under `/api/forms` requires a token except `GET {id}/answer`, `GET {id}/my-submission` and `POST {id}/submit`, which are `[AllowAnonymous]`.
 
 Submitting:
@@ -71,13 +74,17 @@ Grading and scoring:
 - Scoring matches Single and Multiple answers on **option text**, not ids, so submitting and rescoring share one code path. Text is compared trimmed and case-insensitively; numeric suggested answers are parsed with `InvariantCulture`, never the machine's culture.
 - A Single or Multiple question is all-or-nothing: the selected texts must equal the correct texts exactly. There is no partial credit.
 - An unanswered question in a graded form scores 0, not null. `null` means "this form is not graded"; `0` means "graded, earned nothing".
+- **Correctness is recomputed, never read back from a stored score.** `Answer.Score` is the question's points when right and 0 when wrong, so a question worth **0 points** stores 0 either way, and so does a question with no answer key. Anything that needs to know whether an answer was right calls `SubmissionScorer.IsAnswerCorrect` — one definition of correctness, shared by submitting, rescoring and results.
+- **Results count against the answers to a question, not the form's submissions.** A skipped question has no `Answer` row at all, so a form with 6 submissions can show `1/4 correct` on a question 2 people skipped. This deliberately disagrees with scoring, which treats an unanswered question as 0 — that is, as wrong. Both readings are defensible; a question card is about that question, so the question's own answers are its population.
+- A green bar and a zero correct-count are **not** a contradiction. An option is marked correct because it is in the answer key; an answer is correct only when the whole selection matches the key, which is all-or-nothing. Everyone can have picked a correct option and nobody can be correct.
 
 ## Architecture
 
 Clean Architecture with strict layer boundaries. Dependency direction: `API → Application → Domain`, `Infrastructure → Application`.
 
 ```
-FormAI.Domain        entities, enums. Zero dependencies, no framework references.
+FormAI.Domain        entities, enums, and the pure rules over them (Scoring/, Results/).
+                     Zero dependencies, no framework references.
 FormAI.Application   use cases, DTOs, interfaces (IFormRepository, IFormGenerationService, ...).
                      References only Domain. Never references Infrastructure.
 FormAI.Infrastructure EF Core (AppDbContext), repositories, ClaudeFormGenerationService,
@@ -100,7 +107,8 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | `POST /api/forms` · `GET /api/forms` · `GET/DELETE /api/forms/{id}` | Owner-only. `GET {id}` returns the answer key, so it is owner-only even for a published form |
 | `PUT /api/forms/{id}/editor` | The editor save — diffed, id-preserving, applies grading and rescores |
 | `POST /api/forms/generate/text` | The only generation endpoint |
-| `GET /api/forms/{id}/submissions/count` | Owner-only; the only results endpoint that exists |
+| `GET /api/forms/{id}/submissions/count` | Owner-only; one `COUNT`, used by the delete-confirmation modal |
+| `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
 
 ### AI integration
@@ -144,8 +152,10 @@ Local values live in `appsettings.Development.json`, which is untracked — keep
 
 ## Tests
 
-- `FormAI.UnitTests` — references Domain + Application. **Currently empty.**
+- `FormAI.UnitTests` — references Domain + Application; xUnit, no mocking library. Contains `Results/FormResultsCalculatorTests` (with its entity builders in `FormResultsCalculatorTestsHelper`), which covers the aggregation and, through it, most of `SubmissionScorer`. Everything there is a pure function over entities built by the real `Create()` factories, so there is nothing to stub — keep it that way.
 - `FormAI.IntegrationTests` — references FormAI.API, uses `WebApplicationFactory` and PostgreSQL via Testcontainers. Contains `UserRepositoryTests` only.
+
+`dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj` runs the unit tests alone, without Docker. Note that `--filter` applied to the whole solution reports "No test matches" for every project that has no match, which is not a failure.
 
 ## Keeping the docs true
 
@@ -160,4 +170,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, aggregated results for the owner, editable expiry, editable points, unit tests — **none of these are built**. Scores are computed and stored but nothing displays them; `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Aggregated results now exist behind `GET /api/forms/{id}/results`, but **nothing renders them**: the Results tab is a placeholder and no screen displays a score. There is still no endpoint returning the individual submissions, so an owner cannot see what one respondent answered. `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form. The results read loads every submission of a form at once, the same unbounded shape as rescoring.

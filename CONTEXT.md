@@ -101,6 +101,26 @@ The points a respondent earned: for one answer, and summed for the submission. A
 **Rescoring**:
 Recomputing the scores of every submission of a form, because something that decides them has changed.
 
+### Results
+
+**Results**:
+The read-only aggregate of every submission to one form, seen only by the owner. Results say what was answered, never who answered it.
+_Code alias_: `FormResults`, `FormResultsCalculator`.
+_Avoid_: analytics, statistics, report, responses.
+
+**Answer distribution**:
+How one question's answers were spread: how many respondents picked each option, or how many gave each distinct text or number. Counted over the answers to that question, not over the form's submissions — a question some respondents skipped is measured against fewer answers than the form has submissions.
+_Code alias_: `QuestionResults`, whose `AnswerCount` is that denominator.
+_Avoid_: breakdown, tally, stats.
+
+**Score distribution**:
+How many submissions earned each score. Only a score somebody actually earned gets an entry, so the gaps between entries are real. Exists only for a graded form.
+_Code alias_: `ScoreBucket`.
+
+**Orphaned option**:
+Option text recorded in a submission that no longer matches any option on the question, because the option was renamed or deleted afterwards. It still appears in the answer distribution, after the current options, and can never be marked correct — there is no option left carrying an answer key. A consequence of recording selected options as text ([ADR 0001](./docs/adr/0001-selected-option-text-snapshot.md)).
+_Avoid_: stale option, deleted option, unknown answer.
+
 ### Generation
 
 **Source material**:

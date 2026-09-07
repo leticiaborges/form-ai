@@ -17,5 +17,13 @@ namespace FormAI.Application.Interfaces
         /// </summary>
         Task<IReadOnlyList<Submission>> GetByFormForScoringAsync(Guid formId,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Every submission of a form with its answers and selected options, untracked, for the
+        /// owner's results view. Separate from <see cref="GetByFormForScoringAsync"/>, which
+        /// deliberately returns tracked entities so a rescore can be committed by its caller.
+        /// </summary>
+        Task<IReadOnlyList<Submission>> GetByFormWithAnswersAsync(Guid formId,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -28,7 +28,7 @@ public static class SubmissionScorer
         if (!form.IsGraded)
             return null;
 
-        return IsCorrect(question, answer) ? question.Points ?? 0 : 0;
+        return IsAnswerCorrect(question, answer) ? question.Points ?? 0 : 0;
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public static class SubmissionScorer
         });
     }
 
-    private static bool IsCorrect(FormQuestion question, ScoredAnswer answer) => question.Type switch
+    public static bool IsAnswerCorrect(FormQuestion question, ScoredAnswer answer) => question.Type switch
     {
         QuestionType.Single or QuestionType.Multiple => IsSelectionCorrect(question, answer),
         QuestionType.Text => IsTextCorrect(question, answer),

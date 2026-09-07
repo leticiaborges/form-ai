@@ -36,7 +36,7 @@ public class RescoreFormSubmissionsHandler
 
         foreach (var answer in submission.Answers)
         {
-            var scoredAnswer = ToScoredAnswer(answer);
+            var scoredAnswer = ScoredAnswer.From(answer);
 
             // An answer to a question the owner has since deleted is kept as a record of what the
             // respondent said, but there is nothing left to grade it against.
@@ -52,8 +52,4 @@ public class RescoreFormSubmissionsHandler
 
         submission.SetScore(SubmissionScorer.ScoreSubmission(form, scoredAnswers));
     }
-
-    private static ScoredAnswer ToScoredAnswer(Answer answer) =>
-        new(answer.TextValue, answer.NumericValue,
-            answer.SelectedOptions.Select(o => o.OptionText).ToList());
 }

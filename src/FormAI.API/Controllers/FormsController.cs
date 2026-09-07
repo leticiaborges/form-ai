@@ -2,6 +2,7 @@ using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
+using FormAI.Application.Forms.GetFormResults;
 using FormAI.Application.Forms.GetSubmissionCount;
 using FormAI.Application.Forms.SaveFormEditor;
 using Microsoft.AspNetCore.Authorization;
@@ -23,13 +24,15 @@ public class FormsController : ControllerBase
     private readonly GenerateFormHandler _generateForm;
     private readonly SaveFormEditorHandler _saveFormEditor;
     private readonly GetSubmissionCountHandler _getSubmissionCount;
+    private readonly GetFormResultsHandler _getFormResults;
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
     DeleteFormHandler delete,
     GenerateFormHandler generateForm,
     SaveFormEditorHandler saveFormEditor,
-    GetSubmissionCountHandler submissionCount)
+    GetSubmissionCountHandler submissionCount,
+    GetFormResultsHandler getFormResults)
     {
         _create = create;
         _getById = getById;
@@ -38,6 +41,7 @@ public class FormsController : ControllerBase
         _generateForm = generateForm;
         _saveFormEditor = saveFormEditor;
         _getSubmissionCount = submissionCount;
+        _getFormResults = getFormResults;
     }
 
     [HttpPut("{id:guid}/editor")]
@@ -109,6 +113,23 @@ public class FormsController : ControllerBase
 
         return Ok(response);
     }
+
+
+    // GET /api/forms/{id}/results
+    // Owner-only: results carry the answer key, exactly like GET /api/forms/{id}.
+    [HttpGet("{id:guid}/results")]
+    public async Task<IActionResult> GetResults(
+        Guid id, CancellationToken cancellationToken
+    )
+    {
+        var response = await _getFormResults.HandleAsync(
+            new GetFormResultsRequest(id, CurrentUserId),
+            cancellationToken
+        );
+
+        return Ok(response);
+    }
+
 
     // POST   /api/forms/generate/file
     // POST   /api/forms/generate/url
