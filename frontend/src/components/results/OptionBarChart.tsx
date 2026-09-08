@@ -1,7 +1,7 @@
 import { Bar, BarChart, LabelList, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { BarShapeProps } from "recharts";
 import type { OptionResult } from "../../types/results";
-import { BAR_COLOR, CORRECT_COLOR } from "./chartColors";
+import { BAR_COLOR, CORRECT_COLOR, INCORRECT_COLOR } from "./chartColors";
 
 interface OptionBarChartProps {
   options: OptionResult[];
@@ -17,10 +17,13 @@ interface BarDatum {
   count: number;
   isCorrect: boolean;
   label: string;
+  isGraded: boolean;
 }
 
 function renderBar({ x, y, width, height, payload }: BarShapeProps) {
-  const { isCorrect } = payload as BarDatum;
+  const { isCorrect, isGraded } = payload as BarDatum;
+
+  let fillColor = isGraded ? (isCorrect ? CORRECT_COLOR : INCORRECT_COLOR) : BAR_COLOR;
 
   return (
     <Rectangle
@@ -29,12 +32,14 @@ function renderBar({ x, y, width, height, payload }: BarShapeProps) {
       width={width}
       height={height}
       radius={BAR_RADIUS}
-      fill={isCorrect ? CORRECT_COLOR : BAR_COLOR}
+      fill={fillColor}
     />
   );
 }
 
 export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChartProps>) {
+
+  const isGraded = options.some(option => option.isCorrect !== null);
 
   const data: BarDatum[] = options.map((option) => {
     const percentage = answerCount > 0 ? Math.round((option.count / answerCount) * 100) : 0;
@@ -44,7 +49,8 @@ export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChart
       text: isCorrect ? `${option.text} ✓` : option.text,
       count: option.count,
       isCorrect,
-      label: `${option.count} (${percentage}%)`
+      label: `${option.count} (${percentage}%)`,
+      isGraded: isGraded
     };
   });
 
@@ -66,17 +72,19 @@ export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChart
           tickLine={false}
           tick={{ fontSize: 12, fill: '#6b7280' }}
           tickFormatter={(text: string) =>
-            text.length > 22 ? `${text.slice(0, 21)}…` : text}
+            text.length > 30 ? `${text.slice(0, 30)}…` : text}
         />
         <Tooltip
           cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
           formatter={(value) => [value, 'answers']}
+          labelStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+          itemStyle={{ color: '#6b6375', fontSize: '14px' }}
         />
         <Bar dataKey="count" barSize={18} shape={renderBar}>
           <LabelList
             dataKey="label"
             position="right"
-            style={{ fontSize: 12, fill: '#374151' }}
+            style={{ fontSize: 12, fill: '#6b6375' }}
           />
         </Bar>
       </BarChart>
