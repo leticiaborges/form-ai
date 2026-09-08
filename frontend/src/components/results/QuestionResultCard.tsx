@@ -7,8 +7,9 @@ interface QuestionResultCardProps {
 }
 
 export function QuestionResultCard({ question }: Readonly<QuestionResultCardProps>) {
-  const { answerCount } = question;
+  const { answerCount, correctAnswerCount } = question;
 
+  const showCorrectCount = correctAnswerCount !== null && answerCount > 0;
   const isSelection = question.type == 'Single' || question.type == 'Multiple';
 
   return (<section className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-3">
@@ -16,6 +17,12 @@ export function QuestionResultCard({ question }: Readonly<QuestionResultCardProp
     <p className="text-xs text-gray-500">
       {answerCount === 0 ? 'No answers yet' :
         `${answerCount} answer${answerCount !== 1 ? 's' : ''}`}
+
+      {showCorrectCount && (
+        <span className="ml-2 text-gray-400">
+          · {correctAnswerCount}/{answerCount} correct
+        </span>
+      )}
     </p>
 
     {answerCount > 0 && (

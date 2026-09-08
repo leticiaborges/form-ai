@@ -1,4 +1,5 @@
-import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, LabelList, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { BarShapeProps } from "recharts";
 import type { OptionResult } from "../../types/results";
 
 interface OptionBarChartProps {
@@ -7,18 +8,44 @@ interface OptionBarChartProps {
 }
 
 const BAR_COLOR = '#0091b8';   // brand-600, from index.css
+const CORRECT_COLOR = '#16a34a';
 
 const ROW_HEIGHT = 34;
 const CHART_PADDING = 16;
+const BAR_RADIUS: [number, number, number, number] = [0, 4, 4, 0];
+
+interface BarDatum {
+  text: string;
+  count: number;
+  isCorrect: boolean;
+  label: string;
+}
+
+function renderBar({ x, y, width, height, payload }: BarShapeProps) {
+  const { isCorrect } = payload as BarDatum;
+
+  return (
+    <Rectangle
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      radius={BAR_RADIUS}
+      fill={isCorrect ? CORRECT_COLOR : BAR_COLOR}
+    />
+  );
+}
 
 export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChartProps>) {
 
-  const data = options.map((option) => {
+  const data: BarDatum[] = options.map((option) => {
     const percentage = answerCount > 0 ? Math.round((option.count / answerCount) * 100) : 0;
+    const isCorrect = option.isCorrect === true;
 
     return {
-      text: option.text,
+      text: isCorrect ? `${option.text} ✓` : option.text,
       count: option.count,
+      isCorrect,
       label: `${option.count} (${percentage}%)`
     };
   });
@@ -47,7 +74,7 @@ export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChart
           cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
           formatter={(value) => [value, 'answers']}
         />
-        <Bar dataKey="count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} barSize={18}>
+        <Bar dataKey="count" barSize={18} shape={renderBar}>
           <LabelList
             dataKey="label"
             position="right"
