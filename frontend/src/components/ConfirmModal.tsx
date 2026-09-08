@@ -34,16 +34,19 @@ export function ConfirmModal({
   }, [isLoading, onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={() => { if (!isLoading) onClose(); }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-black/40"
+        onClick={() => { if (!isLoading) onClose(); }}
+      />
+
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
       >
         <h2 id="confirm-modal-title" className="mb-3 text-lg font-semibold text-gray-900">
           {title}

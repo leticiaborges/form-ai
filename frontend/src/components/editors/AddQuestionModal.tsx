@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { FormQuestion, FormOption, QuestionType } from '../../types/form';
 import { Input } from "../Input";
 import { Button } from "../Button";
@@ -32,6 +32,10 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: AddQuestionModalP
   const [points, setPoints] = useState(DEFAULT_POINTS);
   const [options, setOptions] = useState<FormOption[]>([makeOption(isGraded), makeOption(isGraded)]);
   const [error, setError] = useState('');
+
+  // Unique per mounted modal, so the radio group and its caption cannot collide.
+  const typeLabelId = useId();
+  const typeGroupName = useId();
 
   const hasOptions = type === 'Single' || type === 'Multiple';
 
@@ -92,35 +96,43 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: AddQuestionModalP
             placeholder="e.g. What is the capital of France?"
           />
 
-          {/* Type selector, with what the question is worth at the right of its label row */}
           <div>
             <div className="mb-1 flex items-center justify-between gap-3">
-              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <span id={typeLabelId} className="block text-sm font-medium text-gray-700">Type</span>
               {isGraded && <PointsInput points={points} onChange={setPoints} />}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div role="radiogroup" aria-labelledby={typeLabelId} className="flex flex-wrap gap-2">
               {TYPES.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => changeType(t.value)}
-                  className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${type === t.value
-                    ? 'border-brand-600 bg-brand-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-600 hover:border-brand-400'
-                    }`}
-                >
-                  {t.label}
-                </button>
+                <label key={t.value} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name={typeGroupName}
+                    value={t.value}
+                    checked={type === t.value}
+                    onChange={() => changeType(t.value)}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={`block rounded-full border px-3 py-1 text-sm font-medium transition-colors
+                      peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-1 ${type === t.value
+                        ? 'border-brand-600 bg-brand-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-brand-400'
+                      }`}
+                  >
+                    {t.label}
+                  </span>
+                </label>
               ))}
             </div>
           </div>
 
-          {/* Options (only for Single / Multiple) */}
+
           {hasOptions && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-2 p-0 text-sm font-medium text-gray-700">
                 Options
                 {isGraded && <span className="text-gray-400 font-normal"> (mark correct answers)</span>}
-              </label>
+              </legend>
               {type === 'Single' ? (
                 <RadioButtonList
                   options={options}
@@ -136,7 +148,7 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: AddQuestionModalP
                   onOptionsChange={setOptions}
                 />
               )}
-            </div>
+            </fieldset>
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
