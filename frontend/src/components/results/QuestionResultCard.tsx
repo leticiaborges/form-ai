@@ -1,5 +1,6 @@
 import type { QuestionResult } from "../../types/results";
 import { OptionBarChart } from "./OptionBarChart";
+import { ValueAnswerList } from "./ValueAnswerList";
 
 interface QuestionResultCardProps {
   question: QuestionResult;
@@ -20,12 +21,8 @@ export function QuestionResultCard({ question }: Readonly<QuestionResultCardProp
     {answerCount > 0 && (
       isSelection ?
         <OptionBarChart options={question.options} answerCount={answerCount} />
-        : (
-          <ul className="flex flex-col gap-1 text-sm text-gray-600">
-            {question.values.map((value) => (
-              <li key={value.value}>{value.value} - {value.count}</li>
-            ))}
-          </ul>)
+        :
+        <ValueAnswerList values={question.values} />
     )}
 
   </section>
