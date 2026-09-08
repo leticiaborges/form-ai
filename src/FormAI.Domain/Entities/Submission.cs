@@ -12,8 +12,8 @@ public class Submission
     public DateTime SubmittedAt { get; private set; }
     public int? Score { get; private set; }
 
-    public Form? Form { get; private set; }
-    public User? User { get; private set; }
+    public Form? Form { get; }
+    public User? User { get; }
     public List<Answer> Answers { get; private set; } = new();
 
     private Submission() { }

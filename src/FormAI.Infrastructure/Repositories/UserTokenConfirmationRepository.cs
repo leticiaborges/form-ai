@@ -8,7 +8,7 @@ namespace FormAI.Infrastructure.Repositories;
 
 public class UserTokenConfirmationRepository : IUserTokenConfirmationRepository
 {
-     private readonly AppDbContext _context;
+    private readonly AppDbContext _context;
 
     public UserTokenConfirmationRepository(AppDbContext context)
     {
@@ -18,12 +18,12 @@ public class UserTokenConfirmationRepository : IUserTokenConfirmationRepository
     public async Task AddAsync(UserConfirmationToken token, CancellationToken cancellationToken = default)
     {
         await _context.UserConfirmationTokens.AddAsync(token, cancellationToken);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<UserConfirmationToken?> FindActiveAsync(string tokenHash, TokenPurpose purpose, CancellationToken cancellationToken = default)
     {
-        return await _context.UserConfirmationTokens.FirstOrDefaultAsync(t => 
+        return await _context.UserConfirmationTokens.FirstOrDefaultAsync(t =>
             t.TokenHash == tokenHash &&
             t.UsedAt == null &&
             t.Purpose == purpose &&
@@ -32,7 +32,7 @@ public class UserTokenConfirmationRepository : IUserTokenConfirmationRepository
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
 }

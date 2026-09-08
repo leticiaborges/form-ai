@@ -10,9 +10,12 @@ public class FormSourceContent
     public string Content { get; private set; }
     public string? FileName { get; private set; }
     public int Order { get; private set; }
-    public Form? Form { get; private set; }
+    public Form? Form { get; }
 
-    private FormSourceContent() { }
+    private FormSourceContent()
+    {
+        Content = string.Empty;
+    }
 
     public static FormSourceContent Create(Guid formId,
     SourceType sourceType, string content, int order, string? fileName = null)

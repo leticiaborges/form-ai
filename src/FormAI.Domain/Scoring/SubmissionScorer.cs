@@ -98,6 +98,6 @@ public static class SubmissionScorer
         var parsed = double.TryParse(question.CorrectAnswer.Trim(),
             NumberStyles.Float, CultureInfo.InvariantCulture, out var expected);
 
-        return parsed && answer.NumericValue.Value == expected;
+        return parsed && Math.Round(answer.NumericValue.Value, 5) == Math.Round(expected, 5);
     }
 }

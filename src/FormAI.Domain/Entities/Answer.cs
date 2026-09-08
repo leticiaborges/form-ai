@@ -12,8 +12,8 @@ public class Answer
     public double? NumericValue { get; private set; }
     public int? Score { get; private set; }
 
-    public Submission? Submission { get; private set; }
-    public FormQuestion? Question { get; private set; }
+    public Submission? Submission { get; }
+    public FormQuestion? Question { get; }
 
     private Answer() { }
 

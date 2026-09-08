@@ -14,7 +14,7 @@ public class Form
     public bool ShowResultsAfterSubmit { get; private set; }
     public bool IsGraded { get; private set; }
     public DateTime CreatedAt { get; private set; }
-    public User? Creator { get; private set; }
+    public User? Creator { get; }
     public List<FormQuestion> Questions { get; private set; } = new();
     public List<Submission> Submissions { get; private set; } = new();
     public List<FormSourceContent> SourceContents { get; private set; } = new();

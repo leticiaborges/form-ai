@@ -13,11 +13,14 @@ public class FormQuestion
     public bool AiGenerated { get; private set; }
     public int? Points { get; private set; }
     public string? CorrectAnswer { get; private set; }
-    public Form? Form { get; private set; }
+    public Form? Form { get; }
     public List<QuestionOption> Options { get; private set; } = new();
     public List<Answer> Answers { get; private set; } = new();
 
-    private FormQuestion() { }
+    private FormQuestion()
+    {
+        Text = string.Empty;
+    }
 
     public static FormQuestion Create(Guid formId, string text, QuestionType type, int order, bool isRequired,
     bool aiGenerated, int? points, string? correctAnswer)

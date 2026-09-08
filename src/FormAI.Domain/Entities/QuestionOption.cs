@@ -9,9 +9,12 @@ public class QuestionOption
     public string Text { get; private set; }
     public int Order { get; private set; }
     public bool? IsCorrect { get; private set; }
-    public FormQuestion? Question { get; private set; }
+    public FormQuestion? Question { get; }
 
-    private QuestionOption() { }
+    private QuestionOption()
+    {
+        Text = string.Empty;
+    }
 
     public static QuestionOption Create(Guid questionId, string text, int order, bool? isCorrect)
     {

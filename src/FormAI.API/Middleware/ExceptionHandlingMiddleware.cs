@@ -57,6 +57,6 @@ exception)
 JsonNamingPolicy.CamelCase
             });
 
-        await context.Response.WriteAsync(body);
+        await context.Response.WriteAsync(body, context.RequestAborted);
     }
 }

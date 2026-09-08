@@ -28,11 +28,11 @@ public class VerifyEmailHandler
 
         var tokenHash = Convert.ToHexString(
             SHA256.HashData(Encoding.UTF8.GetBytes(request.Token)));
-            
+
         var userToken = await _userTokens.FindActiveAsync(tokenHash, Domain.Enums.TokenPurpose.EmailConfirmation,
          cancellationToken);
 
-         if (userToken is null)
+        if (userToken is null)
             throw new NotFoundException("Invalid or expired verification token.");
 
         var user = await _users.GetByIdAsync(userToken.UserId, cancellationToken);
@@ -47,7 +47,7 @@ public class VerifyEmailHandler
 
         userToken.MarkUsed();
         user.MarkAsVerified();
-        
-        await _userTokens.SaveChangesAsync();
+
+        await _userTokens.SaveChangesAsync(cancellationToken);
     }
 }

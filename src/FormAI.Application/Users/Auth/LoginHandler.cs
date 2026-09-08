@@ -35,8 +35,8 @@ public class LoginHandler
 
         var refreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(7));
 
-        await _refreshTokens.AddAsync(refreshToken);
-        
+        await _refreshTokens.AddAsync(refreshToken, cancellationToken);
+
         return new LoginResponse(accessToken, refreshTokenStr);
     }
 }

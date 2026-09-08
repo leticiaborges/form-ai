@@ -89,7 +89,7 @@ public class ClaudeFormGenerationService : IFormGenerationService
             aiReplyText,
             @"\A```json\s*|\s*```\z",
             ""
-        ).Trim();
+        , RegexOptions.None, TimeSpan.FromMilliseconds(1000)).Trim();
 
         using var questionsDoc = JsonDocument.Parse(cleaned);
         var questionsArray = questionsDoc.RootElement.GetProperty("questions");

@@ -12,7 +12,10 @@ public class RefreshToken
     public DateTime? RevokedAt { get; private set; }
     public string? ReplacedByToken { get; private set; }
 
-    private RefreshToken() { }
+    private RefreshToken()
+    {
+        Token = string.Empty;
+    }
 
     public static RefreshToken Create(Guid userId, string token, DateTime expiresAt)
     {
@@ -20,7 +23,7 @@ public class RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            Token = token, 
+            Token = token,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = expiresAt
         };

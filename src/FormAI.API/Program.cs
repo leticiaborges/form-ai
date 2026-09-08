@@ -5,6 +5,9 @@ using FormAI.Domain.Entities;
 using FormAI.Infrastructure;
 using Microsoft.OpenApi;
 
+
+AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromMilliseconds(500));
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
