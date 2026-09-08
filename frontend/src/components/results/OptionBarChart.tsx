@@ -23,7 +23,7 @@ interface BarDatum {
 function renderBar({ x, y, width, height, payload }: BarShapeProps) {
   const { isCorrect, isGraded } = payload as BarDatum;
 
-  let fillColor = isGraded ? (isCorrect ? CORRECT_COLOR : INCORRECT_COLOR) : BAR_COLOR;
+  const fillColor = isGraded ? (isCorrect ? CORRECT_COLOR : INCORRECT_COLOR) : BAR_COLOR;
 
   return (
     <Rectangle

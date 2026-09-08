@@ -41,6 +41,9 @@ secrets.json
 *.p12
 .env
 
+.sonarqube/
+.env.sonar
+
 ## Rider / JetBrains
 .idea/
 *.sln.iml
