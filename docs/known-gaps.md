@@ -2,7 +2,7 @@
 
 Everything here is a place where the code and the intent disagree: features described but not built, code that exists but is unused, and behaviour that is wrong on purpose for now. It exists so that neither the next reader nor an agent builds on something that isn't there.
 
-Last audited against the code on 2026-09-07 (the results endpoint and the first unit tests).
+Last audited against the code on 2026-09-08 (the Results tab: answer distributions, graded question results and the score distribution).
 
 ## Not built
 
@@ -13,17 +13,16 @@ Last audited against the code on 2026-09-07 (the results endpoint and the first 
 | **Realtime updates (SignalR)** | `FormHub` is an empty class containing two comments. `AddSignalR()` and `MapHub` are absent from `Program.cs`, so the hub isn't even routed, and the frontend has no SignalR client or dependency. Neither `ReceiveSubmission` nor `GenerationProgress` is ever emitted. |
 | **Rate limiting on generation** | None. Every call to `generate/text` spends Anthropic credits, and any signed-in user can call it in a loop. |
 | **Individual submissions for the owner** | The aggregate exists: `GET /api/forms/{id}/results` returns each question's answer distribution and, when the form is graded, its score distribution. There is still no endpoint returning the submissions themselves, so an owner cannot see what any one respondent answered, and nothing yet enforces "only the owner may view individual results". |
-| **Any screen showing results** | `GET /api/forms/{id}/results` has no caller. The Results tab added in phase 17 is still a placeholder, and no frontend code fetches the endpoint. |
 | **Multiple source items per form** | `FormSourceContent` is a list and `GenerateFormHandler.CombineItems` can merge several sources, but generation always builds exactly one item from `SourceText`. |
 | **Editing the expiry date** | Nothing sends `ExpiresAt` after creation — `SaveFormEditorHandler` preserves whatever is stored, and the endpoint that could set it (`PUT /api/forms/{id}`) has been removed. Generated forms get a fixed 15-day expiry that the UI cannot change. |
-| **Showing a score to anyone** | `Submission.Score` and `Answer.Score` are computed and stored, and `POST {id}/submit` returns the total, but no screen displays it. The denominator now exists — `GET /api/forms/{id}/results` returns `TotalPoints` and the score distribution — but only for the owner, and only over the API: a respondent is still told they scored 7 without being told it was out of 8. |
+| **Showing a respondent their score** | `POST {id}/submit` returns the total and the Results tab shows the owner the score distribution out of the form's total points, but no screen shows a respondent what they earned, and `ShowResultsAfterSubmit` still gates nothing. |
 | **Test coverage beyond the results calculator** | `FormAI.UnitTests` now contains `Results/FormResultsCalculatorTests`, which covers the aggregation and, through it, much of `SubmissionScorer`. Everything else is untested: no test calls `SubmissionScorer` or `GradingFingerprint` directly, no handler has a test, and `FormAI.IntegrationTests` still contains only `UserRepositoryTests` — nothing exercises an endpoint. Known holes inside the calculator's own tests: a graded question with no answer key, numeric grouping (`5` and `5.0`, and the invariant-culture round-trip), a score distribution containing a null score, and question ordering by `Order` — deleting the `OrderBy` from `FormResultsCalculator` would keep the suite green. |
 
 ## Wrong or incomplete on purpose
 
 | Behaviour | Detail |
 |---|---|
-| **Nothing warns about a graded form with no answer key** | Ticking "Graded form" and saving without marking anything is allowed on purpose — the owner needs to be able to tick the box first and fill in the keys second. But such a question can never be earned, scores 0 for everyone.The Results tab now shows it as `0/N correct` with no green bar, which is the only place the owner can notice — nothing warns them at the point of saving.
+| **Nothing warns about a graded form with no answer key** | Ticking "Graded form" and saving without marking anything is allowed on purpose — the owner needs to be able to tick the box first and fill in the keys second. But such a question can never be earned, scores 0 for everyone. The Results tab now shows it as `0/N correct` with no green bar, which is the only place the owner can notice — nothing warns them at the point of saving. |
 | **Renaming an option silently rescores past submissions** | Deliberate, and the direct consequence of [ADR 0001](./adr/0001-selected-option-text-snapshot.md) — see [ADR 0004](./adr/0004-scores-recomputed-from-current-form.md). A respondent who picked the correct option is marked wrong if the owner later renames it. Nothing warns the owner and nothing tells the respondent. |
 | **The owner can answer their own private form** | Every access check on the answering path is `!IsPublic && CreatedBy != requestingUserId`, so the owner passes it on the submit path too and produces a real submission counted in their dashboard. Intended behaviour is that a private form is answerable by nobody, with a separate preview mode for the owner to see what the form looks like. Not decided yet. |
 | **`ShowResultsAfterSubmit` gates nothing** | The flag is stored, updated and returned by every relevant DTO, and no code ever reads it to decide anything. In particular it does not stop `POST {id}/submit` returning the respondent's score. |

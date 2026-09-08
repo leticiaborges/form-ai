@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormResults } from "../../types/results";
 import { getFormResults } from "../../api/results";
 import { QuestionResultCard } from "./QuestionResultCard";
+import { ScoreDistributionChart } from "./ScoreDistributionChart";
 
 type ResultsState = 'loading' | 'ready' | 'error';
 
@@ -53,6 +54,14 @@ export function ResultsTab({ formId, reloadKey }: Readonly<ResultsTabProps>) {
       <p className="text-sm text-gray-500">
         {results.submissionCount} submission{results.submissionCount !== 1 ? 's' : ''}
       </p>
+
+      {
+        results.isGraded && results.scoreDistribution.length > 0 &&
+        (
+          <ScoreDistributionChart buckets={results.scoreDistribution}
+            totalPoints={results.totalPoints} />
+        )
+      }
 
       {results.questions.map(question => (
         <QuestionResultCard key={question.questionId} question={question} />

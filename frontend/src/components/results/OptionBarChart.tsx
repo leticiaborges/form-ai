@@ -1,14 +1,12 @@
 import { Bar, BarChart, LabelList, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { BarShapeProps } from "recharts";
 import type { OptionResult } from "../../types/results";
+import { BAR_COLOR, CORRECT_COLOR } from "./chartColors";
 
 interface OptionBarChartProps {
   options: OptionResult[];
   answerCount: number;
 }
-
-const BAR_COLOR = '#0091b8';   // brand-600, from index.css
-const CORRECT_COLOR = '#16a34a';
 
 const ROW_HEIGHT = 34;
 const CHART_PADDING = 16;

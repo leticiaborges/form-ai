@@ -8,7 +8,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 FormAI turns text supplied by a user into a question form. Claude generates the questions, the user edits them, and the form is answered through a shared link.
 
-**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard and can read the aggregated results over the API. **No screen shows those results yet** — `GET /api/forms/{id}/results` exists and the Results tab is still a placeholder.
+**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard, and opens the form's Results tab to see each question's answer distribution and, on a graded form, how the scores were spread.
 
 ## Vocabulary
 
@@ -170,4 +170,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Aggregated results now exist behind `GET /api/forms/{id}/results`, but **nothing renders them**: the Results tab is a placeholder and no screen displays a score. There is still no endpoint returning the individual submissions, so an owner cannot see what one respondent answered. `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form. The results read loads every submission of a form at once, the same unbounded shape as rescoring.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Scores are shown to the owner in aggregate on the Results tab, but never to the respondent who earned them. There is still no endpoint returning the individual submissions, so an owner cannot see what one respondent answered. `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form. The results read loads every submission of a form at once, the same unbounded shape as rescoring.

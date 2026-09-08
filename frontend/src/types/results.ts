@@ -34,7 +34,7 @@ export interface FormResults {
     title: string;
     isGraded: boolean;
     submissionCount: number;
-    totalPoints?: number | null;
+    totalPoints: number | null;
     scoreDistribution: ScoreBucket[];
     questions: QuestionResult[];
 }
