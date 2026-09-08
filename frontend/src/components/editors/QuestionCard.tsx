@@ -133,12 +133,12 @@ export function QuestionCard({
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitLabel(); }
                 }}
                 rows={2}
-                className="w-full resize-none rounded border border-brand-400 px-2 py-1 text-sm
+                className="w-full resize-none rounded border border-brand-400 px-2 py-1 text-question
                            font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             ) : (
               <p
-                className="cursor-text text-sm font-medium text-gray-900 hover:text-brand-700"
+                className="cursor-text text-question font-medium text-gray-900 hover:text-brand-700"
                 onClick={() => { setLabelDraft(question.text); setIsEditingLabel(true); }}
               >
                 {question.text}

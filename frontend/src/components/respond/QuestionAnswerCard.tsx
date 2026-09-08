@@ -18,14 +18,14 @@ export function QuestionAnswerCard({
 }: AnswerQuestionCardProps) {
     return (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-question font-medium text-gray-900">
                 {index + 1}. {question.text}
                 {question.isRequired && <span className="text-red-500"> *</span>}
             </p>
 
             <div className="mt-3 flex flex-col gap-2">
                 {question.type === 'Single' && question.options.map(opt => (
-                    <label key={opt.id} className="flex items-center gap-2 text-sm text-gray-700">
+                    <label key={opt.id} className="flex items-center gap-2 text-option text-gray-700">
                         <input
                             type="radio"
                             name={question.id}
@@ -38,7 +38,7 @@ export function QuestionAnswerCard({
                 ))}
 
                 {question.type === 'Multiple' && question.options.map(opt => (
-                    <label key={opt.id} className="flex items-center gap-2 text-sm text-gray-700">
+                    <label key={opt.id} className="flex items-center gap-2 text-option text-gray-700">
                         <input
                             type="checkbox"
                             checked={answer?.selectedOptionIds?.includes(opt.id) ?? false}

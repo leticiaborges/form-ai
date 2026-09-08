@@ -60,12 +60,12 @@ export function OptionRow({
           onChange={e => setDraft(e.target.value)}
           onBlur={commitEdit}
           onKeyDown={e => e.key === 'Enter' && commitEdit()}
-          className="flex-1 rounded border border-brand-400 px-2 py-0.5 text-sm
+          className="flex-1 rounded border border-brand-400 px-2 py-0.5 text-option
                      focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
       ) : (
         <span
-          className="flex-1 cursor-text text-sm text-gray-700 hover:text-gray-900"
+          className="flex-1 cursor-text text-option text-gray-700 hover:text-gray-900"
           onClick={() => { setDraft(text); setEditing(true); }}
         >
           {text || <span className="italic text-gray-400">empty option</span>}

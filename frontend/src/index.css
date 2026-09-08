@@ -11,6 +11,11 @@
   --color-brand-600: #0091b8;
   --color-brand-700: #007a9a;
   --color-brand-800: #00627c;
+
+  --text-question: 0.875rem;
+  --text-question--line-height: 1.25rem;
+  --text-option: 0.875rem;
+  --text-option--line-height: 1.25rem;
 }
 
 :root {

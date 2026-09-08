@@ -13,7 +13,7 @@ export function QuestionResultCard({ question }: Readonly<QuestionResultCardProp
   const isSelection = question.type == 'Single' || question.type == 'Multiple';
 
   return (<section className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-3">
-    <h3 className="text-base font-medium text-gray-900">{question.text}</h3>
+    <h3 className="text-question font-medium text-gray-900">{question.text}</h3>
     <p className="text-xs text-gray-500">
       {!showCorrectCount && (answerCount === 0 ? 'No answers yet' :
         `${answerCount} answer${answerCount !== 1 ? 's' : ''}`)}

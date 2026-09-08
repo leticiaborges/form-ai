@@ -26,7 +26,7 @@ export function ValueAnswerList({ values }: Readonly<ValueAnswerListProps>) {
               (isCorrect ? ' bg-green-100' : '')
             }
           >
-            <span className="min-w-0 break-words text-sm text-gray-700">
+            <span className="min-w-0 break-words text-option text-gray-700">
               {value.value}
               {
                 isCorrect && (
