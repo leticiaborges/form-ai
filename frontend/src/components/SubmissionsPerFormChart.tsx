@@ -1,39 +1,89 @@
+import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { BarRectangleItem } from "recharts";
 import type { FormSummary } from "../types/form";
+import { BAR_COLOR } from "./charts/chartColors";
 
 type SubmissionsPerFormChartProps = {
     forms: FormSummary[];
+    onSelectForm: (formId: string) => void;
 };
 
-export function SubmissionsPerFormChart({ forms }: Readonly<SubmissionsPerFormChartProps>) {
+const TOP_FORMS = 5;
+const ROW_HEIGHT = 44;
+const CHART_PADDING = 16;
+const Y_AXIS_WIDTH = 160;
+const TITLE_MAX_CHARS = 24;
+const BAR_RADIUS: [number, number, number, number] = [0, 4, 4, 0];
+
+type ChartDatum = {
+    id: string;
+    title: string;
+    count: number;
+};
+
+export function SubmissionsPerFormChart({
+    forms, onSelectForm
+}: Readonly<SubmissionsPerFormChartProps>) {
+
     if (forms.length === 0) return null;
 
-    const sorted = [...forms].sort((a, b) => b.submissionCount - a.submissionCount);
-    const max = Math.max(1, ...sorted.map(f => f.submissionCount));
+    const data: ChartDatum[] = [...forms]
+        .sort((a, b) => b.submissionCount - a.submissionCount)
+        .slice(0, TOP_FORMS)
+        .map(form => ({ id: form.id, title: form.title, count: form.submissionCount }));
+
+    const titleById = new Map(data.map(datum => [datum.id, datum.title]));
+
+    const max = Math.max(1, ...data.map(datum => datum.count));
+
+    const handleBarClick = (bar: BarRectangleItem) =>
+        onSelectForm((bar.payload as ChartDatum).id);
+
+    const truncate = (title: string) =>
+        title.length > TITLE_MAX_CHARS ? `${title.slice(0, TITLE_MAX_CHARS)}…` : title;
 
     return (
-        <section className="bg-white rounded-2xl shadow-md p-6 cursor-pointer">
-            <ul className="flex flex-col gap-3">
-                {sorted.map(form => (
-                    <li
-                        key={form.id}
-                        className="flex items-center gap-3"
-                        title={`${form.title}: ${form.submissionCount} submission${form.submissionCount !== 1 ? 's' : ''}`}
+        <section className="bg-white rounded-2xl shadow-md p-6" aria-label="Submissions per form">
+            {forms.length > TOP_FORMS && (
+                <p className="mb-3 text-xs text-gray-500">
+                    Top {TOP_FORMS} of {forms.length} forms
+                </p>
+            )}
+
+            <ResponsiveContainer width="100%" height={data.length * ROW_HEIGHT + CHART_PADDING}>
+                <BarChart data={data} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
+                    <XAxis type="number" domain={[0, max]} hide />
+                    <YAxis
+                        type="category"
+                        dataKey="id"
+                        width={Y_AXIS_WIDTH}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tickFormatter={(id: string) => truncate(titleById.get(id) ?? '')}
+                    />
+                    <Tooltip
+                        cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
+                        labelFormatter={(id) => titleById.get(id as string) ?? ''}
+                        formatter={(value) =>
+                            [value, Number(value) === 1 ? 'Submission' : 'Submissions']}
+                        labelStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                        itemStyle={{ color: '#6b6375', fontSize: '14px' }}
+                    />
+
+                    <Bar
+                        dataKey="count"
+                        fill={BAR_COLOR}
+                        radius={BAR_RADIUS}
+                        barSize={22}
+                        cursor="pointer"
+                        onClick={handleBarClick}
                     >
-                        <span className="w-32 shrink-0 truncate text-sm text-gray-600">
-                            {form.title}
-                        </span>
-                        <div className="flex-1 h-2.5 rounded-full bg-gray-100">
-                            <div
-                                className="h-2.5 rounded-full bg-brand-600"
-                                style={{ width: `${(form.submissionCount / max) * 100}%` }}
-                            />
-                        </div>
-                        <span className="w-8 shrink-0 text-right text-sm font-medium text-gray-900">
-                            {form.submissionCount}
-                        </span>
-                    </li>
-                ))}
-            </ul>
+                        <LabelList dataKey="count" position="right"
+                            style={{ fontSize: 12, fill: '#6b6375' }} />
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
         </section>
     );
 }

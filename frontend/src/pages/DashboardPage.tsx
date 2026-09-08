@@ -35,8 +35,15 @@ export function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Submissions per form</h4>
-        {state === 'ready' && <SubmissionsPerFormChart forms={forms} />}
+        {state === 'ready' && forms.length > 0 && (
+          <>
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Submissions per form</h4>
+            <SubmissionsPerFormChart
+              forms={forms}
+              onSelectForm={formId => navigate(`/forms/${formId}/edit`)}
+            />
+          </>
+        )}
         <div style={{ marginTop: "10px" }}>
           <h4 className="text-lg font-semibold text-gray-900 mb-4">My forms</h4>
 

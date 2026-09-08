@@ -1,7 +1,7 @@
 import { Bar, BarChart, LabelList, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { BarShapeProps } from "recharts";
 import type { OptionResult } from "../../types/results";
-import { BAR_COLOR, CORRECT_COLOR, INCORRECT_COLOR } from "./chartColors";
+import { BAR_COLOR, CORRECT_COLOR, INCORRECT_COLOR } from "../charts/chartColors";
 
 interface OptionBarChartProps {
   options: OptionResult[];
@@ -76,7 +76,7 @@ export function OptionBarChart({ options, answerCount }: Readonly<OptionBarChart
         />
         <Tooltip
           cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
-          formatter={(value) => [value, 'answers']}
+          formatter={(value) => [value, 'Answers']}
           labelStyle={{ fontSize: '12px', fontWeight: 'bold' }}
           itemStyle={{ color: '#6b6375', fontSize: '14px' }}
         />

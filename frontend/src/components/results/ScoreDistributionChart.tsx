@@ -1,6 +1,6 @@
 import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ScoreBucket } from "../../types/results";
-import { BAR_COLOR } from "./chartColors";
+import { BAR_COLOR } from "../charts/chartColors";
 
 interface ScoreDistributionChartProps {
   buckets: ScoreBucket[];
@@ -43,7 +43,9 @@ export function ScoreDistributionChart({ buckets, totalPoints }: Readonly<ScoreD
           <Tooltip
             cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
             labelFormatter={(score) => `${score} points`}
-            formatter={(value) => [value, 'submissions']}
+            formatter={(value) => [value, 'Submissions']}
+            labelStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+            itemStyle={{ color: '#6b6375', fontSize: '14px' }}
           />
           <Bar dataKey="submissionCount" fill={BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={56}>
             <LabelList
