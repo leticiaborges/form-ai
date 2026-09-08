@@ -1,4 +1,5 @@
 import type { QuestionResult } from "../../types/results";
+import { OptionBarChart } from "./OptionBarChart";
 
 interface QuestionResultCardProps {
   question: QuestionResult;
@@ -17,16 +18,14 @@ export function QuestionResultCard({ question }: Readonly<QuestionResultCardProp
     </p>
 
     {answerCount > 0 && (
-      <ul className="flex flex-col gap-1 text-sm text-gray-600">
-        {isSelection ?
-          question.options.map((option) => (
-            <li key={option.text}>{option.text} - {option.count}</li>
-          ))
-          :
-          question.values.map((value) => (
-            <li key={value.value}>{value.value} - {value.count}</li>
-          ))}
-      </ul>
+      isSelection ?
+        <OptionBarChart options={question.options} answerCount={answerCount} />
+        : (
+          <ul className="flex flex-col gap-1 text-sm text-gray-600">
+            {question.values.map((value) => (
+              <li key={value.value}>{value.value} - {value.count}</li>
+            ))}
+          </ul>)
     )}
 
   </section>
