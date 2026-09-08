@@ -64,3 +64,5 @@ coverage*/
 
 migration.sql
 appsettings.Development.json 
+
+/docs/learning

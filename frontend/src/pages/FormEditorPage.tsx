@@ -48,6 +48,8 @@ export function FormEditorPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [submissionCount, setSubmissionCount] = useState<number | null>(null);
 
+    const [resultsReloadKey, setResultsReloadKey] = useState(0);
+
     function setFormData(data: FormDetail) {
         setForm(data);
         setQuestions(data.questions);
@@ -145,6 +147,7 @@ export function FormEditorPage() {
 
             const refreshedForm = await getForm(id);
             setFormData(refreshedForm);
+            setResultsReloadKey(k => k + 1);
 
             showSuccess('Form saved.');
             setState('ready');
@@ -230,7 +233,7 @@ export function FormEditorPage() {
                         isGraded={isGraded}
                         onIsGradedChange={toggleGraded} />
                 ) : (
-                    <ResultsTab formId={form.id} />
+                    <ResultsTab formId={form.id} reloadKey={resultsReloadKey} />
                 )}
             </main>
 
