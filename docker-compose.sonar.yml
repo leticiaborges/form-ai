@@ -6,6 +6,8 @@ services:
       POSTGRES_USER: sonarqube
       POSTGRES_PASSWORD: ${SONARQUBE_DB_PASSWORD}
       POSTGRES_DB: sonarqube
+    ports:
+      - "5433:5432"
     volumes:
       - sonarqube_db_data:/var/lib/postgresql
     healthcheck:
