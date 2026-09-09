@@ -15,7 +15,7 @@ export function QuestionAnswerCard({
     question, index, answer, error,
     onSingleChange, onMultipleToggle,
     onTextChange, onNumericChange
-}: AnswerQuestionCardProps) {
+}: Readonly<AnswerQuestionCardProps>) {
     return (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-question font-medium text-gray-900">

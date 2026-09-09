@@ -16,7 +16,7 @@ interface PointsInputProps {
  * blur or Enter — coercing anything unusable to the default and clamping to the allowed range.
  * The server never has to reject what this produces.
  */
-export function PointsInput({ points, onChange }: PointsInputProps) {
+export function PointsInput({ points, onChange }: Readonly<PointsInputProps>) {
   const [draft, setDraft] = useState(String(points ?? DEFAULT_POINTS));
 
   // Keep up with changes made elsewhere, such as ticking "Graded form".
