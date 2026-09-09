@@ -5,6 +5,7 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-ki
 import { showError, showSuccess } from "../utils/toast";
 import { QuestionCard } from "./editors/QuestionCard";
 import { AddQuestionModal } from "./editors/AddQuestionModal";
+import { DateTimeInput } from "./DateTimeInput";
 
 
 interface FormEditorTabProps {
@@ -18,6 +19,9 @@ interface FormEditorTabProps {
   onIsPublicChange: (value: boolean) => void;
   isGraded: boolean;
   onIsGradedChange: (value: boolean) => void;
+  expiresAt: string;
+  onExpiresAtChange: (value: string) => void;
+  expiresAtError?: string;
 }
 
 export function FormEditorTab({
@@ -30,7 +34,10 @@ export function FormEditorTab({
   isPublic,
   onIsPublicChange,
   isGraded,
-  onIsGradedChange
+  onIsGradedChange,
+  expiresAt,
+  onExpiresAtChange,
+  expiresAtError
 }: Readonly<FormEditorTabProps>) {
 
 
@@ -90,6 +97,15 @@ export function FormEditorTab({
         }
       />
       {descriptionError && <p className="text-xs text-red-500 px-1">{descriptionError}</p>}
+
+      <div className="flex items-center justify-between">
+        <DateTimeInput id="expiresAt"
+          label="Expires at"
+          value={expiresAt}
+          onChange={onExpiresAtChange}
+          error={expiresAtError}
+          timeFormat="HH:mm" />
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-4">

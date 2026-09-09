@@ -9,6 +9,7 @@ public record SaveFormEditorRequest(
     string? Description,
     bool IsPublic,
     bool IsGraded,
+    DateTime ExpiresAt,
     List<QuestionInput> Questions
 );
 

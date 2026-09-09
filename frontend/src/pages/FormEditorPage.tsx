@@ -11,6 +11,7 @@ import { DEFAULT_POINTS } from "../components/editors/PointsInput";
 import { Tabs, type TabDefinition } from "../components/Tabs";
 import { FormEditorTab } from "../components/FormEditorTab";
 import { ResultsTab } from "../components/results/ResultsTab";
+import { DATETIME_FORMATS, utcToLocalDateTime } from "../utils/dateUtils";
 
 type PageState = 'loading' | 'ready' | 'saving' | 'deleting' | 'error';
 
@@ -42,6 +43,9 @@ export function FormEditorPage() {
     const [title, setTitle] = useState('');
     const [titleError, setTitleError] = useState('');
 
+    const [expiresAt, setExpiresAt] = useState('');
+    const [expiresAtError, setExpiresAtError] = useState('');
+
     const [description, setDescription] = useState('');
     const [descriptionError, setDescriptionError] = useState('');
 
@@ -57,6 +61,7 @@ export function FormEditorPage() {
         setDescription(data.description ?? '');
         setIsPublic(data.isPublic);
         setIsGraded(data.isGraded);
+        setExpiresAt(utcToLocalDateTime(data.expiresAt ?? '', DATETIME_FORMATS.DATETIME_HHMM));
     }
 
     useEffect(() => {
@@ -70,12 +75,6 @@ export function FormEditorPage() {
     }, [id]);
 
 
-    /**
-     * Turning grading on gives every question the default points, so the fields the owner is
-     * about to see already hold a usable value rather than appearing empty. Turning it off leaves
-     * the points alone — saving is what discards them, so an accidental tick can still be undone
-     * by ticking it back before saving.
-     */
     function toggleGraded(next: boolean) {
         setIsGraded(next);
 
@@ -118,6 +117,8 @@ export function FormEditorPage() {
         if (!id)
             return;
 
+        setExpiresAtError('');
+
         const trimmedTitle = title.trim();
         if (!trimmedTitle) {
             setTitleError('Title is required.');
@@ -125,6 +126,21 @@ export function FormEditorPage() {
         }
         if (trimmedTitle.length > 255) {
             setTitleError('Title must be at most 255 characters.');
+            return;
+        }
+
+        if (!expiresAt) {
+            setExpiresAtError('Pick an expiry date and time.');
+            return;
+        }
+
+        if (Number.isNaN(Date.parse(expiresAt))) {
+            setExpiresAtError('Enter a valid date and time.');
+            return;
+        }
+
+        if (new Date(expiresAt) <= new Date()) {
+            setExpiresAtError('The expiry must be in the future.');
             return;
         }
 
@@ -142,7 +158,8 @@ export function FormEditorPage() {
                 description: trimmedDescription,
                 isPublic,
                 isGraded,
-                questions
+                questions,
+                expiresAt: new Date(expiresAt)
             });
 
             const refreshedForm = await getForm(id);
@@ -231,7 +248,11 @@ export function FormEditorPage() {
                         isPublic={isPublic}
                         onIsPublicChange={setIsPublic}
                         isGraded={isGraded}
-                        onIsGradedChange={toggleGraded} />
+                        onIsGradedChange={toggleGraded}
+                        expiresAt={expiresAt}
+                        onExpiresAtChange={setExpiresAt}
+                        expiresAtError={expiresAtError}
+                    />
                 ) : (
                     <ResultsTab formId={form.id} reloadKey={resultsReloadKey} />
                 )}

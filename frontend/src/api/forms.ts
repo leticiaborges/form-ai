@@ -8,6 +8,7 @@ export interface GenerateFormPayload {
     questionCount: number;
     difficultyLevel: string;
     isGraded: boolean;
+    expiresAt: Date;
 }
 
 export interface GenerateFormResult {
@@ -21,6 +22,7 @@ export interface SaveFormEditorPayload {
     isPublic: boolean;
     isGraded: boolean;
     questions: FormQuestion[];
+    expiresAt: Date;
 }
 
 export async function saveFormEditor(formId: string, payload: SaveFormEditorPayload): Promise<void> {
@@ -29,6 +31,7 @@ export async function saveFormEditor(formId: string, payload: SaveFormEditorPayl
         description: payload.description?.trim() || null,
         isPublic: payload.isPublic,
         isGraded: payload.isGraded,
+        expiresAt: payload.expiresAt.toISOString(),
         questions: payload.questions.map((q, i) => ({
             id: q.id,
             text: q.text,
@@ -59,6 +62,7 @@ export async function generateForm(payload: GenerateFormPayload): Promise<Genera
         allowedTypes: null,
         difficultyLevel: payload.difficultyLevel,
         isGraded: payload.isGraded,
+        expiresAt: payload.expiresAt.toISOString()
     });
     return response.data;
 }

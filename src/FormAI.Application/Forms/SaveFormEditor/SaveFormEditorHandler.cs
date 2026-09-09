@@ -37,6 +37,12 @@ public class SaveFormEditorHandler
         if (request.Description?.Length > 1024)
             throw new ArgumentException("Description must be at most 1024 characters.");
 
+        if (request.ExpiresAt <= DateTime.UtcNow)
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["expiresAt"] = ["The expiry must be in the future."]
+            });
+
         var errors = new Dictionary<string, string[]>();
         for (var i = 0; i < request.Questions.Count; i++)
         {
@@ -63,7 +69,7 @@ public class SaveFormEditorHandler
         form.Update(request.Title.Trim(),
          request.Description?.Trim() ?? string.Empty,
           request.IsPublic,
-            form.ExpiresAt, form.ShowResultsAfterSubmit, request.IsGraded);
+            request.ExpiresAt, form.ShowResultsAfterSubmit, request.IsGraded);
 
         var diff = FormEditorDiffer.DiffQuestions(form.Questions, request.Questions);
 

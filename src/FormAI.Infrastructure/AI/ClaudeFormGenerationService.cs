@@ -101,7 +101,7 @@ public class ClaudeFormGenerationService : IFormGenerationService
 
             var options = question.GetProperty("options").EnumerateArray().Select(q =>
             new GeneratedOption(q.GetProperty("text").GetString()!.Truncate(1024),
-             q.GetProperty("isCorrect").GetString() == null ? null : q.GetProperty("isCorrect").GetBoolean())).ToList();
+             q.GetProperty("isCorrect").ValueKind == JsonValueKind.Null ? null : q.GetProperty("isCorrect").GetBoolean())).ToList();
 
             results.Add(new GeneratedQuestion(
                 Text: question.GetProperty("text").GetString()!.Truncate(1024),

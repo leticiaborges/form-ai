@@ -1,4 +1,5 @@
 using FormAI.Application.AI;
+using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
@@ -48,7 +49,16 @@ public class GenerateFormHandler
             : request.Description.Trim();
 
         if (description?.Length > 1024)
-            throw new ArgumentException("Description must be at most 1024 characters.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["description"] = ["Description must be at most 1024 characters."]
+            });
+
+        if (request.ExpiresAt <= DateTime.UtcNow)
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["expiresAt"] = ["The expiry must be in the future."]
+            });
 
         var form = Form.Create(
             title: title,
@@ -56,7 +66,7 @@ public class GenerateFormHandler
             createdBy: requestingUserId,
             sourceType: SourceType.Text,
             isPublic: false,
-            expiresAt: DateTime.UtcNow.AddDays(15),
+            expiresAt: request.ExpiresAt,
             showResultsAfterSubmit: false,
             isGraded: request.IsGraded
         );

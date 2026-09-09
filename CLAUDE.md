@@ -8,7 +8,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 FormAI turns text supplied by a user into a question form. Claude generates the questions, the user edits them, and the form is answered through a shared link.
 
-**What works end to end today:** register and verify an account → paste text → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard, and opens the form's Results tab to see each question's answer distribution and, on a graded form, how the scores were spread.
+**What works end to end today:** register and verify an account → paste text and pick an expiry date → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor, and change the expiry → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard, and opens the form's Results tab to see each question's answer distribution and, on a graded form, how the scores were spread.
 
 ## Vocabulary
 
@@ -60,7 +60,7 @@ Forms and questions:
 - `Title` is required, max 255 characters; `Description` max 1024.
 - Option text is **required and unique within a question** (trimmed, case-insensitive), enforced by `QuestionOptionValidator` in the application layer only — there is no database constraint.
 - Saving the editor diffs against what is stored and **preserves question and option ids** ([ADR 0002](./docs/adr/0002-id-preserving-editor-save.md)). Never regenerate them.
-- Generated forms are created **private**, with `ShowResultsAfterSubmit = false` and an expiry **15 days out**.
+- Generated forms are created **private**, with `ShowResultsAfterSubmit = false` and an expiry **7 days out** (default, chosen by the owner at creation). The owner may change the expiry at any time in the editor; the expiry must always be in the future.
 - Source files are never stored — only the extracted text, in `FormSourceContent`.
 
 Grading and scoring:

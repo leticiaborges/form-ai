@@ -3,10 +3,12 @@ import { BasePage } from "../components/BasePage";
 import { Link, useNavigate } from "react-router-dom";
 import { generateForm } from "../api/forms";
 import z from "zod";
-import { useForm } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
+import { DateTimeInput } from "../components/DateTimeInput";
+import { addDays, DATETIME_FORMATS, getDefaultFormatStringDateTime } from "../utils/dateUtils";
 
 const createFormSchema = z.object({
   title: z.string().max(255, "Title must be at most 255 characters").optional(),
@@ -15,16 +17,24 @@ const createFormSchema = z.object({
   questionCount: z.coerce.number().int().min(1, "At least 1 question.").
     max(20, "At most 20 questions."),
   difficultyLevel: z.enum(["Easy", "Medium", "Hard"], "Difficulty level must be one of Easy, Medium, or Hard."),
-  isGraded: z.boolean()
+  isGraded: z.boolean(),
+  expiresAt: z.string()
+    .min(1, "Pick an expiry date and time")
+    .refine(v => !Number.isNaN(Date.parse(v)), "Enter a valid date and time.")
+    .refine(v => new Date(v) > new Date(), "The expiry must be in the future.")
 });
 
 type CreateFormData = z.infer<typeof createFormSchema>;
 
 export function CreateFormPage() {
   const navigate = useNavigate();
+  var currentDate = new Date();
+  currentDate.setHours(23, 59, 59, 999);
+  var defaultDate = addDays(currentDate, 7);
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<CreateFormData>({
@@ -32,13 +42,16 @@ export function CreateFormPage() {
     defaultValues: {
       questionCount: 5,
       difficultyLevel: "Medium",
-      isGraded: false
+      isGraded: false,
+      expiresAt: getDefaultFormatStringDateTime(defaultDate, DATETIME_FORMATS.DATETIME_HHMM)
     }
   });
 
+  const { field, fieldState } = useController({ name: 'expiresAt', control });
+
   async function onSubmit(data: CreateFormData) {
     try {
-      const result = await generateForm(data);
+      const result = await generateForm({ ...data, expiresAt: new Date(data.expiresAt) });
       showSuccess('Form generated successfully.');
       navigate(`/forms/${result.formId}/edit`);
     } catch (err: unknown) {
@@ -141,6 +154,7 @@ export function CreateFormPage() {
                 )}
               </div>
 
+
               <div className="flex flex-col gap-1">
                 <label htmlFor="difficultyLevel" className="text-sm font-medium text-gray-700">
                   Difficulty
@@ -156,6 +170,17 @@ export function CreateFormPage() {
                   <option value="Hard">Hard</option>
                 </select>
               </div>
+            </div>
+
+            <div className="flex items-center gap-4 text-sm text-gray-700">
+              <DateTimeInput
+                label="Expires at"
+                id="expiresAt"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={fieldState.error?.message}
+                timeFormat="HH:mm"></DateTimeInput>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-gray-700">
