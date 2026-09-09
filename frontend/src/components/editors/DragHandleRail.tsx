@@ -17,7 +17,7 @@ export function DragHandleRail({
     listeners,
     compact = false,
     title = 'Drag to reorder'
-}: DragHandleRailProps) {
+}: Readonly<DragHandleRailProps>) {
     const size = compact ? 16 : 20;
 
     return (

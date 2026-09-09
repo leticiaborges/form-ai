@@ -163,7 +163,7 @@ export function CreateFormPage() {
                 type="checkbox"
                 className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 {...register('isGraded')}
-              />
+              />{/**/}
               Graded form
             </label>
 

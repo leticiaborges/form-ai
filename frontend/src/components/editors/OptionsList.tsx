@@ -13,7 +13,7 @@ interface OptionListProps {
 
 export function OptionList({
     options, questionId, inputType, isGraded, onOptionsChange
-}: OptionListProps) {
+}: Readonly<OptionListProps>) {
 
     function updateOption(index: number,
         patch: Partial<FormOption>) {

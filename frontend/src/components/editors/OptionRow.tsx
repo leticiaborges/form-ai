@@ -21,7 +21,7 @@ export function OptionRow({
   onTextChange,
   onCorrectChange,
   onRemove
-}: OptionRowProps) {
+}: Readonly<OptionRowProps>) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
 

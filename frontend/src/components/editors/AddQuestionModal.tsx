@@ -26,7 +26,7 @@ function makeOption(isGraded: boolean): FormOption {
   return { id: crypto.randomUUID(), text: '', order: 0, isCorrect: isGraded ? false : null };
 }
 
-export function AddQuestionModal({ isGraded, onAdd, onClose }: AddQuestionModalProps) {
+export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuestionModalProps>) {
   const [text, setText] = useState('');
   const [type, setType] = useState<QuestionType>('Single');
   const [points, setPoints] = useState(DEFAULT_POINTS);

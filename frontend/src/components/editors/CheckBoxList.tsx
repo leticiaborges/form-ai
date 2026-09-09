@@ -8,6 +8,6 @@ interface CheckBoxListProps {
   onOptionsChange: (options: FormOption[]) => void;
 }
 
-export function CheckBoxList(props: CheckBoxListProps) {
+export function CheckBoxList(props: Readonly<CheckBoxListProps>) {
   return <OptionList {...props} inputType="checkbox" />;
 }

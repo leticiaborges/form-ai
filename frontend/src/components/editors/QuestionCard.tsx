@@ -41,7 +41,7 @@ export function QuestionCard({
   isGraded,
   onChange,
   onRemove
-}: QuestionCardProps) {
+}: Readonly<QuestionCardProps>) {
 
   const { attributes, listeners, setNodeRef,
     transform, transition, isDragging } =

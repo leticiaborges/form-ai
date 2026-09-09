@@ -99,7 +99,7 @@ export function FormEditorTab({
               checked={isPublic}
               onChange={e => onIsPublicChange(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-            />
+            />{/**/}
             Public
           </label>
 
@@ -109,7 +109,7 @@ export function FormEditorTab({
               checked={isGraded}
               onChange={e => onIsGradedChange(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
-            />
+            />{/**/}
             Graded form
           </label>
         </div>

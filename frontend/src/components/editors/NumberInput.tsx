@@ -6,7 +6,7 @@ interface NumberInputProps {
 }
 
 
-export function NumberInput({ correctAnswer, isGraded, onCorrectAnswerChange }: NumberInputProps) {
+export function NumberInput({ correctAnswer, isGraded, onCorrectAnswerChange }: Readonly<NumberInputProps>) {
   return (
     <div className="mt-3 space-y-3">
       <div>

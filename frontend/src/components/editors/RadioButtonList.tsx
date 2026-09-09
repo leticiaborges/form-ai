@@ -8,6 +8,6 @@ interface RadioButtonListProps {
   onOptionsChange: (options: FormOption[]) => void;
 }
 
-export function RadioButtonList(props: RadioButtonListProps) {
+export function RadioButtonList(props: Readonly<RadioButtonListProps>) {
   return <OptionList {...props} inputType="radio" />;
 }

@@ -5,7 +5,7 @@ interface TextInputProps {
   onCorrectAnswerChange: (value: string | null) => void;
 }
 
-export function TextInput({ correctAnswer, isGraded, onCorrectAnswerChange }: TextInputProps) {
+export function TextInput({ correctAnswer, isGraded, onCorrectAnswerChange }: Readonly<TextInputProps>) {
   return (
     <div className="mt-3 space-y-3">
       <div>

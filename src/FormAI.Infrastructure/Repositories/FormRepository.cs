@@ -45,7 +45,6 @@ public class FormRepository : IFormRepository
 
     public async Task UpdateAsync(Form form, CancellationToken cancellationToken = default)
     {
-        //_context.Forms.Update(form);
         await _context.SaveChangesAsync(cancellationToken);
     }
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)

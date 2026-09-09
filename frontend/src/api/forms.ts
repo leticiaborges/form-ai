@@ -78,8 +78,7 @@ export async function deleteForm(formId: string): Promise<void> {
 }
 
 export async function getSubmissionCount(formId: string): Promise<number> {
-    const response = await api.get<{ submissionCount: number }>
-        (`/forms/${formId}/submissions/count`);
+    const response = await api.get<{ submissionCount: number }>(`/forms/${formId}/submissions/count`);
 
     return response.data.submissionCount;
 }

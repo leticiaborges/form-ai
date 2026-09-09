@@ -22,7 +22,7 @@ export function SortableOptionRow({
     onTextChange,
     onCorrectChange,
     onRemove
-}: SortableOptionsRowProps) {
+}: Readonly<SortableOptionsRowProps>) {
     const { attributes, listeners, setNodeRef,
         transform, transition, isDragging
     } = useSortable({ id: option.id });

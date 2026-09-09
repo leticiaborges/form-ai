@@ -36,7 +36,7 @@ export function PointsInput({ points, onChange }: PointsInputProps) {
 
   return (
     <label className="flex shrink-0 items-center gap-1.5 text-xs text-gray-500">
-      Points
+      Points{/**/}
       <input
         type="number"
         min={MIN_POINTS}
