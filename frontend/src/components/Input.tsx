@@ -6,7 +6,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>
 }
 
-export function Input({ label, error, id, className = '', ref, ...props }: InputProps) {
+export function Input({ label, error, id, className = '', ref, ...props }: Readonly<InputProps>) {
   const inputId = id ?? label.toLowerCase().replaceAll(/\s+/g, '-');
 
   return (

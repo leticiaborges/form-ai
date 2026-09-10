@@ -8,7 +8,7 @@ interface TimeInputProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>;
 }
 
-export function TimeInput({ error, id, showError = true, className = '', format, ref, ...props }: TimeInputProps) {
+export function TimeInput({ error, id, showError = true, className = '', format, ref, ...props }: Readonly<TimeInputProps>) {
   const step = format === 'HH:mm:ss' ? 1 : 60;
 
   return (

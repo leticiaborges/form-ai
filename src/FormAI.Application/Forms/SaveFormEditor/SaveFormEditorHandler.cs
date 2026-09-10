@@ -19,12 +19,8 @@ public class SaveFormEditorHandler
         _rescore = rescore;
     }
 
-    public async Task HandleAsync(SaveFormEditorRequest request, CancellationToken cancellationToken = default)
+    public async void ValidateSave(SaveFormEditorRequest request, Form form)
     {
-        var form = await _forms.GetByIdAsync(request.FormId, cancellationToken);
-        if (form == null)
-            throw new NotFoundException("Form not found.");
-
         if (form.CreatedBy != request.RequestingUserId)
             throw new ForbiddenException("You do not own this form.");
 
@@ -59,6 +55,15 @@ public class SaveFormEditorHandler
 
         if (errors.Count > 0)
             throw new ValidationException(errors);
+    }
+
+    public async Task HandleAsync(SaveFormEditorRequest request, CancellationToken cancellationToken = default)
+    {
+        var form = await _forms.GetByIdAsync(request.FormId, cancellationToken);
+        if (form == null)
+            throw new NotFoundException("Form not found.");
+
+        ValidateSave(request, form);
 
         // Taken before anything changes, over the questions that exist right now: a question the
         // save adds was answered by nobody, so it cannot move a stored score and is left out of

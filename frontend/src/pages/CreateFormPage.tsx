@@ -28,9 +28,9 @@ type CreateFormData = z.infer<typeof createFormSchema>;
 
 export function CreateFormPage() {
   const navigate = useNavigate();
-  var currentDate = new Date();
+  let currentDate = new Date();
   currentDate.setHours(23, 59, 59, 999);
-  var defaultDate = addDays(currentDate, 7);
+  const defaultDate = addDays(currentDate, 7);
 
   const {
     register,

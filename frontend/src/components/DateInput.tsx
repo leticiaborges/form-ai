@@ -7,7 +7,7 @@ interface DateInputProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>
 }
 
-export function DateInput({ error, id, showError = true, className = '', ref, ...props }: DateInputProps) {
+export function DateInput({ error, id, showError = true, className = '', ref, ...props }: Readonly<DateInputProps>) {
 
   return (
     <>
