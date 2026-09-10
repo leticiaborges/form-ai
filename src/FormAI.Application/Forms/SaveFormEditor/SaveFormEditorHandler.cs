@@ -19,7 +19,7 @@ public class SaveFormEditorHandler
         _rescore = rescore;
     }
 
-    public async void ValidateSave(SaveFormEditorRequest request, Form form)
+    public static void ValidateSave(SaveFormEditorRequest request, Form form)
     {
         if (form.CreatedBy != request.RequestingUserId)
             throw new ForbiddenException("You do not own this form.");
