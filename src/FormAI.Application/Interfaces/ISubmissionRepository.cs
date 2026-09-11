@@ -1,3 +1,4 @@
+using FormAI.Application.Submissions;
 using FormAI.Domain.Entities;
 
 
@@ -25,5 +26,10 @@ namespace FormAI.Application.Interfaces
         /// </summary>
         Task<IReadOnlyList<Submission>> GetByFormWithAnswersAsync(Guid formId,
             CancellationToken cancellationToken = default);
+
+        Task<(IReadOnlyList<SubmissionListItem> Items, int TotalCount)> GetSubmissionListByFormAsync(Guid formId, int page, int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<Submission?> GetByIdWithAnswersNoTrackingAsync(Guid id, Guid formId, CancellationToken cancellationToken = default);
     }
 }

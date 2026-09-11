@@ -5,7 +5,9 @@ using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.GetFormResults;
+using FormAI.Application.Forms.GetSubmissionAnswers;
 using FormAI.Application.Forms.GetSubmissionCount;
+using FormAI.Application.Forms.GetSubmissions;
 using FormAI.Application.Forms.SaveFormEditor;
 using FormAI.Application.Interfaces;
 using FormAI.Application.Submissions.GetFormToAnswer;
@@ -70,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<RescoreFormSubmissionsHandler>();
         services.AddScoped<GetSubmissionCountHandler>();
         services.AddScoped<GetFormResultsHandler>();
+        services.AddScoped<GetSubmissionsHandler>();
+        services.AddScoped<GetSubmissionAnswersHandler>();
 
         services.AddScoped<IJwtService, JwtService>();
 

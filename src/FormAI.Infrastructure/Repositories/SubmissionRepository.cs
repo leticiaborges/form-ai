@@ -1,4 +1,5 @@
 using FormAI.Application.Interfaces;
+using FormAI.Application.Submissions;
 using FormAI.Domain.Entities;
 using FormAI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ public class SubmissionRepository : ISubmissionRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Submissions
+            .AsSplitQuery()
             .Include(s => s.Answers)
                 .ThenInclude(a => a.SelectedOptions)
             .Where(s => s.FormId == formId)
@@ -55,5 +57,32 @@ public class SubmissionRepository : ISubmissionRepository
         .ThenInclude(a => a.SelectedOptions)
         .Where(a => a.FormId == formId)
         .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(IReadOnlyList<SubmissionListItem> Items, int TotalCount)> GetSubmissionListByFormAsync(Guid formId,
+    int page, int pageSize,
+    CancellationToken cancellationToken = default)
+    {
+        int skip = pageSize * (page - 1);
+
+        int totalCount = await _context.Submissions.AsNoTracking()
+              .Where(a => a.FormId == formId).CountAsync(cancellationToken);
+
+        return (await _context.Submissions.AsNoTracking()
+              .Where(a => a.FormId == formId)
+              .OrderByDescending(a => a.SubmittedAt).ThenBy(a => a.Id)
+              .Select(a => new SubmissionListItem(a.Id, a.SubmittedAt))
+              .Skip(skip).Take(pageSize)
+              .ToListAsync(cancellationToken), totalCount);
+    }
+
+    public async Task<Submission?> GetByIdWithAnswersNoTrackingAsync(Guid id, Guid formId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions
+            .AsNoTracking().AsSplitQuery()
+            .Include(a => a.Answers)
+            .ThenInclude(a => a.SelectedOptions)
+            .Where(a => a.Id == id && a.FormId == formId)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

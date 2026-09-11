@@ -3,7 +3,9 @@ using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
 using FormAI.Application.Forms.GetForm;
 using FormAI.Application.Forms.GetFormResults;
+using FormAI.Application.Forms.GetSubmissionAnswers;
 using FormAI.Application.Forms.GetSubmissionCount;
+using FormAI.Application.Forms.GetSubmissions;
 using FormAI.Application.Forms.SaveFormEditor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +26,9 @@ public class FormsController : ControllerBase
     private readonly GenerateFormHandler _generateForm;
     private readonly SaveFormEditorHandler _saveFormEditor;
     private readonly GetSubmissionCountHandler _getSubmissionCount;
+    private readonly GetSubmissionsHandler _getSubmissionsHandler;
+
+    private readonly GetSubmissionAnswersHandler _getSubmissionAnswersHandler;
     private readonly GetFormResultsHandler _getFormResults;
 
     public FormsController(CreateFormHandler create,
@@ -32,7 +37,9 @@ public class FormsController : ControllerBase
     GenerateFormHandler generateForm,
     SaveFormEditorHandler saveFormEditor,
     GetSubmissionCountHandler submissionCount,
-    GetFormResultsHandler getFormResults)
+    GetFormResultsHandler getFormResults,
+    GetSubmissionsHandler getSubmissionsHandler,
+    GetSubmissionAnswersHandler getSubmissionAnswersHandler)
     {
         _create = create;
         _getById = getById;
@@ -42,6 +49,8 @@ public class FormsController : ControllerBase
         _saveFormEditor = saveFormEditor;
         _getSubmissionCount = submissionCount;
         _getFormResults = getFormResults;
+        _getSubmissionsHandler = getSubmissionsHandler;
+        _getSubmissionAnswersHandler = getSubmissionAnswersHandler;
     }
 
     [HttpPut("{id:guid}/editor")]
@@ -114,6 +123,26 @@ public class FormsController : ControllerBase
         return Ok(response);
     }
 
+    // GET /api/forms/{id}/submissions?page=1&size=10
+    [HttpGet("{id:guid}/submissions")]
+    public async Task<IActionResult> GetSubmissions(Guid id,
+    CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var response = await _getSubmissionsHandler.HandleAsync(new GetSubmissionListItemRequest(id, CurrentUserId, page, pageSize), cancellationToken);
+
+        return Ok(response);
+    }
+
+    // GET /api/forms/{id}/submissions/{submissionId}
+    [HttpGet("{id:guid}/submissions/{submissionId:guid}")]
+    public async Task<IActionResult> GetSubmissionDetail(Guid id, Guid submissionId,
+    CancellationToken cancellationToken)
+    {
+        var response = await _getSubmissionAnswersHandler.HandleAsync(new GetSubmissionAnswersRequest(id, submissionId, CurrentUserId),
+         cancellationToken);
+
+        return Ok(response);
+    }
 
     // GET /api/forms/{id}/results
     // Owner-only: results carry the answer key, exactly like GET /api/forms/{id}.
