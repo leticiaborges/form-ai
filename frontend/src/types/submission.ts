@@ -19,7 +19,6 @@ export interface AnswerForm {
     id: string;
     title: string;
     description: string | null;
-    isExpired: boolean;
     questions: AnswerQuestion[]
 }
 

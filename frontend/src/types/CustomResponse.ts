@@ -8,5 +8,6 @@ export interface DataResponse {
 
 export interface MessageErrorResponse {
     message?: string;
-    errors?: Record<string, string[]> ;
+    errors?: Record<string, string[]>;
+    code?: string;
 }

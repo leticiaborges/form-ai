@@ -1,4 +1,5 @@
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Scoring;
@@ -24,14 +25,7 @@ public class GetSubmissionAnswersHandler
         var form = await _forms.GetByIdAsync(request.FormId,
         cancellationToken);
 
-        if (form is null)
-            throw new NotFoundException("Form not found");
-
-        if (!form.IsPublic && form.CreatedBy != request.RequestingUserId)
-            throw new NotFoundException("You don't have access to this form.");
-
-        if (form.CreatedBy != request.RequestingUserId)
-            throw new ForbiddenException("You do not own this form.");
+        FormAccessValidator.CheckOwnerAccess(form, request.RequestingUserId);
 
         var submission = await _submissions.GetByIdWithAnswersNoTrackingAsync
         (request.SubmissionId, request.FormId, cancellationToken);

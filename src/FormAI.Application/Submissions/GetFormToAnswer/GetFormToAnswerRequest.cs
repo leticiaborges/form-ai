@@ -9,7 +9,6 @@ public record GetFormToAnswerResponse(
     Guid Id,
     string Title,
     string? Description,
-    bool IsExpired,
     List<AnswerQuestionDTO> Questions
 );
 

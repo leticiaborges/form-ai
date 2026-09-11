@@ -1,5 +1,6 @@
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Common.Pagination;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 
 
@@ -24,14 +25,7 @@ public class GetSubmissionsHandler
         var form = await _forms.GetByIdAsync(request.FormId,
         cancellationToken);
 
-        if (form is null)
-            throw new NotFoundException("Form not found");
-
-        if (!form.IsPublic && form.CreatedBy != request.RequestingUserId)
-            throw new NotFoundException("You don't have access to this form.");
-
-        if (form.CreatedBy != request.RequestingUserId)
-            throw new ForbiddenException("You do not own this form.");
+        FormAccessValidator.CheckOwnerAccess(form, request.RequestingUserId);
 
         var pageInfo = PageValidator.GetPageSize(request.Page, request.PageSize);
         var submissions = await _submissions.GetSubmissionListByFormAsync(request.FormId, pageInfo.Page,

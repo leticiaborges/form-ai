@@ -8,6 +8,8 @@ import { BasePage } from "../components/BasePage";
 import { QuestionAnswerCard } from "../components/respond/QuestionAnswerCard";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showError } from "../utils/toast";
+import type { CustomResponse } from "../types/CustomResponse";
+
 
 type PageState = 'loading' | 'alreadySubmitted' |
     'expired' | 'ready' | 'submitting' | 'submitted' | 'error';
@@ -37,6 +39,9 @@ export function FormAnswerPage() {
     const [answers, setAnswers] = useState<Record<string, AnswerPayload>>({});
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+    const [expiredMessage, setExpiredMessage] = useState<string | null>(null);
+
+
     useEffect(() => {
         if (!id) return;
 
@@ -49,9 +54,18 @@ export function FormAnswerPage() {
 
                 return getFormToAnswer(id).then(data => {
                     setForm(data);
-                    setState(data.isExpired ? 'expired' : 'ready');
+                    setState('ready');
                 })
-            }).catch(() => setState('error'));
+            }).catch((err) => {
+                const e = err as CustomResponse;
+                if (e.response?.data?.code === 'FormExpired') {
+                    setExpiredMessage(getErrorMessage(err));
+                    setState('expired');
+                    return;
+                }
+
+                setState('error');
+            });
     }, [id, respondentToken]);
 
     function setSingleAnswer(questionId: string,

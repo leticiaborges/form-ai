@@ -42,15 +42,16 @@ Entities use private constructors plus a static `Create()` factory, and every pr
 
 Access and ownership:
 
-- A **private form is invisible to everyone but its owner** — viewing, answering and submitting all check `!IsPublic && CreatedBy != requestingUserId` and throw `NotFoundException`, so the client sees **404, not 403**. This applies to signed-in users too, not only anonymous ones.
-- Only the owner may edit, update, delete or expire a form (`ForbiddenException` → 403 when the form is visible but not yours).
-- **`GET /api/forms/{id}` is owner-only even when the form is published**, because it is the editor's response and carries the answer key and the suggested answers. Respondents read a form through `GET {id}/answer`, which leaves both out.
-- **`GET /api/forms/{id}/results` is owner-only for the same reason** — it carries the answer key too. It runs the same two-step check as `GetFormHandler`: `NotFoundException` when the form is private and not yours (its existence stays hidden), `ForbiddenException` when it is published and not yours.
+- Every access check in the app goes through one of two static methods on `FormAccessValidator` (`Application/Forms/Validation/`), and both **always throw `NotFoundException` → 404, never `ForbiddenException` → 403** — `ForbiddenException` still exists and is still mapped by `ExceptionHandlingMiddleware`, but nothing in the codebase throws it today. This is deliberate: a non-owner cannot tell "this form doesn't exist" apart from "it exists but I can't have it" from the response, since every throw site uses the identical message for both cases — that also means the response body can't be used to enumerate form ids by comparing messages.
+- **`CheckOwnerAccess(form, requestingUserId)`** — every owner-only endpoint: `GetFormHandler`, `GetFormResultsHandler`, `GetSubmissionsHandler`, `GetSubmissionAnswersHandler`, `GetSubmissionCountHandler`, `DeleteFormHandler`, and `SaveFormEditorHandler`'s save. The only question it asks is `form.CreatedBy == requestingUserId` — it does not care whether the form is public, private or expired. A non-owner gets 404 whether the form is private, published, or doesn't exist at all.
+- **`CheckUserAnswerAccess(form, requestingUserId)`** — the two handlers on the answering path: `GetFormToAnswerHandler` (`GET {id}/answer`) and `SubmitFormHandler` (`POST {id}/submit`). The only question it asks is `form.IsPublic` — **there is no ownership carve-out**, so the owner of a private form gets the same 404 as anyone else on this path. It also rejects an expired form outright with a `ValidationException` (see below) on both the read and the submit call, so nobody — owner included — can open an expired form through the answering link. The owner can still open it through the editor (`GET /api/forms/{id}`), which doesn't check expiry at all.
+- **`GET /api/forms/{id}` is owner-only even when the form is published**, because it is the editor's response and carries the answer key and the suggested answers. Respondents read a form through `GET {id}/answer`, which leaves both out and goes through `CheckUserAnswerAccess` instead of `CheckOwnerAccess`.
+- **`GET /api/forms/{id}/results` is owner-only for the same reason** — it carries the answer key too, and uses `CheckOwnerAccess` like every other owner-only read.
 - Everything under `/api/forms` requires a token except `GET {id}/answer`, `GET {id}/my-submission` and `POST {id}/submit`, which are `[AllowAnonymous]`.
 
 Submitting:
 
-- An **expired form rejects new submissions** (`ExpiresAt` in the past). It can still be read.
+- An **expired form rejects new submissions** (`ExpiresAt` in the past) — and, since `CheckUserAnswerAccess` runs the same expiry check on the read path too, it can no longer be opened through `GET {id}/answer` either, by anyone, including the owner. The owner can still open it through the editor.
 - **One submission per respondent per form** — matched on `UserId` when signed in, otherwise on `RespondentToken` ([ADR 0003](./docs/adr/0003-respondent-token-identity.md)).
 - An answer referencing a question that isn't on the form, or an option that isn't on the question, is rejected; a `Single` question accepts at most one option; a required question must be answered.
 - Answers are validated as a set: every problem is collected into a `ValidationException` keyed by question id, not thrown on the first failure.
@@ -95,7 +96,7 @@ frontend/            React 19 + TypeScript + Vite + Tailwind.
 
 Each use case is a folder named after the operation (`Forms/SaveFormEditor/`, `Submissions/SubmitForm/`, `Users/Auth/`) holding its request/response records and its handler. Handlers are plain classes registered in `Infrastructure/DependencyInjection.cs` — there is no MediatR.
 
-`ExceptionHandlingMiddleware` maps `NotFoundException` → 404, `ForbiddenException` → 403, `ValidationException` → 400 with a per-field error dictionary. Throw these from handlers instead of returning status codes from controllers.
+`ExceptionHandlingMiddleware` maps `NotFoundException` → 404, `ForbiddenException` → 403 (declared and still mapped, but nothing throws it today — see "Access and ownership" above), `ValidationException` → 400. It also logs `NotFoundException`/`ForbiddenException` at `Information` level (path + full exception, stack trace included) before responding, purely for server-side debugging — the client only ever sees the generic serialized message. `ValidationException` serializes as `{ message, errors, code }` and is thrown two ways: a dictionary of per-field messages for a batch of problems collected together (`SaveFormEditorHandler`, `SubmitFormHandler`'s answer validation) leaves `code` null; a single message plus a `ValidationErrorCode` (`FormExpired`, `AlreadySubmitted`, `GenericError`) is for a standalone, whole-request reason thrown alone, never merged with other field errors — that's the constructor `CheckUserAnswerAccess` uses for an expired form. Throw these from handlers instead of returning status codes from controllers.
 
 EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelectedOption.OptionText` is `answer_selected_options.option_text`. Mappings live in `Infrastructure/Data/Configurations`.
 
@@ -108,6 +109,8 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | `PUT /api/forms/{id}/editor` | The editor save — diffed, id-preserving, applies grading and rescores |
 | `POST /api/forms/generate/text` | The only generation endpoint |
 | `GET /api/forms/{id}/submissions/count` | Owner-only; one `COUNT`, used by the delete-confirmation modal |
+| `GET /api/forms/{id}/submissions` | Owner-only; paginated list of a form's submissions. No frontend screen calls it yet |
+| `GET /api/forms/{id}/submissions/{submissionId}` | Owner-only; one submission's answers. No frontend screen calls it yet |
 | `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
 
@@ -170,4 +173,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Scores are shown to the owner in aggregate on the Results tab, but never to the respondent who earned them. There is still no endpoint returning the individual submissions, so an owner cannot see what one respondent answered. `ShowResultsAfterSubmit` gates nothing; the owner can currently answer their own private form. The results read loads every submission of a form at once, the same unbounded shape as rescoring.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Scores are shown to the owner in aggregate on the Results tab. The backend can also return one respondent's own answers (`GET {id}/submissions` and `GET {id}/submissions/{submissionId}`, both owner-only), but nothing in the frontend calls either yet, and scores are never shown to the respondent who earned them. `ShowResultsAfterSubmit` gates nothing. There is still no preview mode letting the owner see what a private form looks like to a respondent — `CheckUserAnswerAccess` now blocks the owner from answering their own private form the same as anyone else, but nothing replaces that access with a preview. The results read loads every submission of a form at once, the same unbounded shape as rescoring.

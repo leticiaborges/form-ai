@@ -19,10 +19,9 @@ public class SaveFormEditorHandler
         _rescore = rescore;
     }
 
-    public static void ValidateSave(SaveFormEditorRequest request, Form form)
+    public static void ValidateSave(SaveFormEditorRequest request, Form? form)
     {
-        if (form.CreatedBy != request.RequestingUserId)
-            throw new ForbiddenException("You do not own this form.");
+        FormAccessValidator.CheckOwnerAccess(form, request.RequestingUserId);
 
         if (string.IsNullOrWhiteSpace(request.Title))
             throw new ArgumentException("Title is required.");
@@ -60,8 +59,6 @@ public class SaveFormEditorHandler
     public async Task HandleAsync(SaveFormEditorRequest request, CancellationToken cancellationToken = default)
     {
         var form = await _forms.GetByIdAsync(request.FormId, cancellationToken);
-        if (form == null)
-            throw new NotFoundException("Form not found.");
 
         ValidateSave(request, form);
 

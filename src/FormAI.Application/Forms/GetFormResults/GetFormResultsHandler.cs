@@ -1,4 +1,5 @@
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
@@ -25,24 +26,17 @@ public class GetFormResultsHandler
         var form = await _forms.GetByIdAsync(request.FormId,
         cancellationToken);
 
-        if (form is null)
-            throw new NotFoundException("Form not found");
-
-        if (!form.IsPublic && form.CreatedBy != request.RequestingUserId)
-            throw new NotFoundException("You don't have access to this form.");
-
-        if (form.CreatedBy != request.RequestingUserId)
-            throw new ForbiddenException("You do not own this form.");
+        FormAccessValidator.CheckOwnerAccess(form, request.RequestingUserId);
 
         var submissions = await _submissions.GetByFormWithAnswersAsync
         (request.FormId, cancellationToken);
 
-        var results = FormResultsCalculator.Calculate(form, submissions);
+        var results = FormResultsCalculator.Calculate(form!, submissions);
 
         return new GetFormResultsResponse(
-            form.Id,
-            form.Title,
-            form.IsGraded,
+            form!.Id,
+            form!.Title,
+            form!.IsGraded,
             results.SubmissionCount,
             results.TotalPoints,
             results.ScoreDistribution.Select(a => new ScoreBucketResponse(a.Score, a.SubmissionCount)).ToList(),

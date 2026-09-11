@@ -1,4 +1,5 @@
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
@@ -65,28 +66,16 @@ public class SubmitFormHandler
     private async Task<Dictionary<string, string[]>> ValidateFormAsync(Form? form, SubmitFormRequestCommand request,
         CancellationToken cancellationToken = default)
     {
-        if (form is null)
-            throw new NotFoundException("Form not found.");
-
-        if (!form.IsPublic && form.CreatedBy != request.UserId)
-            throw new NotFoundException("You don't have access to this form.");
-
-        if (form.IsExpired)
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                ["form"] = new[] { "This form is no longer accepting submissions." }
-            });
+        FormAccessValidator.CheckUserAnswerAccess(form, request.UserId);
 
         var existing = await _submissions.GetByRespondentAsync(
-            form.Id, request.UserId, request.RespondentToken,
+            form!.Id, request.UserId, request.RespondentToken,
             cancellationToken
         );
 
         if (existing is not null)
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                ["form"] = new[] { "You have already submitted this form." }
-            });
+            throw new ValidationException(ValidationErrorCode.AlreadySubmitted,
+                "You have already submitted this form.");
 
         var answersByQuestion = request.Answers.ToDictionary(a => a.QuestionId);
         var knowQuestionsIds = form.Questions.Select(q => q.Id).ToHashSet();

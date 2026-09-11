@@ -1,4 +1,5 @@
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
@@ -25,18 +26,10 @@ public class GetFormHandler
         Guid requestingUserId, CancellationToken cancellationToken)
     {
         var form = await _formRepository.GetByIdAsync(formId, cancellationToken);
-        if (form == null)
-            throw new NotFoundException("Form not found.");
 
-        // A private form is hidden from everyone but its owner; a published one exists, but its
-        // answer key still belongs to the owner alone.
-        if (!form.IsPublic && form.CreatedBy != requestingUserId)
-            throw new NotFoundException("You don't have access to this form.");
+        FormAccessValidator.CheckOwnerAccess(form, requestingUserId);
 
-        if (form.CreatedBy != requestingUserId)
-            throw new ForbiddenException("You do not own this form.");
-
-        var formResponse = new GetFormResponse(form.Id, form.Title, form.Description,
+        var formResponse = new GetFormResponse(form!.Id, form.Title, form.Description,
         form.IsPublic, form.ExpiresAt, form.ShowResultsAfterSubmit, form.IsGraded, form.CreatedAt,
         BuildQuestionDTOList(form));
 
