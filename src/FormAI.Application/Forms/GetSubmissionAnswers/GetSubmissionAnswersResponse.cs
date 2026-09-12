@@ -5,7 +5,7 @@ public record GetSubmissionAnswersResponse(
     Guid SubmissionId,
     DateTime SubmittedAt,
     int? Score,
-    IEnumerable<AnswerResponse> Answers
+    List<AnswerResponse> Answers
 );
 
 public record AnswerResponse(

@@ -39,7 +39,7 @@ export function FormAnswerPage() {
     const [answers, setAnswers] = useState<Record<string, AnswerPayload>>({});
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-    const [expiredMessage, setExpiredMessage] = useState<string | null>(null);
+    const [_, setExpiredMessage] = useState<string | null>(null);
 
 
     useEffect(() => {

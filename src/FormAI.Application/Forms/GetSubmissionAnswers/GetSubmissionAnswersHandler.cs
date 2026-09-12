@@ -33,7 +33,7 @@ public class GetSubmissionAnswersHandler
         if (submission == null)
             throw new NotFoundException("Submission not found.");
 
-        var dictionaryQuestions = form.Questions.GroupBy(a => a.Id)
+        var dictionaryQuestions = form!.Questions.GroupBy(a => a.Id)
                                   .ToDictionary(a => a.Key, a => a.First());
 
         return new GetSubmissionAnswersResponse(
@@ -45,14 +45,14 @@ public class GetSubmissionAnswersHandler
         );
     }
 
-    private bool IsCorrect(Answer answer, FormQuestion question)
+    private static bool IsCorrect(Answer answer, FormQuestion question)
     {
         var scoredAnswer = ScoredAnswer.From(answer);
         var result = SubmissionScorer.IsAnswerCorrect(question, scoredAnswer);
         return result;
     }
 
-    private IEnumerable<AnswerResponse> BuildListAnswerReponse(IEnumerable<Answer> answers, Form form,
+    private List<AnswerResponse> BuildListAnswerReponse(IEnumerable<Answer> answers, Form form,
         Dictionary<Guid, FormQuestion> dictionaryQuestions)
     {
         var list = new List<AnswerResponse>();

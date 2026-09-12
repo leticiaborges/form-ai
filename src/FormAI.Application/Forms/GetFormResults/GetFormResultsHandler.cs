@@ -35,8 +35,8 @@ public class GetFormResultsHandler
 
         return new GetFormResultsResponse(
             form!.Id,
-            form!.Title,
-            form!.IsGraded,
+            form.Title,
+            form.IsGraded,
             results.SubmissionCount,
             results.TotalPoints,
             results.ScoreDistribution.Select(a => new ScoreBucketResponse(a.Score, a.SubmissionCount)).ToList(),

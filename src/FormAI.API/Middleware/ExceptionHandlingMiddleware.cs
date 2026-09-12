@@ -44,9 +44,6 @@ exception)
         if (statusCode == HttpStatusCode.InternalServerError)
             _logger.LogError(exception, "Unhandled exception");
 
-        if (statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-            _logger.LogInformation(exception, "{StatusCode} on {Path}", statusCode, context.Request.Path);
-
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
