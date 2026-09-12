@@ -24,11 +24,12 @@ const createFormSchema = z.object({
     .refine(v => new Date(v) > new Date(), "The expiry must be in the future.")
 });
 
-type CreateFormData = z.infer<typeof createFormSchema>;
+type CreateFormInput = z.input<typeof createFormSchema>;
+type CreateFormData = z.output<typeof createFormSchema>;
 
 export function CreateFormPage() {
   const navigate = useNavigate();
-  let currentDate = new Date();
+  const currentDate = new Date();
   currentDate.setHours(23, 59, 59, 999);
   const defaultDate = addDays(currentDate, 7);
 
@@ -37,8 +38,8 @@ export function CreateFormPage() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm<CreateFormData>({
-    resolver: zodResolver(createFormSchema) as any,
+  } = useForm<CreateFormInput, unknown, CreateFormData>({
+    resolver: zodResolver(createFormSchema),
     defaultValues: {
       questionCount: 5,
       difficultyLevel: "Medium",

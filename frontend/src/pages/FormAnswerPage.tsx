@@ -39,7 +39,7 @@ export function FormAnswerPage() {
     const [answers, setAnswers] = useState<Record<string, AnswerPayload>>({});
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-    const [_, setExpiredMessage] = useState<string | null>(null);
+    const [expiredMessage, setExpiredMessage] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -109,7 +109,7 @@ export function FormAnswerPage() {
             case 'alreadySubmitted':
                 return "You've already responded to this form. Thanks!";
             case 'expired':
-                return "This form is no longer accepting responses.";
+                return expiredMessage ?? "";
             case 'submitted':
                 return "Thanks! Your response has been recorded.";
             case 'error':
@@ -163,12 +163,11 @@ export function FormAnswerPage() {
         );
     }
 
-    let message = '';
-    let status = state == 'error' || !form ? 'error' : state;
+    const status = state == 'error' || !form ? 'error' : state;
     if (status == 'alreadySubmitted' ||
         status == 'expired' ||
         status == 'submitted' || status == 'error' || !form) {
-        message = getMessageBasedOnState(state);
+        let message = getMessageBasedOnState(state);
         return (
             <BasePage>
                 <div className="flex-1 flex items-center justify-center">

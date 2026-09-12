@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 /** Mirrors QuestionPointsValidator on the server. */
 export const MIN_POINTS = 0;
@@ -19,10 +19,13 @@ interface PointsInputProps {
 export function PointsInput({ points, onChange }: Readonly<PointsInputProps>) {
   const [draft, setDraft] = useState(String(points ?? DEFAULT_POINTS));
 
-  // Keep up with changes made elsewhere, such as ticking "Graded form".
-  useEffect(() => {
+  // Keep up with changes made elsewhere, such as ticking "Graded form". Adjusting state
+  // during render (rather than in an effect) avoids an extra commit-then-effect render pass.
+  const [prevPoints, setPrevPoints] = useState(points);
+  if (points !== prevPoints) {
+    setPrevPoints(points);
     setDraft(String(points ?? DEFAULT_POINTS));
-  }, [points]);
+  }
 
   function commit() {
     const parsed = Number.parseInt(draft, 10);
