@@ -15,9 +15,16 @@ export function ResultsTab({ formId, reloadKey }: Readonly<ResultsTabProps>) {
   const [state, setState] = useState<ResultsState>('loading');
   const [results, setResults] = useState<FormResults | null>(null);
 
+  // Reset to loading when the form or a refetch is requested. Adjusting state during render
+  // (rather than in the effect) avoids an extra commit-then-effect render pass.
+  const [prevQuery, setPrevQuery] = useState([formId, reloadKey]);
+  if (prevQuery[0] !== formId || prevQuery[1] !== reloadKey) {
+    setPrevQuery([formId, reloadKey]);
+    setState('loading');
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setState('loading');
 
     getFormResults(formId)
       .then(data => {

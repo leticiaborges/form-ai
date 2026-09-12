@@ -167,7 +167,7 @@ export function FormAnswerPage() {
     if (status == 'alreadySubmitted' ||
         status == 'expired' ||
         status == 'submitted' || status == 'error' || !form) {
-        let message = getMessageBasedOnState(state);
+        const message = getMessageBasedOnState(state);
         return (
             <BasePage>
                 <div className="flex-1 flex items-center justify-center">
