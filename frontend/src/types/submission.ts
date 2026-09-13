@@ -29,8 +29,18 @@ export interface MySubmission {
 
 export interface AnswerPayload {
     selectedOptionIds?: string[];
+    selectedOptionTexts?: string[];
     textValue?: string;
     numericValue?: number;
+}
+
+export interface QuestionGradingInfo {
+    points: number;
+    earnedScore: number;
+    isCorrect: boolean;
+    correctOptionTexts: string[];
+    correctAnswerText: string | null;
+    hasAnswerKey: boolean;
 }
 
 export interface SubmitFormPayload {
