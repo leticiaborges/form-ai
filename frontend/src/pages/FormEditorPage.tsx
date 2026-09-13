@@ -234,7 +234,7 @@ export function FormEditorPage() {
             </header>
 
             {/* Editor area */}
-            <main className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-6">
+            <main className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-3">
                 <Tabs tabs={TABS} activeTab={activeTab} onTabChange={changeTab} />
 
                 {activeTab === 'editor' ? (
