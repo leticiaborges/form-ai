@@ -15,6 +15,7 @@ This is a work in progress. See [what works](#what-works-today) and [what doesn'
 - **Publishing** — forms start private and are answerable only once you publish them; forms expire on a date
 - **Responding** — anonymous or signed in, one submission per respondent, required-question and option validation
 - **Dashboard** — your forms and how many submissions each has
+- **Results** — a Summary view of each question's answer distribution and, on a graded form, its score distribution, plus an Individual view to page through submissions one at a time and see that respondent's answers and score
 
 ## Roadmap
 
@@ -22,8 +23,7 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 
 - AI analysis of results
 - Generation from PDF, Word, images and URLs (only pasted text works today)
-- A results view for the owner beyond the submission count
-- Working grading and score display
+- Showing a respondent their own score
 - Realtime submission and generation updates
 - Rate limiting on generation
 

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { DateInput } from "./DateInput";
 import { TimeInput } from "./TimeInput";
 
@@ -21,11 +20,9 @@ function splitValue(value: string) {
 
 export function DateTimeInput({ id, label, value, onChange,
   onBlur, error, disabled, minDate, timeFormat = 'HH:mm' }: Readonly<DateTimeInputProps>) {
-
-  const [parts, setParts] = useState(splitValue(value));
+  const parts = splitValue(value);
 
   function update(newValue: { date: string, time: string }) {
-    setParts(newValue);
     onChange(newValue.date && newValue.time ? `${newValue.date}T${newValue.time}` : '');
   }
 

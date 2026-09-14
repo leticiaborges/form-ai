@@ -52,7 +52,7 @@ public class GetSubmissionAnswersHandler
         return result;
     }
 
-    private List<AnswerResponse> BuildListAnswerReponse(IEnumerable<Answer> answers, Form form,
+    private static List<AnswerResponse> BuildListAnswerReponse(IEnumerable<Answer> answers, Form form,
         Dictionary<Guid, FormQuestion> dictionaryQuestions)
     {
         var list = new List<AnswerResponse>();

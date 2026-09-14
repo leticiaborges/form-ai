@@ -8,7 +8,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 FormAI turns text supplied by a user into a question form. Claude generates the questions, the user edits them, and the form is answered through a shared link.
 
-**What works end to end today:** register and verify an account → paste text and pick an expiry date → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor, and change the expiry → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard, and opens the form's Results tab to see each question's answer distribution and, on a graded form, how the scores were spread.
+**What works end to end today:** register and verify an account → paste text and pick an expiry date → Claude generates a draft set of questions → edit, reorder, add and delete questions and options in the form editor, and change the expiry → publish the form → share the link → respondents (signed in or anonymous) answer once → submissions to a graded form are scored → the owner sees a submission count on the dashboard, and opens the form's Results tab to see, under Summary, each question's answer distribution and, on a graded form, how the scores were spread, and under Individual, one submission at a time — its answers, and on a graded form, per-question correctness and score.
 
 ## Vocabulary
 
@@ -109,9 +109,9 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | `PUT /api/forms/{id}/editor` | The editor save — diffed, id-preserving, applies grading and rescores |
 | `POST /api/forms/generate/text` | The only generation endpoint |
 | `GET /api/forms/{id}/submissions/count` | Owner-only; one `COUNT`, used by the delete-confirmation modal |
-| `GET /api/forms/{id}/submissions` | Owner-only; paginated list of a form's submissions. No frontend screen calls it yet |
-| `GET /api/forms/{id}/submissions/{submissionId}` | Owner-only; one submission's answers. No frontend screen calls it yet |
-| `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution |
+| `GET /api/forms/{id}/submissions` | Owner-only; paginated list of a form's submissions (id and timestamp only — no respondent identity). Backs the Individual tab's pager |
+| `GET /api/forms/{id}/submissions/{submissionId}` | Owner-only; one submission's answers, and on a graded form its per-answer correctness and score. Backs the Individual tab's detail view |
+| `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution. Backs the Results tab's Summary view |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
 
 ### AI integration
@@ -173,4 +173,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. Scores are shown to the owner in aggregate on the Results tab. The backend can also return one respondent's own answers (`GET {id}/submissions` and `GET {id}/submissions/{submissionId}`, both owner-only), but nothing in the frontend calls either yet, and scores are never shown to the respondent who earned them. `ShowResultsAfterSubmit` gates nothing. There is still no preview mode letting the owner see what a private form looks like to a respondent — `CheckUserAnswerAccess` now blocks the owner from answering their own private form the same as anyone else, but nothing replaces that access with a preview. The results read loads every submission of a form at once, the same unbounded shape as rescoring.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. The owner sees scores two ways: aggregated on the Results tab's Summary sub-tab, and per submission on its Individual sub-tab (`GET {id}/submissions` and `GET {id}/submissions/{submissionId}`, both owner-only) — but scores are never shown to the respondent who earned them. `ShowResultsAfterSubmit` gates nothing. There is still no preview mode letting the owner see what a private form looks like to a respondent — `CheckUserAnswerAccess` now blocks the owner from answering their own private form the same as anyone else, but nothing replaces that access with a preview. The results read loads every submission of a form at once, the same unbounded shape as rescoring.

@@ -104,8 +104,8 @@ Recomputing the scores of every submission of a form, because something that dec
 ### Results
 
 **Results**:
-The read-only aggregate of every submission to one form, seen only by the owner. Results say what was answered, never who answered it.
-_Code alias_: `FormResults`, `FormResultsCalculator`.
+What the owner sees about the submissions to one form, in two forms: the read-only aggregate across all of them, and each one looked at individually. Either way, results say what was answered, never who answered it — a submission is identified only by its id and timestamp, never by respondent.
+_Code alias_: `FormResults`, `FormResultsCalculator` (aggregate); `GetSubmissionsHandler`, `GetSubmissionAnswersHandler` (individual).
 _Avoid_: analytics, statistics, report, responses.
 
 **Answer distribution**:
