@@ -2,6 +2,7 @@ using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
 using FormAI.Domain.Results;
 using static FormAI.UnitTests.Results.FormResultsCalculatorTestsHelper;
+using static FormAI.UnitTests.TestsHelper.EntityBuilders;
 
 namespace FormAI.UnitTests.Results;
 

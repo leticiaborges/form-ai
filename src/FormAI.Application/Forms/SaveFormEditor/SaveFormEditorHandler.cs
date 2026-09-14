@@ -65,7 +65,7 @@ public class SaveFormEditorHandler
         // Taken before anything changes, over the questions that exist right now: a question the
         // save adds was answered by nobody, so it cannot move a stored score and is left out of
         // the comparison. See ADR 0004.
-        var questionIdsBeforeSave = form.Questions.Select(q => q.Id).ToList();
+        var questionIdsBeforeSave = form!.Questions.Select(q => q.Id).ToList();
         var fingerprintBeforeSave = GradingFingerprint.Of(form, questionIdsBeforeSave);
 
         form.Update(request.Title.Trim(),
