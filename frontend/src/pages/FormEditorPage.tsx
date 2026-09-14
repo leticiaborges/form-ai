@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { FormDetail, FormQuestion } from "../types/form";
 import { getForm, saveFormEditor, deleteForm, getSubmissionCount } from '../api/forms';
@@ -12,6 +12,7 @@ import { Tabs, type TabDefinition } from "../components/Tabs";
 import { FormEditorTab } from "../components/FormEditorTab";
 import { ResultsTab } from "../components/results/ResultsTab";
 import { DATETIME_FORMATS, utcToLocalDateTime } from "../utils/dateUtils";
+import { FormConfigTab } from "../components/FormConfigTab";
 
 type PageState = 'loading' | 'ready' | 'saving' | 'deleting' | 'error';
 
@@ -27,11 +28,11 @@ export function FormEditorPage() {
 
     const TABS: TabDefinition[] = [
         { id: 'editor', label: 'Edit form' },
-        { id: 'results', label: 'Results' }
+        { id: 'results', label: 'Results' },
+        { id: 'config', label: 'Configuration' }
     ];
 
-    const activeTab = searchParams.get('tab') === 'results' ?
-        'results' : 'editor';
+    const activeTab = TABS.find(t => t.id === searchParams.get('tab'))?.id ?? 'editor'
 
     function changeTab(id: string) {
         setSearchParams(id == 'editor' ? {} : { tab: id },
@@ -196,6 +197,31 @@ export function FormEditorPage() {
         );
     }
 
+    let currentTab: ReactNode = null;
+    switch (activeTab) {
+        case "editor":
+            currentTab = <FormEditorTab
+                form={form}
+                questions={questions}
+                onQuestionsChange={setQuestions}
+                description={description}
+                onDescriptionChange={value => { setDescription(value); setDescriptionError(''); }}
+                descriptionError={descriptionError}
+                isPublic={isPublic}
+                onIsPublicChange={setIsPublic}
+                isGraded={isGraded}
+                onIsGradedChange={toggleGraded}
+            />;
+            break;
+        case "results":
+            currentTab = <ResultsTab formId={form.id} reloadKey={resultsReloadKey} />;
+            break;
+        case "config":
+            currentTab = <FormConfigTab expiresAt={expiresAt} onExpiresAtChange={setExpiresAt} expiresAtError={expiresAtError} />;
+            break;
+        default:
+            break;
+    }
     return (
         <BasePage>
             {/* Sticky top bar */}
@@ -236,26 +262,7 @@ export function FormEditorPage() {
             {/* Editor area */}
             <main className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-3">
                 <Tabs tabs={TABS} activeTab={activeTab} onTabChange={changeTab} />
-
-                {activeTab === 'editor' ? (
-                    <FormEditorTab
-                        form={form}
-                        questions={questions}
-                        onQuestionsChange={setQuestions}
-                        description={description}
-                        onDescriptionChange={value => { setDescription(value); setDescriptionError(''); }}
-                        descriptionError={descriptionError}
-                        isPublic={isPublic}
-                        onIsPublicChange={setIsPublic}
-                        isGraded={isGraded}
-                        onIsGradedChange={toggleGraded}
-                        expiresAt={expiresAt}
-                        onExpiresAtChange={setExpiresAt}
-                        expiresAtError={expiresAtError}
-                    />
-                ) : (
-                    <ResultsTab formId={form.id} reloadKey={resultsReloadKey} />
-                )}
+                {currentTab}
             </main>
 
 
