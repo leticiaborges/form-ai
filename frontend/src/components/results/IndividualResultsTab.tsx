@@ -94,7 +94,7 @@ export function IndividualResultsTab({ formId, reloadKey }: Readonly<IndividualR
 
     const answer = currentSubmission?.answers.find((item) => item.questionId === question.id);
     const correctOptionsText = question.options.filter((opt) => opt.isCorrect === true).map((opt) => opt.text);
-    const hasAnswerKey = correctOptionsText.length > 0 || question.correctAnswer ? true : false;
+    const hasAnswerKey = correctOptionsText.length > 0 || !!question.correctAnswer;
 
     const gradingInfo: QuestionGradingInfo = {
       points: question.points!,
