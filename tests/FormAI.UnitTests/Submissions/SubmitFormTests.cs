@@ -24,7 +24,7 @@ public class SubmitFormTests
         .Returns((Submission?)null);
     }
 
-    private Form CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
+    private static Form CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
     out FormQuestion questionText)
     {
         var form = NewForm(isGraded: true);
