@@ -1,7 +1,6 @@
+using FormAI.API.Hubs;
 using FormAI.API.Middleware;
-using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
-using FormAI.Domain.Entities;
 using FormAI.Infrastructure;
 using Microsoft.OpenApi;
 
@@ -49,6 +48,13 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+builder.Services.AddSignalR().AddStackExchangeRedis(
+    builder.Configuration.GetConnectionString("Redis") ??
+    throw new InvalidOperationException("ConnectionStrings:Redis is missing")
+);
+
+builder.Services.AddSingleton<IFormResultsNotifier, SignalRFormResultsNotifier>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -63,5 +69,6 @@ app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<FormResultsHub>("/hubs/form-results");
 
 await app.RunAsync();

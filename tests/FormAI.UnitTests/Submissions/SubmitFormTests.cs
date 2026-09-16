@@ -14,10 +14,11 @@ public class SubmitFormTests
     private readonly IFormRepository _formRepository = Substitute.For<IFormRepository>();
     private readonly ISubmissionRepository _submissionRepository = Substitute.For<ISubmissionRepository>();
     private readonly SubmitFormHandler _handler;
+    private readonly IFormResultsNotifier _notifier = Substitute.For<IFormResultsNotifier>();
 
     public SubmitFormTests()
     {
-        _handler = new SubmitFormHandler(_formRepository, _submissionRepository);
+        _handler = new SubmitFormHandler(_formRepository, _submissionRepository, _notifier);
 
         _submissionRepository.GetByRespondentAsync(Arg.Any<Guid>(),
         Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -63,6 +64,8 @@ public class SubmitFormTests
         await _submissionRepository.Received(1).AddAsync(
             Arg.Is<Submission>(s => s.Id == response.Id && s.Score == 5 && s.Answers.Count == 2),
             Arg.Any<CancellationToken>());
+
+        await _notifier.Received(1).NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -76,6 +79,8 @@ public class SubmitFormTests
         var request = SubmitFormTestsHelper.Request(form, respondentToken);
 
         await Assert.ThrowsAsync<NotFoundException>(() => _handler.HandleAsync(request));
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -90,6 +95,8 @@ public class SubmitFormTests
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
         Assert.Equal(ValidationErrorCode.FormExpired, exception.Code);
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -110,6 +117,8 @@ public class SubmitFormTests
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
         Assert.Equal(ValidationErrorCode.AlreadySubmitted, exception.Code);
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -132,6 +141,8 @@ public class SubmitFormTests
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
         Assert.NotEmpty(exception.Errors["answers"]);
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -159,6 +170,8 @@ public class SubmitFormTests
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
         Assert.NotEmpty(exception.Errors[questionSingle.Id.ToString()]);
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -182,5 +195,7 @@ public class SubmitFormTests
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
         Assert.NotEmpty(exception.Errors[questionSingle.Id.ToString()]);
+
+        await _notifier.DidNotReceive().NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
     }
 }

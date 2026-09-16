@@ -11,11 +11,14 @@ public class SubmitFormHandler
 {
     private readonly IFormRepository _forms;
     private readonly ISubmissionRepository _submissions;
+    private readonly IFormResultsNotifier _notifier;
 
-    public SubmitFormHandler(IFormRepository forms, ISubmissionRepository submissions)
+    public SubmitFormHandler(IFormRepository forms, ISubmissionRepository submissions,
+     IFormResultsNotifier notifier)
     {
         _forms = forms;
         _submissions = submissions;
+        _notifier = notifier;
     }
 
     public async Task<SubmitFormResponse> HandleAsync(SubmitFormRequestCommand request,
@@ -59,6 +62,8 @@ public class SubmitFormHandler
 
         submission.SetAnswers(answers);
         await _submissions.AddAsync(submission, cancellationToken);
+
+        await _notifier.NotifyResultsChangedAsync(form.Id, cancellationToken);
 
         return new SubmitFormResponse(submission.Id, totalScore);
     }

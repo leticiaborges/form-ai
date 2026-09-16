@@ -96,6 +96,8 @@ frontend/            React 19 + TypeScript + Vite + Tailwind.
 
 Each use case is a folder named after the operation (`Forms/SaveFormEditor/`, `Submissions/SubmitForm/`, `Users/Auth/`) holding its request/response records and its handler. Handlers are plain classes registered in `Infrastructure/DependencyInjection.cs` — there is no MediatR.
 
+**`FormAI.API/Hubs/` is a deliberate, one-off exception to that registration pattern.** `FormResultsHub` pushes a bare `ResultsUpdated(formId)` refetch signal to an owner's open Results tab when a submission comes in, fanned out through a Redis backplane (`AddStackExchangeRedis` in `Program.cs`) so it works across more than one API instance. Its DI (`AddSignalR()`, `IFormResultsNotifier` → `SignalRFormResultsNotifier`, `MapHub<FormResultsHub>("/hubs/form-results")`) is registered directly in `Program.cs`, not `Infrastructure/DependencyInjection.cs`, because `IHubContext<T>` needs the ASP.NET Core hosting framework that only `FormAI.API` references. `SubmitFormHandler` depends on `IFormResultsNotifier` (declared in `Application/Interfaces/`, framework-free) to trigger it, following the same interface-in-Application/implementation-in-Infrastructure-or-API split as every other external collaborator. The Hub authorizes `JoinFormResults` with the same `FormAccessValidator.CheckOwnerAccess` as every other owner-only read, and — since a browser's WebSocket API can't set an `Authorization` header — authenticates over `?access_token=` in the query string instead, read back out in the existing `AddJwtBearer` config's `OnMessageReceived` event, scoped to `/hubs` paths only. See [ADR 0005](./docs/adr/0005-realtime-results-via-signalr-redis.md) for why SignalR+Redis was chosen over polling/SSE/an AWS-native stack, and for the consequences of both decisions.
+
 `ExceptionHandlingMiddleware` maps `NotFoundException` → 404, `ForbiddenException` → 403 (declared and still mapped, but nothing throws it today — see "Access and ownership" above), `ValidationException` → 400. It also logs `NotFoundException`/`ForbiddenException` at `Information` level (path + full exception, stack trace included) before responding, purely for server-side debugging — the client only ever sees the generic serialized message. `ValidationException` serializes as `{ message, errors, code }` and is thrown two ways: a dictionary of per-field messages for a batch of problems collected together (`SaveFormEditorHandler`, `SubmitFormHandler`'s answer validation) leaves `code` null; a single message plus a `ValidationErrorCode` (`FormExpired`, `AlreadySubmitted`, `GenericError`) is for a standalone, whole-request reason thrown alone, never merged with other field errors — that's the constructor `CheckUserAnswerAccess` uses for an expired form. Throw these from handlers instead of returning status codes from controllers.
 
 EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelectedOption.OptionText` is `answer_selected_options.option_text`. Mappings live in `Infrastructure/Data/Configurations`.
@@ -113,6 +115,7 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | `GET /api/forms/{id}/submissions/{submissionId}` | Owner-only; one submission's answers, and on a graded form its per-answer correctness and score. Backs the Individual tab's detail view |
 | `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution. Backs the Results tab's Summary view |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
+| `/hubs/form-results` (SignalR) | Owner-only via `JoinFormResults(formId)`; pushes `ResultsUpdated(formId)` to live Results tabs ([ADR 0005](./docs/adr/0005-realtime-results-via-signalr-redis.md)) |
 
 ### AI integration
 
@@ -140,13 +143,14 @@ dotnet ef migrations add <MigrationName> --project src/FormAI.Infrastructure --s
 dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API
 ```
 
-Local infrastructure is Docker Compose: PostgreSQL and Mailpit (web inbox at http://localhost:8025, which receives all local email).
+Local infrastructure is Docker Compose: PostgreSQL, Mailpit (web inbox at http://localhost:8025, which receives all local email), and Redis (the SignalR results backplane — no auth locally, no volume, since it's a pure pub/sub relay and losing it on restart is fine).
 
 ## Configuration
 
 | Key | Purpose |
 |---|---|
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
+| `ConnectionStrings__Redis` | Redis connection string for the SignalR results backplane (local dev: docker-compose `redis` service) |
 | `Jwt__Secret` / `Jwt__Issuer` / `Jwt__Audience` | JWT signing and validation |
 | `Claude__ApiKey` | Anthropic API key (`Claude__Model`, `Claude__MaxTokens` have defaults in `appsettings.json`) |
 | `Email__SmtpHost` / `SmtpPort` / `FromAddress` / `FromName` / `FrontendBaseUrl` | Confirmation email delivery and link building |
@@ -155,7 +159,7 @@ Local values live in `appsettings.Development.json`, which is untracked — keep
 
 ## Tests
 
-- `FormAI.UnitTests` — references Domain + Application; xUnit, no mocking library. Contains `Results/FormResultsCalculatorTests` (with its entity builders in `FormResultsCalculatorTestsHelper`), which covers the aggregation and, through it, most of `SubmissionScorer`. Everything there is a pure function over entities built by the real `Create()` factories, so there is nothing to stub — keep it that way.
+- `FormAI.UnitTests` — references Domain + Application; xUnit + NSubstitute. `Results/FormResultsCalculatorTests` and `Results/SubmissionScorerTests` (entity builders in `FormResultsCalculatorTestsHelper`) cover the aggregation and `SubmissionScorer` as pure functions over entities built by the real `Create()` factories — nothing to stub there, keep it that way. Handler-level tests (`Forms/SaveFormTests`, `Submissions/SubmitFormTests`) stub their interface dependencies (`IFormRepository`, `ISubmissionRepository`, `IFormResultsNotifier`, ...) with `Substitute.For<T>()`, since a use-case orchestrator's collaborators are side-effecting infrastructure, not pure Domain logic.
 - `FormAI.IntegrationTests` — references FormAI.API, uses `WebApplicationFactory` and PostgreSQL via Testcontainers. Contains `UserRepositoryTests` only.
 
 `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj` runs the unit tests alone, without Docker. Note that `--filter` applied to the whole solution reports "No test matches" for every project that has no match, which is not a failure.
@@ -173,4 +177,4 @@ When working in this repo:
 
 ## Known gaps
 
-Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, SignalR realtime updates, rate limiting on generation, editable expiry, editable points — **none of these are built**. The owner sees scores two ways: aggregated on the Results tab's Summary sub-tab, and per submission on its Individual sub-tab (`GET {id}/submissions` and `GET {id}/submissions/{submissionId}`, both owner-only) — but scores are never shown to the respondent who earned them. `ShowResultsAfterSubmit` gates nothing. There is still no preview mode letting the owner see what a private form looks like to a respondent — `CheckUserAnswerAccess` now blocks the owner from answering their own private form the same as anyone else, but nothing replaces that access with a preview. The results read loads every submission of a form at once, the same unbounded shape as rescoring.
+Detail in [`docs/known-gaps.md`](./docs/known-gaps.md). Headlines: AI result analysis, generation from PDF/Word/image/URL, rate limiting on generation — **none of these are built**. The owner sees scores two ways: aggregated on the Results tab's Summary sub-tab, and per submission on its Individual sub-tab (`GET {id}/submissions` and `GET {id}/submissions/{submissionId}`, both owner-only) — but scores are never shown to the respondent who earned them. `ShowResultsAfterSubmit` gates nothing. The results read loads every submission of a form at once, the same unbounded shape as rescoring.
