@@ -1,0 +1,15 @@
+.git
+.gitignore
+.github
+docs
+README.md
+LICENSE
+*.md
+.vscode
+.vs
+bin
+obj
+node_modules
+.env
+.env.*
+.DS_Store

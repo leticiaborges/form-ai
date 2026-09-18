@@ -116,6 +116,7 @@ EF Core uses snake_case naming (`UseSnakeCaseNamingConvention`), so `AnswerSelec
 | `GET /api/forms/{id}/results` | Owner-only; the form's answer distributions and, when graded, its score distribution. Backs the Results tab's Summary view |
 | `GET /api/forms/{formId}/answer` · `my-submission` · `POST submit` | Anonymous-friendly |
 | `/hubs/form-results` (SignalR) | Owner-only via `JoinFormResults(formId)`; pushes `ResultsUpdated(formId)` to live Results tabs ([ADR 0005](./docs/adr/0005-realtime-results-via-signalr-redis.md)) |
+| `GET /health` | Anonymous, unauthenticated. Bare ASP.NET Core `AddHealthChecks()`/`MapHealthChecks()` — no DB/Redis probe, just confirms the process is up, for the ALB target group in [`docs/deployment/aws-deployment-guide.md`](./docs/deployment/aws-deployment-guide.md) |
 
 ### AI integration
 

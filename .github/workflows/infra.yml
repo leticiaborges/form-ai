@@ -1,0 +1,55 @@
+name: Infrastructure
+
+on:
+  pull_request:
+    paths: ['infra/**']
+  push:
+    branches: [main]
+    paths: ['infra/**']
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+  pull-requests: write   # to comment the plan on the PR
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: infra/envs/prod } }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::058264176602:role/formai-github-actions-terraform
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform init
+      - run: terraform plan -no-color -out=tfplan
+      - run: terraform show -no-color tfplan > plan.txt
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/envs/prod/plan.txt', 'utf8').slice(0, 60000);
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``
+            });
+
+  apply:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production   # see the manual-approval note below
+    defaults: { run: { working-directory: infra/envs/prod } }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::058264176602:role/formai-github-actions-terraform
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform init
+      - run: terraform apply -auto-approve

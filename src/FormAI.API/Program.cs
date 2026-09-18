@@ -55,6 +55,8 @@ builder.Services.AddSignalR().AddStackExchangeRedis(
 
 builder.Services.AddSingleton<IFormResultsNotifier, SignalRFormResultsNotifier>();
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -70,5 +72,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<FormResultsHub>("/hubs/form-results");
+app.MapHealthChecks("/health");
 
 await app.RunAsync();
