@@ -96,6 +96,15 @@ resource "aws_ecs_task_definition" "api" {
       }
     }
   }])
+
+  # deploy.yml registers a new revision with the freshly-built image on every
+  # push (Terraform's `:latest` here is only the bootstrap value for the very
+  # first apply, before any image has been pushed) — without this, the next
+  # `terraform apply` would revert the running service back to that literal
+  # `:latest`, which was never pushed and doesn't exist as a tag.
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 }
 
 resource "aws_ecs_service" "api" {

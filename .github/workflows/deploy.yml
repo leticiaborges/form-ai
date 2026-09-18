@@ -24,6 +24,16 @@ jobs:
           IMAGE="${{ steps.ecr.outputs.registry }}/formai-prod-api:${{ github.sha }}"
           docker build -f src/FormAI.API/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
-      - run: |
-          aws ecs update-service --cluster formai-prod-cluster \
-            --service formai-prod-api --force-new-deployment
+      - run: aws ecs describe-task-definition --task-definition formai-prod-api --query taskDefinition > task-definition.json
+      - uses: aws-actions/amazon-ecs-render-task-definition@v1
+        id: render
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.ecr.outputs.registry }}/formai-prod-api:${{ github.sha }}
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: formai-prod-api
+          cluster: formai-prod-cluster
+          wait-for-service-stability: true

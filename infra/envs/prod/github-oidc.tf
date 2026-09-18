@@ -34,6 +34,19 @@ data "aws_iam_policy_document" "deploy_permissions" {
     actions   = ["ecs:UpdateService", "ecs:DescribeServices"]
     resources = [module.container_platform.ecs_service_id]
   }
+  statement {
+    sid       = "ECSTaskDefinitionRegister"
+    actions   = ["ecs:RegisterTaskDefinition", "ecs:DescribeTaskDefinition"]
+    resources = ["*"] # neither action supports resource-level scoping in AWS's model
+  }
+  statement {
+    sid     = "PassEcsRoles"
+    actions = ["iam:PassRole"]
+    resources = [
+      module.container_platform.ecs_execution_role_arn,
+      module.container_platform.ecs_task_role_arn,
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "deploy" {
