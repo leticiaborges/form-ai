@@ -72,7 +72,5 @@ appsettings.Development.json
 /docs/learning
 
 infra/envs/prod/.terraform
-*.tfvars
-!*.tfvars.example
 *.tfplan
 crash.log
