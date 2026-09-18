@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/FormAI.API/Dockerfile
+    container_name: form-ai-api
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=form_ai;Username=form_ai_app;Password=${APP_DB_PASSWORD}"
+      ConnectionStrings__Redis: "redis:6379"
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: formai
+      Jwt__Audience: formai
+      Email__SmtpHost: mailpit
+      Email__SmtpPort: 1025
+      Email__FromAddress: noreply@formai.local
+      Email__FromName: FormAI
+      Email__FrontendBaseUrl: http://localhost:5173
+      Claude__ApiKey: ${CLAUDE_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

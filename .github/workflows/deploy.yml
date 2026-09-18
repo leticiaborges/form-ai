@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['infra/**', 'docs/**']
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::058264176602:role/formai-github-actions-deploy
+          aws-region: us-east-1
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/formai-prod-api:${{ github.sha }}"
+          docker build -f src/FormAI.API/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+      - run: |
+          aws ecs update-service --cluster formai-prod-cluster \
+            --service formai-prod-api --force-new-deployment

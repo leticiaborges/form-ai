@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d form_ai"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d form_ai" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,13 +21,23 @@ services:
     image: axllent/mailpit:latest
     container_name: form-ai-mailpit
     ports:
-      - "1025:1025"   # SMTP — backend connects here
-      - "8025:8025"   # Web inbox — open http://localhost:8025
+      - "1025:1025" # SMTP — backend connects here
+      - "8025:8025" # Web inbox — open http://localhost:8025
     environment:
       MP_MAX_MESSAGES: 500
       MP_DATA_FILE: /data/mailpit.db
     volumes:
       - mailpit_data:/data
+  redis:
+    image: redis:8-alpine
+    container_name: form-ai-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

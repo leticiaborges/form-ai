@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and fill in real values. terraform.tfvars is
+# gitignored (*.tfvars) — this .example file is the only one tracked.
+#
+# jwt_secret and claude_api_key are NOT set here even as placeholders — pass
+# them as TF_VAR_jwt_secret / TF_VAR_claude_api_key environment variables
+# instead, so a secret never sits in a file on disk.
+
+hosted_zone_id        = "Z0123456789ABCDEFGHIJ" # Route 53 console -> your hosted zone -> Hosted zone ID
+api_domain_name        = "api.yourdomain.com"
+frontend_domain_name   = "app.yourdomain.com"
+
+# Optional — only needed if you want to override the defaults in variables.tf
+# region          = "us-east-1"
+# name            = "formai-prod"

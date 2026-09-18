@@ -34,6 +34,7 @@ artifacts/
 
 ## Secrets / config overrides
 appsettings.Development.json
+appsettings.Production.json
 appsettings.Local.json
 *.local.json
 secrets.json
@@ -69,3 +70,9 @@ migration.sql
 appsettings.Development.json 
 
 /docs/learning
+
+infra/envs/prod/.terraform
+*.tfvars
+!*.tfvars.example
+*.tfplan
+crash.log
