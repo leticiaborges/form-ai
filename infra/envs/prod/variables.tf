@@ -5,7 +5,7 @@ variable "region" {
 }
 
 variable "name" {
-  description = "Resource name prefix for this environment, e.g. formai-prod."
+  description = "Resource name prefix for this environment, for example: formai-prod."
   type        = string
   default     = "formai-prod"
 }
