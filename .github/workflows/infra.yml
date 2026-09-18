@@ -17,6 +17,9 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: infra/envs/prod } }
+    env:
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+      TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
@@ -44,6 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production   # see the manual-approval note below
     defaults: { run: { working-directory: infra/envs/prod } }
+    env:
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+      TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
