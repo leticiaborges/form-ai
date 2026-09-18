@@ -1,16 +1,18 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['infra/**', 'docs/**']
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   build-and-deploy:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
