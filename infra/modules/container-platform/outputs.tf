@@ -17,3 +17,14 @@ output "alb_zone_id" {
 output "ecr_repository_url" {
   value = aws_ecr_repository.api.repository_url
 }
+
+# Needed so deploy.yml's role can be granted iam:PassRole scoped to exactly
+# these two ARNs — registering a task definition revision requires PassRole
+# on whatever executionRoleArn/taskRoleArn it references.
+output "ecs_execution_role_arn" {
+  value = aws_iam_role.ecs_execution.arn
+}
+
+output "ecs_task_role_arn" {
+  value = aws_iam_role.ecs_task.arn
+}
