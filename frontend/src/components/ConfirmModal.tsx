@@ -6,7 +6,7 @@ interface ConfirmModalProps {
   children: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'primary' | 'danger';
+  variant?: "primary" | "danger";
   isLoading?: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -15,31 +15,30 @@ interface ConfirmModalProps {
 export function ConfirmModal({
   title,
   children,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  variant = 'primary',
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  variant = "primary",
   isLoading = false,
   onConfirm,
-  onClose
+  onClose,
 }: Readonly<ConfirmModalProps>) {
-
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !isLoading)
-        onClose();
+      if (e.key === "Escape" && !isLoading) onClose();
     }
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLoading, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-black/40"
-        onClick={() => { if (!isLoading) onClose(); }}
+        onClick={() => {
+          if (!isLoading) onClose();
+        }}
       />
 
       <div

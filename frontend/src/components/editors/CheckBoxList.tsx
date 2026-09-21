@@ -1,5 +1,5 @@
-import type { FormOption } from '../../types/form';
-import { OptionList } from './OptionsList';
+import type { FormOption } from "../../types/form";
+import { OptionList } from "./OptionsList";
 
 interface CheckBoxListProps {
   options: FormOption[];

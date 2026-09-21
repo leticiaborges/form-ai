@@ -1,11 +1,10 @@
 import { useId, useState } from "react";
-import type { FormQuestion, FormOption, QuestionType } from '../../types/form';
+import type { FormQuestion, FormOption, QuestionType } from "../../types/form";
 import { Input } from "../Input";
 import { Button } from "../Button";
 import { RadioButtonList } from "./RadioButtonList";
 import { CheckBoxList } from "./CheckBoxList";
 import { DEFAULT_POINTS, PointsInput } from "./PointsInput";
-
 
 interface AddQuestionModalProps {
   /** Whether the form is graded, so the new question offers an answer key or does not. */
@@ -14,55 +13,58 @@ interface AddQuestionModalProps {
   onClose: () => void;
 }
 
-const TYPES: { value: QuestionType, label: string }[] = [
-  { value: 'Single', label: 'Single choice' },
-  { value: 'Multiple', label: 'Multiple choice' },
-  { value: 'Text', label: 'Text' },
-  { value: 'Numeric', label: 'Numeric' }
+const TYPES: { value: QuestionType; label: string }[] = [
+  { value: "Single", label: "Single choice" },
+  { value: "Multiple", label: "Multiple choice" },
+  { value: "Text", label: "Text" },
+  { value: "Numeric", label: "Numeric" },
 ];
 
 function makeOption(isGraded: boolean): FormOption {
   // Null means "not marked": an ungraded form has no answer key at all.
-  return { id: crypto.randomUUID(), text: '', order: 0, isCorrect: isGraded ? false : null };
+  return { id: crypto.randomUUID(), text: "", order: 0, isCorrect: isGraded ? false : null };
 }
 
 export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuestionModalProps>) {
-  const [text, setText] = useState('');
-  const [type, setType] = useState<QuestionType>('Single');
+  const [text, setText] = useState("");
+  const [type, setType] = useState<QuestionType>("Single");
   const [points, setPoints] = useState(DEFAULT_POINTS);
-  const [options, setOptions] = useState<FormOption[]>([makeOption(isGraded), makeOption(isGraded)]);
-  const [error, setError] = useState('');
+  const [options, setOptions] = useState<FormOption[]>([
+    makeOption(isGraded),
+    makeOption(isGraded),
+  ]);
+  const [error, setError] = useState("");
 
   // Unique per mounted modal, so the radio group and its caption cannot collide.
   const typeLabelId = useId();
   const typeGroupName = useId();
 
-  const hasOptions = type === 'Single' || type === 'Multiple';
+  const hasOptions = type === "Single" || type === "Multiple";
 
   function changeType(next: QuestionType) {
     setType(next);
 
     // Switching to Single narrows the answer key to the first marked option.
-    if (next === 'Single') {
-      const firstCorrect = options.findIndex(o => o.isCorrect);
+    if (next === "Single") {
+      const firstCorrect = options.findIndex((o) => o.isCorrect);
       if (firstCorrect >= 0)
-        setOptions(opts => opts.map((o, i) => ({ ...o, isCorrect: i === firstCorrect })));
+        setOptions((opts) => opts.map((o, i) => ({ ...o, isCorrect: i === firstCorrect })));
     }
   }
 
   function handleSubmit() {
     if (!text.trim()) {
-      setError('Question text is required.');
+      setError("Question text is required.");
       return;
     }
 
     if (hasOptions && options.length < 2) {
-      setError('At least two options are required.');
+      setError("At least two options are required.");
       return;
     }
 
-    if (hasOptions && options.some(o => !o.text.trim())) {
-      setError('All option texts must be filled in.');
+    if (hasOptions && options.some((o) => !o.text.trim())) {
+      setError("All option texts must be filled in.");
       return;
     }
 
@@ -75,7 +77,7 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuest
       aiGenerated: false,
       points: isGraded ? points : null,
       correctAnswer: null,
-      options: hasOptions ? options.map((o, i) => ({ ...o, order: i + 1 })) : []
+      options: hasOptions ? options.map((o, i) => ({ ...o, order: i + 1 })) : [],
     };
 
     onAdd(newQuestion);
@@ -92,17 +94,19 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuest
           <Input
             label="Question text"
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={(e) => setText(e.target.value)}
             placeholder="e.g. What is the capital of France?"
           />
 
           <div>
             <div className="mb-1 flex items-center justify-between gap-3">
-              <span id={typeLabelId} className="block text-sm font-medium text-gray-700">Type</span>
+              <span id={typeLabelId} className="block text-sm font-medium text-gray-700">
+                Type
+              </span>
               {isGraded && <PointsInput points={points} onChange={setPoints} />}
             </div>
             <div role="radiogroup" aria-labelledby={typeLabelId} className="flex flex-wrap gap-2">
-              {TYPES.map(t => (
+              {TYPES.map((t) => (
                 <label key={t.value} className="cursor-pointer">
                   <input
                     type="radio"
@@ -114,9 +118,10 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuest
                   />
                   <span
                     className={`block rounded-full border px-3 py-1 text-sm font-medium transition-colors
-                      peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-1 ${type === t.value
-                        ? 'border-brand-600 bg-brand-600 text-white'
-                        : 'border-gray-300 bg-white text-gray-600 hover:border-brand-400'
+                      peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-1 ${
+                        type === t.value
+                          ? "border-brand-600 bg-brand-600 text-white"
+                          : "border-gray-300 bg-white text-gray-600 hover:border-brand-400"
                       }`}
                   >
                     {t.label}
@@ -126,14 +131,15 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuest
             </div>
           </div>
 
-
           {hasOptions && (
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-2 p-0 text-sm font-medium text-gray-700">
                 Options
-                {isGraded && <span className="text-gray-400 font-normal"> (mark correct answers)</span>}
+                {isGraded && (
+                  <span className="text-gray-400 font-normal"> (mark correct answers)</span>
+                )}
               </legend>
-              {type === 'Single' ? (
+              {type === "Single" ? (
                 <RadioButtonList
                   options={options}
                   questionId="modal-new-question"
@@ -155,7 +161,9 @@ export function AddQuestionModal({ isGraded, onAdd, onClose }: Readonly<AddQuest
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit}>Add question</Button>
         </div>
       </div>

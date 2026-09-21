@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { Button } from '../components/Button';
+import { Link } from "react-router-dom";
+import { Button } from "../components/Button";
 
 export function LandingPage() {
   return (
@@ -7,8 +7,12 @@ export function LandingPage() {
       <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto w-full">
         <span className="text-2xl font-bold text-brand-600">FormAI</span>
         <nav className="flex gap-3">
-          <Link to="/login"><Button variant="outline">Log in</Button></Link>
-          <Link to="/register"><Button>Get started</Button></Link>
+          <Link to="/login">
+            <Button variant="outline">Log in</Button>
+          </Link>
+          <Link to="/register">
+            <Button>Get started</Button>
+          </Link>
         </nav>
       </header>
 
@@ -18,8 +22,8 @@ export function LandingPage() {
             Build forms <span className="text-brand-600">powered by AI</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Describe what you need. FormAI generates smart, beautiful forms in
-            seconds — ready to share.
+            Describe what you need. FormAI generates smart, beautiful forms in seconds — ready to
+            share.
           </p>
         </div>
         <div className="flex gap-4 flex-wrap justify-center">
@@ -27,7 +31,9 @@ export function LandingPage() {
             <Button className="px-8 py-3 text-base">Start for free</Button>
           </Link>
           <Link to="/login">
-            <Button variant="outline" className="px-8 py-3 text-base">Log in</Button>
+            <Button variant="outline" className="px-8 py-3 text-base">
+              Log in
+            </Button>
           </Link>
         </div>
       </main>

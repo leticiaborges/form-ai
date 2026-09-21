@@ -1,13 +1,13 @@
 export interface CustomResponse {
-    response?: DataResponse;
+  response?: DataResponse;
 }
 
 export interface DataResponse {
-    data?: MessageErrorResponse
+  data?: MessageErrorResponse;
 }
 
 export interface MessageErrorResponse {
-    message?: string;
-    errors?: Record<string, string[]>;
-    code?: string;
+  message?: string;
+  errors?: Record<string, string[]>;
+  code?: string;
 }

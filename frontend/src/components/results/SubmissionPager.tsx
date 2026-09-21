@@ -8,7 +8,12 @@ interface SubmissionPagerProps {
   disabled?: boolean;
 }
 
-export function SubmissionPager({ page, totalPages, onPageChange, disabled }: Readonly<SubmissionPagerProps>) {
+export function SubmissionPager({
+  page,
+  totalPages,
+  onPageChange,
+  disabled,
+}: Readonly<SubmissionPagerProps>) {
   const [inputValue, setInputValue] = useState(String(page));
 
   // Resync the input from the page prop when navigation happens elsewhere (Prev/Next, parent).
@@ -37,7 +42,13 @@ export function SubmissionPager({ page, totalPages, onPageChange, disabled }: Re
         disabled={disabled || page <= 1}
         onClick={() => onPageChange(page - 1)}
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </Button>
@@ -49,9 +60,11 @@ export function SubmissionPager({ page, totalPages, onPageChange, disabled }: Re
           max={totalPages}
           value={inputValue}
           disabled={disabled}
-          onChange={e => setInputValue(e.target.value)}
+          onChange={(e) => setInputValue(e.target.value)}
           onBlur={commit}
-          onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+          }}
           className="w-16 rounded-lg border border-gray-300 px-2 py-1 text-center text-sm shadow-sm outline-none
                      focus:ring-2 focus:ring-brand-500 focus:border-brand-500 disabled:bg-gray-50"
         />
@@ -64,7 +77,13 @@ export function SubmissionPager({ page, totalPages, onPageChange, disabled }: Re
         disabled={disabled || page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </Button>

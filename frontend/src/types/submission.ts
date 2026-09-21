@@ -1,54 +1,54 @@
 import type { QuestionType } from "./form";
 
 export interface AnswerOption {
-    id: string;
-    text: string;
-    order: number;
+  id: string;
+  text: string;
+  order: number;
 }
 
 export interface AnswerQuestion {
-    id: string;
-    text: string;
-    type: QuestionType;
-    order: number;
-    isRequired: boolean;
-    options: AnswerOption[]
+  id: string;
+  text: string;
+  type: QuestionType;
+  order: number;
+  isRequired: boolean;
+  options: AnswerOption[];
 }
 
 export interface AnswerForm {
-    id: string;
-    title: string;
-    description: string | null;
-    questions: AnswerQuestion[]
+  id: string;
+  title: string;
+  description: string | null;
+  questions: AnswerQuestion[];
 }
 
 export interface MySubmission {
-    hasSubmitted: boolean;
-    submittedAt: string | null;
+  hasSubmitted: boolean;
+  submittedAt: string | null;
 }
 
 export interface AnswerPayload {
-    selectedOptionIds?: string[];
-    selectedOptionTexts?: string[];
-    textValue?: string;
-    numericValue?: number;
+  selectedOptionIds?: string[];
+  selectedOptionTexts?: string[];
+  textValue?: string;
+  numericValue?: number;
 }
 
 export interface QuestionGradingInfo {
-    points: number;
-    earnedScore: number;
-    isCorrect: boolean;
-    correctOptionTexts: string[];
-    correctAnswerText: string | null;
-    hasAnswerKey: boolean;
+  points: number;
+  earnedScore: number;
+  isCorrect: boolean;
+  correctOptionTexts: string[];
+  correctAnswerText: string | null;
+  hasAnswerKey: boolean;
 }
 
 export interface SubmitFormPayload {
-    respondentToken: string;
-    answers: (AnswerPayload & { questionId: string })[];
+  respondentToken: string;
+  answers: (AnswerPayload & { questionId: string })[];
 }
 
 export interface SubmitFormResult {
-    submissionId: string;
-    score: number | null;
+  submissionId: string;
+  score: number | null;
 }
