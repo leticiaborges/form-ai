@@ -30,6 +30,10 @@ public class LoginHandler
         if (user == null || !_hasher.Verify(request.Password, user.PasswordHash))
             throw new NotFoundException("Invalid user or password.");
 
+        if (!user.IsEmailVerified)
+            throw new ValidationException(ValidationErrorCode.EmailNotVerified,
+                "Please confirm your email address before logging in.");
+
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenStr = _jwtService.GenerateRefreshToken();
 
