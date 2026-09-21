@@ -4,7 +4,7 @@ import { getFormResults } from "../../api/results";
 import { QuestionResultCard } from "./QuestionResultCard";
 import { ScoreDistributionChart } from "./ScoreDistributionChart";
 
-type ResultsState = 'loading' | 'ready' | 'error';
+type ResultsState = "loading" | "ready" | "error";
 
 interface SummaryResultsTabProps {
   formId: string;
@@ -12,7 +12,7 @@ interface SummaryResultsTabProps {
 }
 
 export function SummaryResultsTab({ formId, reloadKey }: Readonly<SummaryResultsTabProps>) {
-  const [state, setState] = useState<ResultsState>('loading');
+  const [state, setState] = useState<ResultsState>("loading");
   const [results, setResults] = useState<FormResults | null>(null);
 
   // Reset to loading when the form or a refetch is requested. Adjusting state during render
@@ -20,31 +20,33 @@ export function SummaryResultsTab({ formId, reloadKey }: Readonly<SummaryResults
   const [prevQuery, setPrevQuery] = useState([formId, reloadKey]);
   if (prevQuery[0] !== formId || prevQuery[1] !== reloadKey) {
     setPrevQuery([formId, reloadKey]);
-    setState('loading');
+    setState("loading");
   }
 
   useEffect(() => {
     let cancelled = false;
 
     getFormResults(formId)
-      .then(data => {
+      .then((data) => {
         if (cancelled) return;
 
         setResults(data);
-        setState('ready');
+        setState("ready");
       })
       .catch(() => {
         if (cancelled) return;
-        setState('error');
+        setState("error");
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [formId, reloadKey]);
 
-  if (state === 'loading')
+  if (state === "loading")
     return <p className="py-16 text-center text-gray-500">Loading results…</p>;
 
-  if (state === 'error' || !results)
+  if (state === "error" || !results)
     return <p className="py-16 text-center text-red-600">Could not load the results.</p>;
 
   if (results.submissionCount === 0) {
@@ -59,18 +61,17 @@ export function SummaryResultsTab({ formId, reloadKey }: Readonly<SummaryResults
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-gray-500">
-        {results.submissionCount} submission{results.submissionCount !== 1 ? 's' : ''}
+        {results.submissionCount} submission{results.submissionCount !== 1 ? "s" : ""}
       </p>
 
-      {
-        results.isGraded && results.scoreDistribution.length > 0 &&
-        (
-          <ScoreDistributionChart buckets={results.scoreDistribution}
-            totalPoints={results.totalPoints} />
-        )
-      }
+      {results.isGraded && results.scoreDistribution.length > 0 && (
+        <ScoreDistributionChart
+          buckets={results.scoreDistribution}
+          totalPoints={results.totalPoints}
+        />
+      )}
 
-      {results.questions.map(question => (
+      {results.questions.map((question) => (
         <QuestionResultCard key={question.questionId} question={question} />
       ))}
     </div>

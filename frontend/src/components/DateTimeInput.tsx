@@ -10,20 +10,29 @@ interface DateTimeInputProps {
   error?: string;
   disabled?: boolean;
   minDate?: string;
-  timeFormat?: 'HH:mm' | 'HH:mm:ss';
+  timeFormat?: "HH:mm" | "HH:mm:ss";
 }
 
 function splitValue(value: string) {
-  const [date = '', time = ''] = value.split('T');
+  const [date = "", time = ""] = value.split("T");
   return { date, time };
 }
 
-export function DateTimeInput({ id, label, value, onChange,
-  onBlur, error, disabled, minDate, timeFormat = 'HH:mm' }: Readonly<DateTimeInputProps>) {
+export function DateTimeInput({
+  id,
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+  minDate,
+  timeFormat = "HH:mm",
+}: Readonly<DateTimeInputProps>) {
   const parts = splitValue(value);
 
-  function update(newValue: { date: string, time: string }) {
-    onChange(newValue.date && newValue.time ? `${newValue.date}T${newValue.time}` : '');
+  function update(newValue: { date: string; time: string }) {
+    onChange(newValue.date && newValue.time ? `${newValue.date}T${newValue.time}` : "");
   }
 
   return (
@@ -31,26 +40,28 @@ export function DateTimeInput({ id, label, value, onChange,
       <legend className="text-sm font-medium text-gray-700">{label}</legend>
       <div className="flex items-center gap-2">
         <div className="w-44">
-          <DateInput id={`di-${id}`}
+          <DateInput
+            id={`di-${id}`}
             aria-label="Date"
             value={parts.date}
             min={minDate}
             error={error}
             showError={false}
-            onChange={e => update({ date: e.target.value, time: parts.time })}
-            onBlur={onBlur}>
-          </DateInput>
+            onChange={(e) => update({ date: e.target.value, time: parts.time })}
+            onBlur={onBlur}
+          ></DateInput>
         </div>
         <div className="w-32">
-          <TimeInput id={`ti-${id}`}
+          <TimeInput
+            id={`ti-${id}`}
             aria-label="Time"
             value={parts.time}
             error={error}
             showError={false}
-            onChange={e => update({ date: parts.date, time: e.target.value })}
+            onChange={(e) => update({ date: parts.date, time: e.target.value })}
             onBlur={onBlur}
-            format={timeFormat}>
-          </TimeInput>
+            format={timeFormat}
+          ></TimeInput>
         </div>
       </div>
 

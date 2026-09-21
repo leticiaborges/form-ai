@@ -14,14 +14,21 @@ const createFormSchema = z.object({
   title: z.string().max(255, "Title must be at most 255 characters").optional(),
   description: z.string().max(1024, "Description must be at most 1024 characters").optional(),
   sourceText: z.string().min(50, "Source text must be at least 50 characters long"),
-  questionCount: z.coerce.number().int().min(1, "At least 1 question.").
-    max(20, "At most 20 questions."),
-  difficultyLevel: z.enum(["Easy", "Medium", "Hard"], "Difficulty level must be one of Easy, Medium, or Hard."),
+  questionCount: z.coerce
+    .number()
+    .int()
+    .min(1, "At least 1 question.")
+    .max(20, "At most 20 questions."),
+  difficultyLevel: z.enum(
+    ["Easy", "Medium", "Hard"],
+    "Difficulty level must be one of Easy, Medium, or Hard.",
+  ),
   isGraded: z.boolean(),
-  expiresAt: z.string()
+  expiresAt: z
+    .string()
     .min(1, "Pick an expiry date and time")
-    .refine(v => !Number.isNaN(Date.parse(v)), "Enter a valid date and time.")
-    .refine(v => new Date(v) > new Date(), "The expiry must be in the future.")
+    .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid date and time.")
+    .refine((v) => new Date(v) > new Date(), "The expiry must be in the future."),
 });
 
 type CreateFormInput = z.input<typeof createFormSchema>;
@@ -37,23 +44,23 @@ export function CreateFormPage() {
     register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<CreateFormInput, unknown, CreateFormData>({
     resolver: zodResolver(createFormSchema),
     defaultValues: {
       questionCount: 5,
       difficultyLevel: "Medium",
       isGraded: false,
-      expiresAt: getDefaultFormatStringDateTime(defaultDate, DATETIME_FORMATS.DATETIME_HHMM)
-    }
+      expiresAt: getDefaultFormatStringDateTime(defaultDate, DATETIME_FORMATS.DATETIME_HHMM),
+    },
   });
 
-  const { field, fieldState } = useController({ name: 'expiresAt', control });
+  const { field, fieldState } = useController({ name: "expiresAt", control });
 
   async function onSubmit(data: CreateFormData) {
     try {
       const result = await generateForm({ ...data, expiresAt: new Date(data.expiresAt) });
-      showSuccess('Form generated successfully.');
+      showSuccess("Form generated successfully.");
       navigate(`/forms/${result.formId}/edit`);
     } catch (err: unknown) {
       showError(getErrorMessage(err, "Failed to generate form. Please try again."));
@@ -67,8 +74,8 @@ export function CreateFormPage() {
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-gray-900">Create a new form</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Paste the content you want to turn into questions, and the AI will
-              generate a draft form for you to edit.
+              Paste the content you want to turn into questions, and the AI will generate a draft
+              form for you to edit.
             </p>
           </div>
 
@@ -82,16 +89,14 @@ export function CreateFormPage() {
                 type="text"
                 maxLength={255}
                 className={
-                  'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                  'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                  (errors.title ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                  "w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none " +
+                  "focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
+                  (errors.title ? "border-red-400 focus:ring-red-400 " : "border-gray-300 ")
                 }
                 placeholder="Leave blank to use a generated title"
-                {...register('title')}
+                {...register("title")}
               />
-              {errors.title && (
-                <span className="text-xs text-red-500">{errors.title.message}</span>
-              )}
+              {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="description" className="text-sm font-medium text-gray-700">
@@ -102,12 +107,12 @@ export function CreateFormPage() {
                 rows={2}
                 maxLength={1024}
                 className={
-                  'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                  'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                  (errors.description ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                  "w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none " +
+                  "focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
+                  (errors.description ? "border-red-400 focus:ring-red-400 " : "border-gray-300 ")
                 }
                 placeholder="A short note about what this form is for…"
-                {...register('description')}
+                {...register("description")}
               />
               {errors.description && (
                 <span className="text-xs text-red-500">{errors.description.message}</span>
@@ -121,12 +126,12 @@ export function CreateFormPage() {
                 id="sourceText"
                 rows={8}
                 className={
-                  'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                  'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                  (errors.sourceText ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                  "w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none " +
+                  "focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
+                  (errors.sourceText ? "border-red-400 focus:ring-red-400 " : "border-gray-300 ")
                 }
                 placeholder="Paste an article, study notes, or any text you want questions generated from…"
-                {...register('sourceText')}
+                {...register("sourceText")}
               />
               {errors.sourceText && (
                 <span className="text-xs text-red-500">{errors.sourceText.message}</span>
@@ -144,17 +149,18 @@ export function CreateFormPage() {
                   min={1}
                   max={20}
                   className={
-                    'w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none ' +
-                    'focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ' +
-                    (errors.questionCount ? 'border-red-400 focus:ring-red-400 ' : 'border-gray-300 ')
+                    "w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none " +
+                    "focus:ring-2 focus:ring-brand-500 focus:border-brand-500 " +
+                    (errors.questionCount
+                      ? "border-red-400 focus:ring-red-400 "
+                      : "border-gray-300 ")
                   }
-                  {...register('questionCount')}
+                  {...register("questionCount")}
                 />
                 {errors.questionCount && (
                   <span className="text-xs text-red-500">{errors.questionCount.message}</span>
                 )}
               </div>
-
 
               <div className="flex flex-col gap-1">
                 <label htmlFor="difficultyLevel" className="text-sm font-medium text-gray-700">
@@ -164,7 +170,7 @@ export function CreateFormPage() {
                   id="difficultyLevel"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm outline-none
                   focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                  {...register('difficultyLevel')}
+                  {...register("difficultyLevel")}
                 >
                   <option value="Easy">Easy</option>
                   <option value="Medium">Medium</option>
@@ -177,19 +183,21 @@ export function CreateFormPage() {
               <DateTimeInput
                 label="Expires at"
                 id="expiresAt"
-                value={field.value ?? ''}
+                value={field.value ?? ""}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 error={fieldState.error?.message}
-                timeFormat="HH:mm"></DateTimeInput>
+                timeFormat="HH:mm"
+              ></DateTimeInput>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
                 className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                {...register('isGraded')}
-              />{/**/}
+                {...register("isGraded")}
+              />
+              {/**/}
               Graded form
             </label>
 

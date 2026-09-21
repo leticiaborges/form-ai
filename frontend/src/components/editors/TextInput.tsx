@@ -5,7 +5,11 @@ interface TextInputProps {
   onCorrectAnswerChange: (value: string | null) => void;
 }
 
-export function TextInput({ correctAnswer, isGraded, onCorrectAnswerChange }: Readonly<TextInputProps>) {
+export function TextInput({
+  correctAnswer,
+  isGraded,
+  onCorrectAnswerChange,
+}: Readonly<TextInputProps>) {
   return (
     <div className="mt-3 space-y-3">
       <div>
@@ -16,19 +20,21 @@ export function TextInput({ correctAnswer, isGraded, onCorrectAnswerChange }: Re
           className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 cursor-not-allowed"
         />
       </div>
-      {isGraded && (<div>
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-          Suggested answer
-        </p>
-        <input
-          type="text"
-          value={correctAnswer ?? ''}
-          onChange={e => onCorrectAnswerChange(e.target.value || null)}
-          placeholder="Enter the expected correct answer…"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
+      {isGraded && (
+        <div>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
+            Suggested answer
+          </p>
+          <input
+            type="text"
+            value={correctAnswer ?? ""}
+            onChange={(e) => onCorrectAnswerChange(e.target.value || null)}
+            placeholder="Enter the expected correct answer…"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-        />
-      </div>)}
+          />
+        </div>
+      )}
     </div>
   );
 }

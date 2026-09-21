@@ -45,10 +45,13 @@ export function PointsInput({ points, onChange }: Readonly<PointsInputProps>) {
         min={MIN_POINTS}
         max={MAX_POINTS}
         value={draft}
-        onChange={e => setDraft(e.target.value)}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
         }}
         className="w-16 rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700
                    focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400"

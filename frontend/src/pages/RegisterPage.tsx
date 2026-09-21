@@ -55,12 +55,8 @@ export function RegisterPage() {
         for (const [key, messages] of objectEntries) {
           setError(key as keyof RegisterFormData, { type: "server", message: messages[0] });
         }
-      }
-      else {
-        setServerError(
-          e.response?.data?.message ??
-          "Registration failed. Please try again.",
-        );
+      } else {
+        setServerError(e.response?.data?.message ?? "Registration failed. Please try again.");
       }
     }
   }
@@ -72,9 +68,7 @@ export function RegisterPage() {
           <Link to="/" className="text-2xl font-bold text-brand-600">
             FormAI
           </Link>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">
-            Create your account
-          </h1>
+          <h1 className="mt-4 text-xl font-semibold text-gray-900">Create your account</h1>
           <p className="text-sm text-gray-500 mt-1">
             Already have an account?{" "}
             <Link to="/login" className="text-brand-600 hover:underline">
@@ -83,11 +77,7 @@ export function RegisterPage() {
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-          className="flex flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <Input
             label="Full name"
             type="text"
@@ -123,11 +113,7 @@ export function RegisterPage() {
             </div>
           )}
 
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            className="mt-2 w-full"
-          >
+          <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
             Create account
           </Button>
         </form>

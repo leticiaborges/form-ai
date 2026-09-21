@@ -8,23 +8,26 @@ interface TabsProps {
   activeTab: string;
   onTabChange: (id: string) => void;
   centered?: boolean;
-  size?: 'md' | 'sm';
+  size?: "md" | "sm";
 }
 
 export function Tabs({
-  tabs, activeTab, onTabChange, centered = true, size = 'md'
+  tabs,
+  activeTab,
+  onTabChange,
+  centered = true,
+  size = "md",
 }: Readonly<TabsProps>) {
-  const isSmall = size === 'sm';
+  const isSmall = size === "sm";
 
   return (
     <div
       role="tablist"
       className={
-        'flex items-center gap-1 border-b border-gray-200 ' +
-        (centered ? 'justify-center' : '')
+        "flex items-center gap-1 border-b border-gray-200 " + (centered ? "justify-center" : "")
       }
     >
-      {tabs.map(tab => {
+      {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
 
         return (
@@ -35,11 +38,11 @@ export function Tabs({
             aria-selected={isActive}
             onClick={() => onTabChange(tab.id)}
             className={
-              'transition-colors border-b-2 -mb-px ' +
-              (isSmall ? 'px-3 py-1.5 text-xs font-medium ' : 'px-4 py-2 text-sm font-semibold ') +
+              "transition-colors border-b-2 -mb-px " +
+              (isSmall ? "px-3 py-1.5 text-xs font-medium " : "px-4 py-2 text-sm font-semibold ") +
               (isActive
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300')
+                ? "border-brand-600 text-brand-700"
+                : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300")
             }
           >
             {tab.label}

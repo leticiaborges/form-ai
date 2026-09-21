@@ -10,24 +10,30 @@ interface ResultsTabProps {
 }
 
 const TABS: TabDefinition[] = [
-  { id: 'summary', label: 'Summary' },
-  { id: 'individual', label: 'Individual' }
+  { id: "summary", label: "Summary" },
+  { id: "individual", label: "Individual" },
 ];
 
 export function ResultsTab({ formId, reloadKey }: Readonly<ResultsTabProps>) {
-
-  const [activeTab, setActiveTab] = useState('summary');
+  const [activeTab, setActiveTab] = useState("summary");
   const [liveReloadKey, setLiveReloadKey] = useState(0);
 
   useFormResultsHub(formId, () => setLiveReloadKey((k) => k + 1));
 
   return (
     <div>
-      <Tabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} size="sm" centered={false} />
-      {
-        (activeTab === 'summary' ?
-          <SummaryResultsTab formId={formId} reloadKey={reloadKey + liveReloadKey} /> :
-          <IndividualResultsTab formId={formId} reloadKey={reloadKey + liveReloadKey} />)
-      }
-    </div>);
+      <Tabs
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        size="sm"
+        centered={false}
+      />
+      {activeTab === "summary" ? (
+        <SummaryResultsTab formId={formId} reloadKey={reloadKey + liveReloadKey} />
+      ) : (
+        <IndividualResultsTab formId={formId} reloadKey={reloadKey + liveReloadKey} />
+      )}
+    </div>
+  );
 }

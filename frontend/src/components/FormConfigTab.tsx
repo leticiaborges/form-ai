@@ -6,18 +6,23 @@ interface FormConfigTabProps {
   expiresAtError: string;
 }
 
-export function FormConfigTab({ expiresAt, onExpiresAtChange, expiresAtError }: Readonly<FormConfigTabProps>) {
-
-
+export function FormConfigTab({
+  expiresAt,
+  onExpiresAtChange,
+  expiresAtError,
+}: Readonly<FormConfigTabProps>) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <DateTimeInput id="expiresAt"
+        <DateTimeInput
+          id="expiresAt"
           label="Expires at"
           value={expiresAt}
           onChange={onExpiresAtChange}
           error={expiresAtError}
-          timeFormat="HH:mm" />
+          timeFormat="HH:mm"
+        />
       </div>
-    </div>);
+    </div>
+  );
 }
