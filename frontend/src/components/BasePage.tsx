@@ -5,7 +5,7 @@ import { Button } from "./Button";
 
 export function BasePage({ children }: Readonly<{ children: ReactNode }>) {
   const { user, logout } = useAuth();
-  
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
