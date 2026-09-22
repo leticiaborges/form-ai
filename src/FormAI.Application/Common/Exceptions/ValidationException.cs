@@ -4,7 +4,8 @@ public enum ValidationErrorCode
 {
     GenericError,
     FormExpired,
-    AlreadySubmitted
+    AlreadySubmitted,
+    EmailNotVerified
 }
 
 public class ValidationException : Exception

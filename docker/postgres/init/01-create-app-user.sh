@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -v app_db_password="$APP_DB_PASSWORD" <<-'EOSQL'
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -v app_db_password="$APP_DB_PASSWORD" -v db_name="$POSTGRES_DB" <<-'EOSQL'
 CREATE ROLE form_ai_app WITH
 LOGIN
 PASSWORD :'app_db_password'
@@ -10,11 +10,11 @@ NOCREATEDB
 NOCREATEROLE
 NOREPLICATION;
 
-ALTER DATABASE form_ai OWNER TO form_ai_app;
+ALTER DATABASE :"db_name" OWNER TO form_ai_app;
 
-GRANT ALL PRIVILEGES ON DATABASE form_ai TO form_ai_app;
+GRANT ALL PRIVILEGES ON DATABASE :"db_name" TO form_ai_app;
 
-\c form_ai
+\c :db_name
 
 ALTER SCHEMA public OWNER TO form_ai_app;
 
