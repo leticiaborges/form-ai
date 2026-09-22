@@ -93,6 +93,7 @@ jobs:
         ports: ["1025:1025", "8025:8025"]
     env:
       E2E_DB_CONNECTION: Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_app;Password=${{ secrets.CI_APP_DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -118,6 +119,13 @@ jobs:
         run: dotnet restore
 
       - name: Apply migrations
+        env:
+          # dotnet-ef builds the whole app host (Program.cs) to find AppDbContext, and both
+          # AddInfrastructure() and Program.cs fail fast if these are missing entirely.
+          Jwt__Secret: ${{ secrets.JWT_SECRET }}
+          Jwt__Issuer: formai-e2e
+          Jwt__Audience: formai-e2e
+          ConnectionStrings__Redis: localhost:6379
         run: |
           dotnet tool install --global dotnet-ef   # skip if .config/dotnet-tools.json exists; use `dotnet tool restore`
           dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "$E2E_DB_CONNECTION"

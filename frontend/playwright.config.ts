@@ -16,6 +16,10 @@ if (!process.env.E2E_DB_CONNECTION && !process.env.APP_DB_PASSWORD) {
   throw new Error("Set E2E_DB_CONNECTION, or APP_DB_PASSWORD in the repo-root .env.");
 }
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("Set JWT_SECRET in the repo-root .env.");
+}
+
 const DB =
   process.env.E2E_DB_CONNECTION ??
   `Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_app;Password=${process.env.APP_DB_PASSWORD}`;
@@ -43,7 +47,7 @@ export default defineConfig({
         ASPNETCORE_URLS: API_URL,
         ConnectionStrings__DefaultConnection: DB,
         ConnectionStrings__Redis: "localhost:6379",
-        Jwt__Secret: "1d68b203-ab75-480b-b52e-1704aaea214e",
+        Jwt__Secret: process.env.JWT_SECRET!,
         Jwt__Issuer: "formai-e2e",
         Jwt__Audience: "formai-e2e",
         Claude__ApiKey: "unused-in-e2e",
