@@ -114,6 +114,9 @@ jobs:
           APP_DB_PASSWORD: ${{ secrets.CI_APP_DB_PASSWORD }}
         run: sh docker/postgres/init/01-create-app-user.sh
 
+      - name: Restore
+        run: dotnet restore
+
       - name: Apply migrations
         run: |
           dotnet tool install --global dotnet-ef   # skip if .config/dotnet-tools.json exists; use `dotnet tool restore`
