@@ -17,12 +17,12 @@ Goal of this phase: Playwright installed, wired to a hermetic local stack and to
 
 Why this one, out of the candidates:
 
-| Candidate                                      | Verdict                                                                                                                                                                                 |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Register → verify email → log in               | Already covered piece by piece (Phase 32 `LoginPage`, backend handlers). Needs Mailpit scraping, which the seeding helper already needs, so it becomes cheap afterwards. **Second test**, not first.                                                            |
-| Generate a form from text                      | Calls Anthropic: slow, costs money, non-deterministic. Needs a fake generation service. **Later**, once a fake exists.                                                                  |
-| Edit questions in the editor                   | Component tests in Phase 32 cover most of it; drag-and-drop is the only real e2e-only part. **Later.**                                                                                  |
-| **Publish → anonymous submit → owner sees it** | This is the product. It crosses every layer, includes the anonymous-identity mechanism, the expiry/visibility gate, scoring and SignalR. If this breaks, the app is broken. **Chosen.** |
+| Candidate                                      | Verdict                                                                                                                                                                                              |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Register → verify email → log in               | Already covered piece by piece (Phase 32 `LoginPage`, backend handlers). Needs Mailpit scraping, which the seeding helper already needs, so it becomes cheap afterwards. **Second test**, not first. |
+| Generate a form from text                      | Calls Anthropic: slow, costs money, non-deterministic. Needs a fake generation service. **Later**, once a fake exists.                                                                               |
+| Edit questions in the editor                   | Component tests in Phase 32 cover most of it; drag-and-drop is the only real e2e-only part. **Later.**                                                                                               |
+| **Publish → anonymous submit → owner sees it** | This is the product. It crosses every layer, includes the anonymous-identity mechanism, the expiry/visibility gate, scoring and SignalR. If this breaks, the app is broken. **Chosen.**              |
 
 Scenario (one `test()`, several `test.step()`s so a failure names the step):
 
@@ -133,10 +133,22 @@ const API_PORT = 5255;
 const WEB_PORT = 5273;
 const API_URL = `http://localhost:${API_PORT}`;
 const WEB_URL = `http://localhost:${WEB_PORT}`;
+// Locally the password lives in the repo-root .env (read by Docker Compose, not by Node).
+// loadEnvFile never overrides a variable that is already set, so CI's own values win.
+try {
+  process.loadEnvFile("../.env");
+} catch {
+  // No .env (CI): E2E_DB_CONNECTION must be provided instead.
+}
+if (!process.env.E2E_DB_CONNECTION && !process.env.APP_DB_PASSWORD) {
+  throw new Error(
+    "Set E2E_DB_CONNECTION, or APP_DB_PASSWORD in the repo-root .env.",
+  );
+}
+
 const DB =
   process.env.E2E_DB_CONNECTION ??
-  "Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_app;Password=" +
-    process.env.APP_DB_PASSWORD;
+  `Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_app;Password=${process.env.APP_DB_PASSWORD}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -205,7 +217,9 @@ async function confirmEmail(request: APIRequestContext, email: string) {
       const { messages } = await search.json();
       if (!messages?.length) return "";
 
-      const mail = await (await request.get(`${MAILPIT_URL}/api/v1/message/${messages[0].ID}`)).json();
+      const mail = await (
+        await request.get(`${MAILPIT_URL}/api/v1/message/${messages[0].ID}`)
+      ).json();
       token = /verify-email\?token=([^\s"<>]+)/.exec(mail.Text)?.[1] ?? "";
       return token;
     })
@@ -224,14 +238,18 @@ export interface SeededForm {
   question: { id: string; text: string; correct: string; wrong: string };
 }
 
-export async function seedPublishedGradedForm(request: APIRequestContext): Promise<SeededForm> {
+export async function seedPublishedGradedForm(
+  request: APIRequestContext,
+): Promise<SeededForm> {
   const email = `e2e-${randomUUID()}@example.com`;
   await request.post(`${API_URL}/api/auth/register`, {
     data: { name: "E2E Owner", email, password: PASSWORD },
   });
   await confirmEmail(request, email);
   const { accessToken } = await (
-    await request.post(`${API_URL}/api/auth/login`, { data: { email, password: PASSWORD } })
+    await request.post(`${API_URL}/api/auth/login`, {
+      data: { email, password: PASSWORD },
+    })
   ).json();
   const auth = { Authorization: `Bearer ${accessToken}` };
 
@@ -285,6 +303,7 @@ test("a published form collects an anonymous submission that the owner sees live
     await owner.getByLabel("Email").fill(form.owner.email);
     await owner.getByLabel("Password").fill(form.owner.password);
     await owner.getByRole("button", { name: "Log in" }).click();
+    await expect(owner).toHaveURL(/\/dashboard/); // let the login finish before navigating away
     await owner.goto(`/forms/${form.formId}/edit?tab=results`);
     await expect(owner.getByText("No submissions yet.")).toBeVisible();
   });
@@ -293,13 +312,19 @@ test("a published form collects an anonymous submission that the owner sees live
     await respondent.goto(`/forms/${form.formId}/answer`);
     await expect(respondent.getByText(form.title)).toBeVisible();
     await respondent.getByRole("button", { name: "Submit" }).click();
-    await expect(respondent.getByText("This question is required.")).toBeVisible();
+    await expect(
+      respondent.getByText("This question is required."),
+    ).toBeVisible();
   });
 
   await test.step("respondent submits the correct answer", async () => {
-    await respondent.getByRole("radio", { name: form.question.correct }).check();
+    await respondent
+      .getByRole("radio", { name: form.question.correct })
+      .check();
     await respondent.getByRole("button", { name: "Submit" }).click();
-    await expect(respondent.getByText("Thanks! Your response has been recorded.")).toBeVisible();
+    await expect(
+      respondent.getByText("Thanks! Your response has been recorded."),
+    ).toBeVisible();
   });
 
   await test.step("respondent cannot submit twice", async () => {
@@ -411,6 +436,8 @@ Roughly by value:
 
 ## Known gotchas
 
+- **`.env` is not in Node's environment.** `APP_DB_PASSWORD` is only read by Docker Compose. Without `process.loadEnvFile("../.env")` the connection string became `Password=undefined`, PostgreSQL rejected it, and every request that touched the database returned a bare `500 "An unexpected error occurred."` (register failed first). When you see an unexplained 500 from the API, run it by hand with the same environment and read the log; the response body never carries the exception.
+- **Wait for the login before navigating.** Clicking "Log in" and immediately calling `page.goto()` aborts the login request, so the owner is signed out and the edit page redirects to `/login`. Assert `toHaveURL(/\/dashboard/)` first.
 - **Vitest collects `*.spec.ts`.** Without the `include` change in step 4b, `npm test` tries to run Playwright specs and fails with a confusing import error.
 - **Redis is mandatory at API startup.** `Program.cs` throws if `ConnectionStrings:Redis` is missing, so a missing Redis container shows up as a `webServer` timeout, not a test failure. Check `docker ps` first.
 - **Mailpit is required twice over.** `RegisterHandler` calls SMTP synchronously (Mailpit down → registration returns 500), and the seed helper reads the confirmation token from Mailpit's HTTP API on port 8025 because login refuses unconfirmed accounts. In CI both `1025` and `8025` must be mapped (the job in step 9 already does).
