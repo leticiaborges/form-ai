@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.Configure<EmailSettings>(configuration.GetSection("Email"));
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IConfirmationTokenGenerator, ConfirmationTokenGenerator>();
 
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
