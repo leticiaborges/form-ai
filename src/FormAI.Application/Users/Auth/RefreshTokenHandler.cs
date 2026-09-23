@@ -33,7 +33,7 @@ public class RefreshTokenHandler
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenStr = _jwtService.GenerateRefreshToken();
 
-        var newRefreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(7));
+        var newRefreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(RefreshToken.ExpiryDays));
 
         token.Revoke(refreshTokenStr);
 

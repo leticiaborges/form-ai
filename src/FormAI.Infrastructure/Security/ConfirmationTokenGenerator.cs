@@ -13,9 +13,12 @@ public class ConfirmationTokenGenerator : IConfirmationTokenGenerator
         var rawToken = Convert.ToBase64String(tokenBytes)
             .Replace("+", "-").Replace("/", "_").Replace("=", ""); // URL-safe base64
 
-        var tokenHash = Convert.ToHexString(
-            SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
+        return (rawToken, GenerateHash(rawToken));
+    }
 
-        return (rawToken, tokenHash);
+    public string GenerateHash(string rawToken)
+    {
+        return Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
     }
 }

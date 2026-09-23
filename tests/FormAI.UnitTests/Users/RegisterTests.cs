@@ -4,13 +4,12 @@ using FormAI.Application.Users.Auth;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
 using NSubstitute;
+using static FormAI.UnitTests.Users.AuthTestData;
 
 namespace FormAI.UnitTests.Users;
 
 public class RegisterTests
 {
-    private const string Email = "testuser@example.com";
-    private const string Password = "Secret123!";
     private const string HashedPassword = "hashed-value";
 
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
@@ -30,13 +29,12 @@ public class RegisterTests
     [Fact]
     public async Task ValidEmail_ReturnsUserInfo_AndPersistsHashedPasswordNotPlaintext()
     {
-        var name = "TestUser";
         User? createdUser = null;
         _ = _users.AddAsync(Arg.Do<User>(u => createdUser = u), Arg.Any<CancellationToken>());
 
-        var response = await _handler.HandleAsync(new RegisterUserRequest(name, Email, Password));
+        var response = await _handler.HandleAsync(new RegisterUserRequest(Name, Email, Password));
 
-        Assert.Equal(name, response.Name);
+        Assert.Equal(Name, response.Name);
         Assert.Equal(Email, response.Email);
 
         Assert.NotNull(createdUser);
@@ -46,7 +44,7 @@ public class RegisterTests
         await _users.Received(1).AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
         _hasher.Received(1).Hash(Password);
         await _userTokens.Received(1).AddAsync(Arg.Any<UserConfirmationToken>(), Arg.Any<CancellationToken>());
-        await _emailService.Received(1).SendVerificationEmailAsync(Email, name, Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _emailService.Received(1).SendVerificationEmailAsync(Email, Name, Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -56,7 +54,6 @@ public class RegisterTests
         const string tokenHash = "token-hash-value";
         _confirmationTokenGenerator.Generate().Returns((RawToken: rawToken, TokenHash: tokenHash));
 
-        var name = "TestUser";
         User? createdUser = null;
         UserConfirmationToken? storedToken = null;
         string? emailedRawToken = null;
@@ -66,7 +63,7 @@ public class RegisterTests
         _ = _emailService.SendVerificationEmailAsync(
             Arg.Any<string>(), Arg.Any<string>(), Arg.Do<string>(t => emailedRawToken = t), Arg.Any<CancellationToken>());
 
-        await _handler.HandleAsync(new RegisterUserRequest(name, Email, Password));
+        await _handler.HandleAsync(new RegisterUserRequest(Name, Email, Password));
 
         Assert.NotNull(createdUser);
         Assert.NotNull(storedToken);
@@ -83,14 +80,12 @@ public class RegisterTests
     {
         _users.EmailExistsAsync(Email, Arg.Any<CancellationToken>()).Returns(true);
 
-        var name = "TestUser";
-
         var ex = await Assert.ThrowsAsync<ValidationException>(
-          () => _handler.HandleAsync(new RegisterUserRequest(name, Email, Password)));
+          () => _handler.HandleAsync(new RegisterUserRequest(Name, Email, Password)));
 
         Assert.Equal("This email is already registered.", ex.Errors["email"].FirstOrDefault());
         await _users.DidNotReceive().AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
         await _userTokens.DidNotReceive().AddAsync(Arg.Any<UserConfirmationToken>(), Arg.Any<CancellationToken>());
-        await _emailService.DidNotReceive().SendVerificationEmailAsync(Email, name, Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _emailService.DidNotReceive().SendVerificationEmailAsync(Email, Name, Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }
