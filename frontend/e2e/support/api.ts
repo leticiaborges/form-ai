@@ -34,9 +34,6 @@ export interface SeededForm {
   formId: string;
   title: string;
   owner: { email: string; password: string };
-  auth: { Authorization: string };
-  /** The body the seed saved, so a test can save the same form again with one setting changed. */
-  editorBody: Record<string, unknown>;
   question: { id: string; text: string; correct: string; wrong: string };
 }
 
@@ -138,8 +135,6 @@ export async function seedPublishedGradedForm(
     formId,
     title,
     owner: { email, password: PASSWORD_FORTESTS },
-    auth,
-    editorBody,
     question,
   };
 }

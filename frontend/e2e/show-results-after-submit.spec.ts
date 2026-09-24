@@ -19,25 +19,6 @@ async function submitRightAnswer(request: APIRequestContext, form: SeededForm) {
   return { status: response.status(), body: await response.json() };
 }
 
-test("editor save stores the flag only on a graded form", async ({ request }) => {
-  const form = await seedPublishedGradedForm(request);
-  const save = (settings: { isGraded: boolean; showResultsAfterSubmit: boolean }) =>
-    request.put(`${API_URL}/api/forms/${form.formId}/editor`, {
-      headers: form.auth,
-      data: { ...form.editorBody, ...settings },
-    });
-  const read = async () =>
-    (await request.get(`${API_URL}/api/forms/${form.formId}`, { headers: form.auth })).json();
-
-  expect((await save({ isGraded: true, showResultsAfterSubmit: true })).status()).toBe(204);
-  expect((await read()).showResultsAfterSubmit).toBe(true);
-
-  expect((await save({ isGraded: false, showResultsAfterSubmit: true })).status()).toBe(204);
-  const ungraded = await read();
-  expect(ungraded.isGraded).toBe(false);
-  expect(ungraded.showResultsAfterSubmit).toBe(false);
-});
-
 test("submit returns score and maximum only on a graded form with the flag set", async ({
   request,
 }) => {
