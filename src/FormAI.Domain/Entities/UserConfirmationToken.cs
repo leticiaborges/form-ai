@@ -33,7 +33,7 @@ public class UserConfirmationToken
             TokenHash = hash,
             Purpose = purpose,
             CreatedAt = createdAt,
-            ExpiresAt = createdAt.AddMinutes(15)
+            ExpiresAt = expiresAt
         };
     }
 

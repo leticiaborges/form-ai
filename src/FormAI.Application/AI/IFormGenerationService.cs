@@ -5,7 +5,7 @@ namespace FormAI.Application.AI;
 public record GenerationParameters(
     int QuestionCount = 10,
     QuestionType[]? AllowedTypes = null,
-    string DifficultyLevel = "medium",
+    DifficultyLevel DifficultyLevel = DifficultyLevel.Medium,
     bool IncludeCorrectAnswers = false
 );
 

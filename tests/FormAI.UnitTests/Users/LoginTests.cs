@@ -3,14 +3,12 @@ using FormAI.Application.Interfaces;
 using FormAI.Application.Users.Auth;
 using FormAI.Domain.Entities;
 using NSubstitute;
+using static FormAI.UnitTests.Users.AuthTestData;
 
 namespace FormAI.UnitTests.Users;
 
 public class LoginTests
 {
-    private const string Email = "testuser@example.com";
-    private const string Password = "Secret123!";
-
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
@@ -28,7 +26,7 @@ public class LoginTests
 
     private User GivenUser(bool verified)
     {
-        var user = User.Create("TestUser", Email, "hash");
+        var user = User.Create(Name, Email, "hash");
         if (verified)
             user.MarkAsVerified();
 

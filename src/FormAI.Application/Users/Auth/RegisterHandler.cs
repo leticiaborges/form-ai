@@ -13,14 +13,17 @@ public class RegisterHandler
     private readonly IUserTokenConfirmationRepository _userTokens;
     private readonly IPasswordHasher _hasher;
     private readonly IEmailService _emailService;
+    private readonly IConfirmationTokenGenerator _confirmationTokenGenerator;
 
     public RegisterHandler(IUserRepository users, IPasswordHasher hasher,
-    IUserTokenConfirmationRepository userTokens, IEmailService emailService)
+    IUserTokenConfirmationRepository userTokens, IEmailService emailService,
+    IConfirmationTokenGenerator confirmationTokenGenerator)
     {
         _users = users;
         _hasher = hasher;
         _userTokens = userTokens;
         _emailService = emailService;
+        _confirmationTokenGenerator = confirmationTokenGenerator;
     }
 
     public async Task<RegisterUserResponse> HandleAsync(RegisterUserRequest request,
@@ -38,21 +41,15 @@ public class RegisterHandler
 
         await _users.AddAsync(user, cancellationToken);
 
-         // Generate raw token (sent to user) and hash (stored in DB — raw never persisted)
-        var tokenBytes = RandomNumberGenerator.GetBytes(64);
-        var rawToken = Convert.ToBase64String(tokenBytes)
-            .Replace("+", "-").Replace("/", "_").Replace("=", ""); // URL-safe base64
+        var resultToken = _confirmationTokenGenerator.Generate();
 
-        var tokenHash = Convert.ToHexString(
-            SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
-
-        var userToken = UserConfirmationToken.Create(user.Id, tokenHash,
+        var userToken = UserConfirmationToken.Create(user.Id, resultToken.TokenHash,
          Domain.Enums.TokenPurpose.EmailConfirmation,
         user.PendingRegistrationExpiresAt.GetValueOrDefault());
 
         await _userTokens.AddAsync(userToken, cancellationToken);
-            
-        await _emailService.SendVerificationEmailAsync(user.Email, user.Name, rawToken, cancellationToken);
+
+        await _emailService.SendVerificationEmailAsync(user.Email, user.Name, resultToken.RawToken, cancellationToken);
 
         return new RegisterUserResponse(user.Id, user.Name, user.Email);
     }

@@ -12,6 +12,8 @@ public class RefreshToken
     public DateTime? RevokedAt { get; private set; }
     public string? ReplacedByToken { get; private set; }
 
+    public const int ExpiryDays = 7;
+
     private RefreshToken()
     {
         Token = string.Empty;

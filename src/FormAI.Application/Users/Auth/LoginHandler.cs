@@ -37,7 +37,7 @@ public class LoginHandler
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenStr = _jwtService.GenerateRefreshToken();
 
-        var refreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(7));
+        var refreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(RefreshToken.ExpiryDays));
 
         await _refreshTokens.AddAsync(refreshToken, cancellationToken);
 

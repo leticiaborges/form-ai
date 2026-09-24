@@ -1,7 +1,3 @@
-
-
-using System.Security.Cryptography;
-using System.Text;
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
 
@@ -11,12 +7,16 @@ public class VerifyEmailHandler
 {
     private readonly IUserRepository _users;
     private readonly IUserTokenConfirmationRepository _userTokens;
+    private readonly IConfirmationTokenGenerator _confirmationTokenGenerator;
 
-    public VerifyEmailHandler(IUserRepository users, IUserTokenConfirmationRepository userTokens)
+    public VerifyEmailHandler(IUserRepository users, IUserTokenConfirmationRepository userTokens,
+    IConfirmationTokenGenerator confirmationTokenGenerator)
     {
         _users = users;
         _userTokens = userTokens;
+        _confirmationTokenGenerator = confirmationTokenGenerator;
     }
+
     public async Task HandleAsync(VerifyEmailRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -26,8 +26,7 @@ public class VerifyEmailHandler
                 ["token"] = ["Token is required."]
             });
 
-        var tokenHash = Convert.ToHexString(
-            SHA256.HashData(Encoding.UTF8.GetBytes(request.Token)));
+        var tokenHash = _confirmationTokenGenerator.GenerateHash(request.Token);
 
         var userToken = await _userTokens.FindActiveAsync(tokenHash, Domain.Enums.TokenPurpose.EmailConfirmation,
          cancellationToken);

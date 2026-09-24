@@ -15,6 +15,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -73,6 +76,7 @@ jobs:
         run: npm run build
 
   e2e:
+    needs: [build-and-test, frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -127,7 +131,7 @@ jobs:
           Jwt__Audience: formai-e2e
           ConnectionStrings__Redis: localhost:6379
         run: |
-          dotnet tool install --global dotnet-ef   # skip if .config/dotnet-tools.json exists; use `dotnet tool restore`
+          dotnet tool install --global dotnet-ef
           dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "$E2E_DB_CONNECTION"
       - run: npm ci
         working-directory: frontend

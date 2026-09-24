@@ -1,14 +1,9 @@
-using System.ComponentModel;
-using System.Net.Http.Json;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormAI.Application.AI;
 using FormAI.Domain.Enums;
 using Humanizer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Options;
 
 namespace FormAI.Infrastructure.AI;
@@ -68,7 +63,7 @@ public class ClaudeFormGenerationService : IFormGenerationService
 
         prompt = prompt.Replace("{questionCount}", parameters.QuestionCount.ToString());
         prompt = prompt.Replace("{allowedTypes}", allowedTypes);
-        prompt = prompt.Replace("{difficultyLevel}", parameters.DifficultyLevel);
+        prompt = prompt.Replace("{difficultyLevel}", parameters.DifficultyLevel.ToString());
         prompt = prompt.Replace("{markCorrect}", parameters.IncludeCorrectAnswers.ToString());
 
         return prompt;
