@@ -24,22 +24,22 @@ existing `generate`/`editor`/`submit` routes and `FormConfigTab` instead of addi
 
 1. Create page: `CreateFormPage` (exists) shows the checkbox while "Graded form" is ticked, sends `showResultsAfterSubmit` -> `POST /api/forms/generate/text` -> `GenerateFormHandler` (exists) -> `Form.Create` (exists) stores `flag && isGraded`.
 2. Editor: `FormEditorPage` (exists) holds the flag in state, `FormConfigTab` (exists) shows the checkbox while the form is graded -> `PUT /api/forms/{id}/editor` -> `SaveFormEditorHandler` (exists) -> `Form.Update` (exists) stores `flag && isGraded`, replacing the pass-through of the stored value.
-3. Answering: `FormAnswerPage` (exists) -> `POST /api/forms/{formId}/submit` -> `SubmitFormHandler` (exists) scores as today with `SubmissionScorer` (exists), asks `SubmissionScorer` (exists) for the form's maximum, and fills `totalScore` and `maxScore` in `SubmitFormResponse` (exists) only when the form is graded and the flag is set.
+3. Answering: `FormAnswerPage` (exists) -> `POST /api/forms/{formId}/submit` -> `SubmitFormHandler` (exists) scores as today with `SubmissionScorer` (exists), takes the form's maximum from a new `SubmissionScorer.MaximumScore(form)` (placement - a pure function beside `ScoreSubmission`), and fills `totalScore` and `maxScore` in `SubmitFormResponse` (exists) only when the form is graded and the flag is set.
 4. Out: `FormAnswerPage` (exists) keeps the `submitted` state's message and, when both numbers are non-null, shows `totalScore/maxScore`.
-5. Side effect: `FormResultsCalculator` (exists) stops computing its own `TotalPoints` and calls the same `SubmissionScorer` maximum, so the owner's Results tab and the respondent cannot disagree on what the form is worth.
+5. Side effect: `FormResultsCalculator` (exists) stops computing its own `TotalPoints` (today `form.IsGraded ? Sum(q.Points ?? 0) : null`) and calls the same `SubmissionScorer.MaximumScore`, so the owner's Results tab and the respondent cannot disagree on what the form is worth.
 
 ## Impact
 
 | Front | What changes |
 | --- | --- |
 | domain | existing term: `ShowResultsAfterSubmit` was stored and inert, nothing branched on it; now `SubmitFormHandler` is the only reader, and `Form.Create`/`Form.Update` refuse to hold it `true` on an ungraded form. "Results" here means the respondent's own score and the maximum, not the owner's Results tab - `CONTEXT.md` gets the term. |
-| domain | new term: **maximum score** - the sum of a graded form's questions' points (a question with no points counts 0); lives in `SubmissionScorer`. The owner's `TotalPoints` is the same number and now comes from the same function. |
+| domain | new term: **maximum score** - the sum of a graded form's questions' points (a question with no points counts 0); lives in `SubmissionScorer.MaximumScore`, which returns null for an ungraded form. The owner's `TotalPoints` is the same number and now comes from the same function. |
 | API | `POST {formId}/submit` response gains `maxScore`, and `totalScore` becomes null unless the form is graded and the flag is set. Only reader today is `FormAnswerPage`, which ignores the body. `frontend/src/types/submission.ts` `SubmitFormResult` names (`submissionId`, `score`) do not match the wire (`id`, `totalScore`) and are corrected. |
 | API | `SaveFormEditorRequest` and `GenerateFormRequest` each gain a positional `bool ShowResultsAfterSubmit`; a caller that omits it sends `false`. The only caller is this frontend. Unit-test helpers that build `SaveFormEditorRequest` positionally must be updated. |
 | business rule | `CLAUDE.md` says generated forms are created with `ShowResultsAfterSubmit = false`; that becomes "false unless the owner ticks it on a graded form". Editor save no longer preserves the stored value. |
 | grading | The flag is not part of `GradingFingerprint`, so an editor save that changes only the flag rescores nothing. |
 | stored data | Column exists, nothing to migrate. Rows created through `POST /api/forms` (unused by the UI) may already hold `true` on an ungraded form; the submit handler gates on both `IsGraded` and the flag, so they are harmless and are not backfilled. |
-| tooling | Frontend has no test runner today (`package.json` has `build` and `lint` only). See the last `Landing` row. |
+| tooling | Nothing to add: the frontend test runner landed in `14d33ab` (Vitest, jsdom, Testing Library, MSW, `src/test/renderWithProviders.tsx`, `LoginPage.test.tsx` as the precedent), so the UI criteria are proved with component tests in that setup. |
 | docs | `CLAUDE.md` (business rules, known-gaps headline), `CONTEXT.md` (new term), `docs/known-gaps.md` (remove both rows; add "a respondent who reopens an already-submitted form does not see their score"). |
 
 ## Relations
@@ -52,7 +52,7 @@ Only routes this adds or whose signature changes.
 
 | Route | In | Out | Status |
 | --- | --- | --- | --- |
-| `POST /api/forms/{formId}/submit` | unchanged | `id` · `totalScore` · `maxScore` (the last two null unless graded and flag set) | `200`, `400`, `404` |
+| `POST /api/forms/{formId}/submit` | unchanged | `id` · `totalScore` (number) · `maxScore` (integer); the last two null unless graded and flag set | `200`, `400`, `404` |
 | `PUT /api/forms/{id}/editor` | + `showResultsAfterSubmit` | none | `204`, `400`, `404` |
 | `POST /api/forms/generate/text` | + `showResultsAfterSubmit` | unchanged | `201`, `400` |
 
@@ -63,7 +63,6 @@ Only routes this adds or whose signature changes.
 | Where the score is withheld | server: `new SubmitFormResponse(submission.Id, reveal ? totalScore : null, reveal ? maxScore : null)` with `reveal = form.IsGraded && form.ShowResultsAfterSubmit`; wire `{ "id": "...", "totalScore": 6, "maxScore": 10 }` or `{ "id": "...", "totalScore": null, "maxScore": null }` | Gate in the frontend only: the score would still be in the network response of a form whose owner chose not to show it, and `docs/known-gaps.md` already records that as a defect. |
 | Where "flag only on graded" holds | domain: `Form.Create` and `Form.Update` store `ShowResultsAfterSubmit = showResultsAfterSubmit && isGraded` | Reject with a `ValidationException`: a stale editor tab that sent `true` after grading was turned off would fail a whole save, when turning grading off is already a silent lossy save. Frontend-only coercion cannot back "always false in the DB" for any other client. |
 | Request field name | `showResultsAfterSubmit` (camelCase `bool`) on `PUT /editor` and `POST /generate/text`, the name `GetFormResponse` already returns | A separate `PATCH` for the flag: a second route and a second save button for one checkbox that lives beside the expiry the editor already saves in one `PUT`. |
-| Frontend test runner | devDependencies `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`; script `"test": "vitest run"` | No runner, proving the UI criteria with `tsc -b` and `eslint` only: neither can observe that a checkbox is hidden or that `6/10` renders. Live alternative - see Assumptions. |
 
 - Nothing else in this change is hard to reverse
 
@@ -132,7 +131,7 @@ Submitting a graded form with the flag set shows `score/maximum`; every other fo
 | A graded form whose questions are all worth 0 points | The respondent sees `0/0` | Honest and unspecial-cased; rare, and the owner set those points. | n |
 | Ticking Graded off and on again in the editor | The flag stays `false` after being turned back on | Untick already forces it to `false` (criterion 8); silently restoring an old value would be the surprise. | n |
 | The stored maximum is not snapshotted | `maxScore` is computed from the form at submit time | Scores are derived from the current form (ADR 0004); a snapshot would be a second source of truth. | y |
-| Frontend test runner (Landing row 4) | Add Vitest + Testing Library as devDependencies and prove criteria 1-3, 6-8, 15-16 with component tests | Without it those eight criteria have no proof stronger than a type-check. Alternative: skip the runner and verify them by hand, leaving them unproven in `verification.md`. | n |
+| Proof of the UI criteria (1-3, 6-8, 15-16) | Vitest + Testing Library component tests, API mocked with MSW, in the existing `frontend/src/test` setup | The runner already exists; `tsc -b` and `eslint` cannot observe a hidden checkbox or a rendered `6/10`. | n |
 
 **Open questions:** none - all resolved or logged above.
 
