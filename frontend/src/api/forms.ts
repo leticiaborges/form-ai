@@ -10,6 +10,7 @@ export interface GenerateFormPayload {
   questionCount: number;
   difficultyLevel: string;
   isGraded: boolean;
+  showResultsAfterSubmit: boolean;
   expiresAt: Date;
 }
 
@@ -23,6 +24,7 @@ export interface SaveFormEditorPayload {
   description: string;
   isPublic: boolean;
   isGraded: boolean;
+  showResultsAfterSubmit: boolean;
   questions: FormQuestion[];
   expiresAt: Date;
 }
@@ -36,6 +38,7 @@ export async function saveFormEditor(
     description: payload.description?.trim() || null,
     isPublic: payload.isPublic,
     isGraded: payload.isGraded,
+    showResultsAfterSubmit: payload.showResultsAfterSubmit,
     expiresAt: payload.expiresAt.toISOString(),
     questions: payload.questions.map((q, i) => ({
       id: q.id,
@@ -67,6 +70,7 @@ export async function generateForm(payload: GenerateFormPayload): Promise<Genera
     allowedTypes: null,
     difficultyLevel: payload.difficultyLevel,
     isGraded: payload.isGraded,
+    showResultsAfterSubmit: payload.showResultsAfterSubmit,
     expiresAt: payload.expiresAt.toISOString(),
   });
   return response.data;

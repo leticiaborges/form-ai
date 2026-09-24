@@ -39,6 +39,7 @@ export function FormEditorPage() {
 
   const [isPublic, setIsPublic] = useState(false);
   const [isGraded, setIsGraded] = useState(false);
+  const [showResultsAfterSubmit, setShowResultsAfterSubmit] = useState(false);
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
 
@@ -60,6 +61,7 @@ export function FormEditorPage() {
     setDescription(data.description ?? "");
     setIsPublic(data.isPublic);
     setIsGraded(data.isGraded);
+    setShowResultsAfterSubmit(data.showResultsAfterSubmit);
     setExpiresAt(utcToLocalDateTime(data.expiresAt ?? "", DATETIME_FORMATS.DATETIME_HHMM));
   }
 
@@ -76,6 +78,10 @@ export function FormEditorPage() {
 
   function toggleGraded(next: boolean) {
     setIsGraded(next);
+
+    // Only a graded form has a score to show. Ticking "Graded form" again does not bring the
+    // flag back: the owner has to choose it again.
+    if (!next) setShowResultsAfterSubmit(false);
 
     if (next)
       setQuestions((qs) =>
@@ -155,6 +161,7 @@ export function FormEditorPage() {
         description: trimmedDescription,
         isPublic,
         isGraded,
+        showResultsAfterSubmit,
         questions,
         expiresAt: new Date(expiresAt),
       });
@@ -221,6 +228,9 @@ export function FormEditorPage() {
           expiresAt={expiresAt}
           onExpiresAtChange={setExpiresAt}
           expiresAtError={expiresAtError}
+          isGraded={isGraded}
+          showResultsAfterSubmit={showResultsAfterSubmit}
+          onShowResultsAfterSubmitChange={setShowResultsAfterSubmit}
         />
       );
       break;

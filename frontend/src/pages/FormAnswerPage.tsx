@@ -1,5 +1,10 @@
 import { useParams } from "react-router-dom";
-import type { AnswerForm, AnswerPayload, AnswerQuestion } from "../types/submission";
+import type {
+  AnswerForm,
+  AnswerPayload,
+  AnswerQuestion,
+  SubmitFormResult,
+} from "../types/submission";
 import { useEffect, useState } from "react";
 import { getRespondentToken } from "../utils/respondentToken";
 import { getFormToAnswer, getMySubmission, submitForm } from "../api/submissions";
@@ -38,6 +43,7 @@ export function FormAnswerPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [expiredMessage, setExpiredMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<SubmitFormResult | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -128,7 +134,7 @@ export function FormAnswerPage() {
     setState("submitting");
 
     try {
-      await submitForm(id, {
+      const submitted = await submitForm(id, {
         respondentToken,
         answers: form.questions
           .filter((q) => isAnswered(q, answers[q.id]))
@@ -137,6 +143,7 @@ export function FormAnswerPage() {
             ...answers[q.id],
           })),
       });
+      setResult(submitted);
       setState("submitted");
     } catch (err: unknown) {
       showError(getErrorMessage(err, "Failed to submit. Please try again."));
@@ -163,10 +170,19 @@ export function FormAnswerPage() {
     !form
   ) {
     const message = getMessageBasedOnState(state);
+    const showScore =
+      state === "submitted" && result?.totalScore != null && result.maxScore != null;
+
     return (
       <BasePage>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <p className="text-gray-600">{message}</p>
+          {showScore && (
+            <div className="text-center">
+              <p className="text-sm text-gray-500">Your score</p>
+              <p className="text-2xl font-semibold text-gray-900">{`${result.totalScore}/${result.maxScore}`}</p>
+            </div>
+          )}
         </div>
       </BasePage>
     );
