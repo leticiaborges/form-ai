@@ -83,7 +83,7 @@ public class GenerateFormHandler
             sourceType: SourceType.Text,
             isPublic: false,
             expiresAt: request.ExpiresAt,
-            showResultsAfterSubmit: false,
+            showResultsAfterSubmit: request.ShowResultsAfterSubmit,
             isGraded: request.IsGraded
         );
 

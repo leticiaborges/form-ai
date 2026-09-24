@@ -12,5 +12,6 @@ public record GenerateFormRequest(
     QuestionType[]? AllowedTypes,
     DifficultyLevel DifficultyLevel,
     bool IsGraded,
+    bool ShowResultsAfterSubmit,
     DateTime ExpiresAt
 );

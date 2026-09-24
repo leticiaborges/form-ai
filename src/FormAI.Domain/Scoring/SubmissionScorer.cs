@@ -51,6 +51,19 @@ public static class SubmissionScorer
         });
     }
 
+    /// <summary>
+    /// The most a submission to this form can score: null when the form is not graded, otherwise
+    /// the sum of its questions' points, a question with no points counting 0. Like every score,
+    /// it is read from the form as it stands, never stored.
+    /// </summary>
+    public static int? MaximumScore(Form form)
+    {
+        if (!form.IsGraded)
+            return null;
+
+        return form.Questions.Sum(question => question.Points ?? 0);
+    }
+
     public static bool IsAnswerCorrect(FormQuestion question, ScoredAnswer answer) => question.Type switch
     {
         QuestionType.Single or QuestionType.Multiple => IsSelectionCorrect(question, answer),

@@ -26,9 +26,9 @@ public class SubmitFormTests
     }
 
     private static Form CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
-    out FormQuestion questionText)
+    out FormQuestion questionText, bool showResultsAfterSubmit = false)
     {
-        var form = NewForm(isGraded: true);
+        var form = NewForm(isGraded: true, showResultsAfterSubmit: showResultsAfterSubmit);
 
         questionSingle = AddQuestion(form, QuestionType.Single, order: 1,
             points: 2,
@@ -44,7 +44,8 @@ public class SubmitFormTests
     [Fact]
     public async Task GradedForm_AllCorrectAnswers_PersistsSubmissionWithFullScore()
     {
-        var form = CreateGradedFormTwoQuestions(out FormQuestion questionSingle, out FormQuestion questionText);
+        var form = CreateGradedFormTwoQuestions(out FormQuestion questionSingle, out FormQuestion questionText,
+            showResultsAfterSubmit: true);
 
         _formRepository.GetByIdAsync(form.Id, Arg.Any<CancellationToken>()).Returns(form);
 
@@ -66,6 +67,68 @@ public class SubmitFormTests
             Arg.Any<CancellationToken>());
 
         await _notifier.Received(1).NotifyResultsChangedAsync(form.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GradedFormWithScoreFlag_ReturnsScoreAndMaximum()
+    {
+        var form = CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
+            out FormQuestion questionText, showResultsAfterSubmit: true);
+
+        _formRepository.GetByIdAsync(form.Id, Arg.Any<CancellationToken>()).Returns(form);
+
+        var request = SubmitFormTestsHelper.Request(form, Guid.NewGuid(),
+            SubmitFormTestsHelper.Picks(questionSingle.Id, questionSingle.Options[0].Id),
+            SubmitFormTestsHelper.Writes(questionText.Id, "wrong"));
+
+        var response = await _handler.HandleAsync(request);
+
+        Assert.Equal(2m, response.TotalScore);
+        Assert.Equal(5, response.MaxScore);
+    }
+
+    [Fact]
+    public async Task GradedFormWithoutScoreFlag_WithholdsScoreButPersistsIt()
+    {
+        var form = CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
+            out FormQuestion questionText, showResultsAfterSubmit: false);
+
+        _formRepository.GetByIdAsync(form.Id, Arg.Any<CancellationToken>()).Returns(form);
+
+        var request = SubmitFormTestsHelper.Request(form, Guid.NewGuid(),
+            SubmitFormTestsHelper.Picks(questionSingle.Id, questionSingle.Options[0].Id),
+            SubmitFormTestsHelper.Writes(questionText.Id, "ABC"));
+
+        var response = await _handler.HandleAsync(request);
+
+        Assert.Null(response.TotalScore);
+        Assert.Null(response.MaxScore);
+
+        await _submissionRepository.Received(1).AddAsync(
+            Arg.Is<Submission>(s => s.Id == response.Id && s.Score == 5),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UngradedFormHoldingTheFlag_WithholdsScoreAndMaximum()
+    {
+        var form = NewForm(isGraded: false);
+        var question = AddQuestion(form, QuestionType.Single, order: 1,
+            options: [("A", null), ("B", null)]);
+
+        // A row written before Form.Create refused this combination: ungraded, yet flag on.
+        typeof(Form).GetProperty(nameof(Form.ShowResultsAfterSubmit))!.SetValue(form, true);
+        Assert.True(form.ShowResultsAfterSubmit);
+
+        _formRepository.GetByIdAsync(form.Id, Arg.Any<CancellationToken>()).Returns(form);
+
+        var request = SubmitFormTestsHelper.Request(form, Guid.NewGuid(),
+            SubmitFormTestsHelper.Picks(question.Id, question.Options[0].Id));
+
+        var response = await _handler.HandleAsync(request);
+
+        Assert.Null(response.TotalScore);
+        Assert.Null(response.MaxScore);
     }
 
     [Fact]
