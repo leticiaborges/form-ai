@@ -98,6 +98,15 @@ _Code alias_: `AnswerSelectedOption`. See [ADR 0001](./docs/adr/0001-selected-op
 **Score**:
 The points a respondent earned: for one answer, and summed for the submission. A score is recomputed from the form as it stands rather than frozen at the moment of submission, so correcting an answer key changes the scores of the submissions already made — see [ADR 0004](./docs/adr/0004-scores-recomputed-from-current-form.md). An unanswered question earns nothing. A submission to an ungraded form has no score at all.
 
+**Maximum score**:
+The most a submission to a graded form can score: the sum of its questions' points, a question with no points counting nothing. Like a score, it is read from the form as it stands and never stored. A form that is not graded has none.
+_Code alias_: `SubmissionScorer.MaximumScore`; the owner's Results calls the same number `TotalPoints`.
+
+**Show score after submit**:
+The owner's choice, open only on a graded form, to let a respondent see how they did the moment they submit: their score out of the maximum score, such as 6/10. A form that is not graded never shows one, and a form that is graded but not set to show it keeps the score to itself. This is about the respondent's own score, not the owner's Results.
+_Code alias_: `ShowResultsAfterSubmit`.
+_Avoid_: show results — that word belongs to the owner's Results.
+
 **Rescoring**:
 Recomputing the scores of every submission of a form, because something that decides them has changed.
 
