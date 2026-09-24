@@ -10,7 +10,7 @@ public record GenerateFormRequest(
     string? SourceUrl,
     int QuestionCount,
     QuestionType[]? AllowedTypes,
-    string DifficultyLevel,
+    DifficultyLevel DifficultyLevel,
     bool IsGraded,
     DateTime ExpiresAt
 );

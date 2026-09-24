@@ -11,6 +11,8 @@ public class GenerateFormHandler
     public readonly IFormGenerationService _generationService;
     public readonly IFormRepository _repository;
 
+    public const string PrefixTitle = "Generated Form –";
+
     public GenerateFormHandler(IFormGenerationService formGenerationService,
         IFormRepository formRepository)
     {
@@ -21,10 +23,20 @@ public class GenerateFormHandler
     private static void ValidateForm(string title, string? description, GenerateFormRequest request)
     {
         if (title.Length > 255)
-            throw new ArgumentException("Title must be at most 255 characters.");
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["title"] = ["Title must be at most 255 characters."]
+            });
+        }
 
         if (string.IsNullOrWhiteSpace(request.SourceText))
-            throw new ArgumentException("Source text is required to generate a form.");
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["sourceText"] = ["Source text is required to generate a form."]
+            });
+        }
 
         if (description?.Length > 1024)
             throw new ValidationException(new Dictionary<string, string[]>
@@ -44,7 +56,7 @@ public class GenerateFormHandler
     CancellationToken cancellationToken = default)
     {
         var title = string.IsNullOrWhiteSpace(request.Title)
-            ? $"Generated Form – {DateTime.UtcNow:yyyy-MM-dd HH:mm}"
+            ? $"{PrefixTitle} {DateTime.UtcNow:yyyy-MM-dd HH:mm}"
             : request.Title.Trim();
 
         var description = string.IsNullOrWhiteSpace(request.Description)
