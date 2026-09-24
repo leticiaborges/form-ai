@@ -34,10 +34,21 @@ export interface SeededForm {
   formId: string;
   title: string;
   owner: { email: string; password: string };
+  auth: { Authorization: string };
+  /** The body the seed saved, so a test can save the same form again with one setting changed. */
+  editorBody: Record<string, unknown>;
   question: { id: string; text: string; correct: string; wrong: string };
 }
 
-export async function seedPublishedGradedForm(request: APIRequestContext): Promise<SeededForm> {
+export interface SeedOptions {
+  isGraded?: boolean;
+  showResultsAfterSubmit?: boolean;
+}
+
+export async function seedPublishedGradedForm(
+  request: APIRequestContext,
+  { isGraded = true, showResultsAfterSubmit = false }: SeedOptions = {},
+): Promise<SeededForm> {
   const email = `e2e-${randomUUID()}@example.com`;
   await expectOk(
     await request.post(`${API_URL}/api/auth/register`, {
@@ -81,45 +92,54 @@ export async function seedPublishedGradedForm(request: APIRequestContext): Promi
 
   // What the editor would send: ids are client-generated, and the server keeps them (ADR 0002).
   // Publishing (isPublic) and grading (isGraded) are set here, so the form is answerable at once.
+  const editorBody = {
+    title,
+    description: "",
+    isPublic: true,
+    isGraded,
+    showResultsAfterSubmit,
+    expiresAt,
+    questions: [
+      {
+        id: question.id,
+        text: question.text,
+        type: "Single",
+        order: 1,
+        isRequired: true,
+        aiGenerated: false,
+        points: 2,
+        correctAnswer: null,
+        options: [
+          { id: randomUUID(), text: question.correct, order: 1, isCorrect: true },
+          { id: randomUUID(), text: question.wrong, order: 2, isCorrect: false },
+          { id: randomUUID(), text: "Marseille", order: 3, isCorrect: false },
+        ],
+      },
+      {
+        id: randomUUID(),
+        text: "Anything else to add?",
+        type: "Text",
+        order: 2,
+        isRequired: false,
+        aiGenerated: false,
+        points: 0, // graded forms require points; 0 = part of the form but does not count
+        correctAnswer: null,
+        options: [],
+      },
+    ],
+  };
   const saved = await request.put(`${API_URL}/api/forms/${formId}/editor`, {
     headers: auth,
-    data: {
-      title,
-      description: "",
-      isPublic: true,
-      isGraded: true,
-      expiresAt,
-      questions: [
-        {
-          id: question.id,
-          text: question.text,
-          type: "Single",
-          order: 1,
-          isRequired: true,
-          aiGenerated: false,
-          points: 2,
-          correctAnswer: null,
-          options: [
-            { id: randomUUID(), text: question.correct, order: 1, isCorrect: true },
-            { id: randomUUID(), text: question.wrong, order: 2, isCorrect: false },
-            { id: randomUUID(), text: "Marseille", order: 3, isCorrect: false },
-          ],
-        },
-        {
-          id: randomUUID(),
-          text: "Anything else to add?",
-          type: "Text",
-          order: 2,
-          isRequired: false,
-          aiGenerated: false,
-          points: 0, // graded forms require points; 0 = part of the form but does not count
-          correctAnswer: null,
-          options: [],
-        },
-      ],
-    },
+    data: editorBody,
   });
   await expectOk(saved, "save form editor");
 
-  return { formId, title, owner: { email, password: PASSWORD_FORTESTS }, question };
+  return {
+    formId,
+    title,
+    owner: { email, password: PASSWORD_FORTESTS },
+    auth,
+    editorBody,
+    question,
+  };
 }
