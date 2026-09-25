@@ -1,3 +1,4 @@
+using FormAI.API.RateLimiting;
 using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
@@ -9,6 +10,7 @@ using FormAI.Application.Forms.GetSubmissions;
 using FormAI.Application.Forms.SaveFormEditor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Linq;
 using System.Security.Claims;
 
@@ -106,6 +108,7 @@ public class FormsController : ControllerBase
 
     // POST /api/forms/generate/text
     [HttpPost("generate/text")]
+    [EnableRateLimiting(RateLimitPolicies.Generate)]
     public async Task<IActionResult> GenerateFromText([FromBody] GenerateFormRequest request,
         CancellationToken cancellationToken)
     {
