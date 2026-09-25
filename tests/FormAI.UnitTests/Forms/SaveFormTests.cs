@@ -56,7 +56,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 
@@ -82,7 +82,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 
@@ -116,7 +116,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 
@@ -141,7 +141,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, IsGraded: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, IsGraded: false, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 
@@ -162,6 +162,65 @@ public class SaveFormTests
     }
 
     [Fact]
+    public async Task GradedSaveWithScoreFlag_StoresFlagOn()
+    {
+        var questions = new List<QuestionInput>()
+        {
+            SaveFormTestsHelper.QuestionInput(_questionSingle),
+            SaveFormTestsHelper.QuestionInput(_questionText),
+        };
+
+        var request = new SaveFormEditorRequest(_defaultForm.Id, _defaultForm.CreatedBy, "New title", "New description",
+        true, true, ShowResultsAfterSubmit: true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+
+        await _handler.HandleAsync(request);
+
+        Assert.True(_defaultForm.IsGraded);
+        Assert.True(_defaultForm.ShowResultsAfterSubmit);
+    }
+
+    [Fact]
+    public async Task UngradedSaveWithScoreFlag_StoresFlagOff()
+    {
+        // The stored flag starts on, so the assertion observes the save clearing it.
+        _defaultForm.Update(_defaultForm.Title, _defaultForm.Description!, _defaultForm.IsPublic,
+            _defaultForm.ExpiresAt, showResultsAfterSubmit: true, isGraded: true);
+
+        var questions = new List<QuestionInput>()
+        {
+            SaveFormTestsHelper.QuestionInput(_questionSingle),
+            SaveFormTestsHelper.QuestionInput(_questionText),
+        };
+
+        var request = new SaveFormEditorRequest(_defaultForm.Id, _defaultForm.CreatedBy, "New title", "New description",
+        true, IsGraded: false, ShowResultsAfterSubmit: true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+
+        await _handler.HandleAsync(request);
+
+        Assert.False(_defaultForm.IsGraded);
+        Assert.False(_defaultForm.ShowResultsAfterSubmit);
+    }
+
+    [Fact]
+    public async Task ChangedOnlyTheScoreFlag_DoesNotTriggerRescore()
+    {
+        var questions = new List<QuestionInput>()
+        {
+            SaveFormTestsHelper.QuestionInput(_questionSingle),
+            SaveFormTestsHelper.QuestionInput(_questionText),
+        };
+
+        var request = new SaveFormEditorRequest(_defaultForm.Id, _defaultForm.CreatedBy, _defaultForm.Title,
+        _defaultForm.Description, _defaultForm.IsPublic, true, ShowResultsAfterSubmit: true,
+        _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+
+        await _handler.HandleAsync(request);
+
+        Assert.True(_defaultForm.ShowResultsAfterSubmit);
+        await _submissionRepository.DidNotReceive().GetByFormForScoringAsync(_defaultForm.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task NonOwner_ThrowsNotFoundException()
     {
         var questions = new List<QuestionInput>()
@@ -171,7 +230,7 @@ public class SaveFormTests
         };
 
         var request = new SaveFormEditorRequest(_defaultForm.Id, Guid.NewGuid(), "New title", "New description",
-        true, IsGraded: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, IsGraded: false, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await Assert.ThrowsAsync<NotFoundException>(() => _handler.HandleAsync(request));
     }
@@ -188,7 +247,7 @@ public class SaveFormTests
         };
 
         var request = new SaveFormEditorRequest(_defaultForm.Id, _defaultForm.CreatedBy, "New title", "New description",
-        true, IsGraded: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, IsGraded: false, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
     }
@@ -217,7 +276,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 
@@ -258,7 +317,7 @@ public class SaveFormTests
 
         var requestingUserId = _defaultForm.CreatedBy;
         var request = new SaveFormEditorRequest(_defaultForm.Id, requestingUserId, "New title", "New description",
-        true, true, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
+        true, true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(), questions);
 
         await _handler.HandleAsync(request);
 

@@ -56,17 +56,19 @@ public class GenerateFormTests
 
 
     private static GenerateFormRequest CreateRequest(string title = "My form 1", string sourceText = "SourceTextTest",
-        bool isGraded = true, int expiresInDays = 7)
+        bool isGraded = true, int expiresInDays = 7, bool showResultsAfterSubmit = false)
     {
         return new GenerateFormRequest(title, "Description test form", sourceText, SourceType.Text,
         string.Empty, QuestionCount: 4,
         AllowedTypes: new QuestionType[] { QuestionType.Single, QuestionType.Multiple, QuestionType.Text, QuestionType.Numeric },
-        DifficultyLevel: DifficultyLevel.Medium, IsGraded: isGraded, ExpiresAt: DateTime.UtcNow.AddDays(expiresInDays));
+        DifficultyLevel: DifficultyLevel.Medium, IsGraded: isGraded,
+        ShowResultsAfterSubmit: showResultsAfterSubmit, ExpiresAt: DateTime.UtcNow.AddDays(expiresInDays));
     }
 
-    private async Task<(GenerateFormRequest Request, Guid UserId, Form Form)> GenerateFormAsync(string title = "My form 1", bool isGraded = true)
+    private async Task<(GenerateFormRequest Request, Guid UserId, Form Form)> GenerateFormAsync(string title = "My form 1",
+        bool isGraded = true, bool showResultsAfterSubmit = false)
     {
-        var request = CreateRequest(title, isGraded: isGraded);
+        var request = CreateRequest(title, isGraded: isGraded, showResultsAfterSubmit: showResultsAfterSubmit);
 
         Form? form = null;
         _ = _forms.AddAsync(Arg.Do<Form>(f => form = f), Arg.Any<CancellationToken>());
@@ -92,6 +94,23 @@ public class GenerateFormTests
         Assert.False(form.ShowResultsAfterSubmit);
         Assert.True(form.IsGraded);
         Assert.Equal(request.ExpiresAt, form.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task GradedRequestWithScoreFlag_CreatesFormThatShowsScore()
+    {
+        var (_, _, form) = await GenerateFormAsync(isGraded: true, showResultsAfterSubmit: true);
+
+        Assert.True(form.ShowResultsAfterSubmit);
+    }
+
+    [Fact]
+    public async Task UngradedRequestWithScoreFlag_CreatesFormWithFlagOff()
+    {
+        var (_, _, form) = await GenerateFormAsync(isGraded: false, showResultsAfterSubmit: true);
+
+        Assert.False(form.IsGraded);
+        Assert.False(form.ShowResultsAfterSubmit);
     }
 
     [Fact]

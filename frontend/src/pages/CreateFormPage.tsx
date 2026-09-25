@@ -3,7 +3,7 @@ import { BasePage } from "../components/BasePage";
 import { Link, useNavigate } from "react-router-dom";
 import { generateForm } from "../api/forms";
 import z from "zod";
-import { useController, useForm } from "react-hook-form";
+import { useController, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
@@ -24,6 +24,7 @@ const createFormSchema = z.object({
     "Difficulty level must be one of Easy, Medium, or Hard.",
   ),
   isGraded: z.boolean(),
+  showResultsAfterSubmit: z.boolean(),
   expiresAt: z
     .string()
     .min(1, "Pick an expiry date and time")
@@ -51,15 +52,23 @@ export function CreateFormPage() {
       questionCount: 5,
       difficultyLevel: "Medium",
       isGraded: false,
+      showResultsAfterSubmit: false,
       expiresAt: getDefaultFormatStringDateTime(defaultDate, DATETIME_FORMATS.DATETIME_HHMM),
     },
   });
 
   const { field, fieldState } = useController({ name: "expiresAt", control });
+  const isGraded = useWatch({ control, name: "isGraded" });
 
   async function onSubmit(data: CreateFormData) {
     try {
-      const result = await generateForm({ ...data, expiresAt: new Date(data.expiresAt) });
+      const result = await generateForm({
+        ...data,
+        // The checkbox is hidden, not cleared, when "Graded form" is unticked, so its stale
+        // value must not travel with an ungraded form.
+        showResultsAfterSubmit: data.isGraded && data.showResultsAfterSubmit,
+        expiresAt: new Date(data.expiresAt),
+      });
       showSuccess("Form generated successfully.");
       navigate(`/forms/${result.formId}/edit`);
     } catch (err: unknown) {
@@ -200,6 +209,17 @@ export function CreateFormPage() {
               {/**/}
               Graded form
             </label>
+
+            {isGraded && (
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                  {...register("showResultsAfterSubmit")}
+                />
+                Show score after submit
+              </label>
+            )}
 
             <div className="flex items-center justify-between mt-2">
               <Link to="/dashboard" className="text-sm text-gray-500 hover:underline">

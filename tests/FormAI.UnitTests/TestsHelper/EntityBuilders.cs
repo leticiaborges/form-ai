@@ -7,10 +7,11 @@ namespace FormAI.UnitTests.TestsHelper;
 
 public static class EntityBuilders
 {
-    public static Form NewForm(bool isGraded, DateTime? expiresAt = null, bool isPublic = true) =>
+    public static Form NewForm(bool isGraded, DateTime? expiresAt = null, bool isPublic = true,
+        bool showResultsAfterSubmit = false) =>
             Form.Create("Quiz", "",
             Guid.NewGuid(), SourceType.Text, isPublic, expiresAt,
-             false, isGraded);
+             showResultsAfterSubmit, isGraded);
 
     public static FormQuestion AddQuestion(Form form, QuestionType type,
         int order, bool isRequired = false,

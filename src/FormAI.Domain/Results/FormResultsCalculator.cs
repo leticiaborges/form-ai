@@ -28,7 +28,7 @@ public static class FormResultsCalculator
 
         return new FormResults(
             submissions.Count,
-            form.IsGraded ? form.Questions.Sum(q => q.Points ?? 0) : null,
+            SubmissionScorer.MaximumScore(form),
             form.IsGraded ? BuildScoreDistribution(submissions) : Array.Empty<ScoreBucket>(),
             questions);
     }

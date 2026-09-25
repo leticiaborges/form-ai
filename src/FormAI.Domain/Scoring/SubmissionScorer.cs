@@ -51,6 +51,14 @@ public static class SubmissionScorer
         });
     }
 
+    public static int? MaximumScore(Form form)
+    {
+        if (!form.IsGraded)
+            return null;
+
+        return form.Questions.Sum(question => question.Points ?? 0);
+    }
+
     public static bool IsAnswerCorrect(FormQuestion question, ScoredAnswer answer) => question.Type switch
     {
         QuestionType.Single or QuestionType.Multiple => IsSelectionCorrect(question, answer),

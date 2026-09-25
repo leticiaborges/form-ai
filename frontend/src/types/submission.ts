@@ -49,6 +49,8 @@ export interface SubmitFormPayload {
 }
 
 export interface SubmitFormResult {
-  submissionId: string;
-  score: number | null;
+  id: string;
+  /** Both scores are null unless the form is graded and its owner chose to show them. */
+  totalScore: number | null;
+  maxScore: number | null;
 }

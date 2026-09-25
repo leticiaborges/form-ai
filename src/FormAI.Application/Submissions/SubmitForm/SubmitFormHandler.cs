@@ -65,7 +65,11 @@ public class SubmitFormHandler
 
         await _notifier.NotifyResultsChangedAsync(form.Id, cancellationToken);
 
-        return new SubmitFormResponse(submission.Id, totalScore);
+        var revealScore = form.IsGraded && form.ShowResultsAfterSubmit;
+
+        return new SubmitFormResponse(submission.Id,
+            revealScore ? totalScore : null,
+            revealScore ? SubmissionScorer.MaximumScore(form) : null);
     }
 
     private async Task<Dictionary<string, string[]>> ValidateFormAsync(Form? form, SubmitFormRequestCommand request,

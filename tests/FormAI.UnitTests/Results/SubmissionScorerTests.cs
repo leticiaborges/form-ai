@@ -9,6 +9,27 @@ namespace FormAI.UnitTests.Results;
 public class SubmissionScorerTests
 {
     [Fact]
+    public void MaximumScore_GradedFormSumsPointsCountingUnsetAsZero()
+    {
+        var form = NewForm(isGraded: true);
+        AddQuestion(form, QuestionType.Single, order: 1, points: 2, options: [("A", true), ("B", false)]);
+        AddQuestion(form, QuestionType.Text, order: 2, points: null, correctAnswer: "x");
+        AddQuestion(form, QuestionType.Text, order: 3, points: 0, correctAnswer: "y");
+        AddQuestion(form, QuestionType.Numeric, order: 4, points: 3, correctAnswer: "1");
+
+        Assert.Equal(5, SubmissionScorer.MaximumScore(form));
+    }
+
+    [Fact]
+    public void MaximumScore_UngradedFormIsNull()
+    {
+        var form = NewForm(isGraded: false);
+        AddQuestion(form, QuestionType.Single, order: 1, options: [("A", true), ("B", false)]);
+
+        Assert.Null(SubmissionScorer.MaximumScore(form));
+    }
+
+    [Fact]
     public void UngradedForm_NullPointsOnANullPointCorrectQuestion()
     {
         var form = NewForm(isGraded: false);

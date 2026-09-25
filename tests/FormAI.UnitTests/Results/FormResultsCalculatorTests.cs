@@ -1,6 +1,7 @@
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
 using FormAI.Domain.Results;
+using FormAI.Domain.Scoring;
 using static FormAI.UnitTests.Results.FormResultsCalculatorTestsHelper;
 using static FormAI.UnitTests.TestsHelper.EntityBuilders;
 
@@ -8,6 +9,26 @@ namespace FormAI.UnitTests.Results;
 
 public class FormResultsCalculatorTests
 {
+    [Fact]
+    public void TotalPoints_EqualsTheSubmissionScorerMaximum()
+    {
+        var graded = NewForm(isGraded: true);
+        AddQuestion(graded, QuestionType.Single, order: 1, points: 2, options: [("A", true), ("B", false)]);
+        AddQuestion(graded, QuestionType.Text, order: 2, points: null, correctAnswer: "x");
+        AddQuestion(graded, QuestionType.Numeric, order: 3, points: 3, correctAnswer: "1");
+
+        var ungraded = NewForm(isGraded: false);
+        AddQuestion(ungraded, QuestionType.Text, order: 1);
+
+        var gradedResults = FormResultsCalculator.Calculate(graded, new List<Submission>());
+        var ungradedResults = FormResultsCalculator.Calculate(ungraded, new List<Submission>());
+
+        Assert.Equal(5, gradedResults.TotalPoints);
+        Assert.Equal(SubmissionScorer.MaximumScore(graded), gradedResults.TotalPoints);
+        Assert.Null(ungradedResults.TotalPoints);
+        Assert.Equal(SubmissionScorer.MaximumScore(ungraded), ungradedResults.TotalPoints);
+    }
+
     [Fact]
     public void GradedForm_CountsCorrectAnswersOnAZeroPointQuestion()
     {

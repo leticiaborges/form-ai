@@ -71,7 +71,7 @@ public class SaveFormEditorHandler
         form.Update(request.Title.Trim(),
          request.Description?.Trim() ?? string.Empty,
           request.IsPublic,
-            request.ExpiresAt, form.ShowResultsAfterSubmit, request.IsGraded);
+            request.ExpiresAt, request.ShowResultsAfterSubmit, request.IsGraded);
 
         var diff = FormEditorDiffer.DiffQuestions(form.Questions, request.Questions);
 

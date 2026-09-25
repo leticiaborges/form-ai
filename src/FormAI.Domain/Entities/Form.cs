@@ -33,7 +33,7 @@ public class Form
             SourceType = sourceType,
             IsPublic = isPublic,
             ExpiresAt = expiresAt,
-            ShowResultsAfterSubmit = showResultsAfterSubmit,
+            ShowResultsAfterSubmit = showResultsAfterSubmit && isGraded,
             IsGraded = isGraded,
             CreatedAt = DateTime.UtcNow
         };
@@ -46,7 +46,8 @@ public class Form
         Description = description;
         IsPublic = isPublic;
         ExpiresAt = expiresAt;
-        ShowResultsAfterSubmit = showResultsAfterSubmit;
+        // Only a graded form has a score to show, so the flag is never held on an ungraded one.
+        ShowResultsAfterSubmit = showResultsAfterSubmit && isGraded;
         IsGraded = isGraded;
     }
 
