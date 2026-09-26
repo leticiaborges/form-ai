@@ -1,4 +1,6 @@
+using FormAI.API.Auth;
 using FormAI.Application.Users.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FormAI.API.Controllers;
@@ -10,14 +12,17 @@ public class AuthController : ControllerBase
     private readonly RegisterHandler _registerHandler;
     private readonly LoginHandler _loginHandler;
     private readonly RefreshTokenHandler _refreshTokenHandler;
+    private readonly LogoutHandler _logoutHandler;
     private readonly VerifyEmailHandler _verifyEmailHandler;
 
     public AuthController(RegisterHandler registerHandler, LoginHandler loginHandler,
-        RefreshTokenHandler refreshTokenHandler, VerifyEmailHandler verifyEmailHandler)
+        RefreshTokenHandler refreshTokenHandler, LogoutHandler logoutHandler,
+        VerifyEmailHandler verifyEmailHandler)
     {
         _registerHandler = registerHandler;
         _loginHandler = loginHandler;
         _refreshTokenHandler = refreshTokenHandler;
+        _logoutHandler = logoutHandler;
         _verifyEmailHandler = verifyEmailHandler;
     }
 
@@ -31,18 +36,35 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody]LoginRequest request, CancellationToken cancellationToken)
     {
-        var response = await _loginHandler.HandleAsync(request, cancellationToken);
-        return Ok(response);
+        var tokens = await _loginHandler.HandleAsync(request, cancellationToken);
+        RefreshTokenCookie.Set(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
+        return Ok(new LoginResponse(tokens.AccessToken));
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody]RefreshTokenRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
-        var response = await _refreshTokenHandler.HandleAsync(request, cancellationToken);
-        return Ok(response);
+        var refreshToken = RefreshTokenCookie.Read(Request)
+            ?? throw new UnauthorizedAccessException("Invalid refresh token");
+
+        var tokens = await _refreshTokenHandler.HandleAsync(new RefreshTokenRequest(refreshToken), cancellationToken);
+        RefreshTokenCookie.Set(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
+        return Ok(new LoginResponse(tokens.AccessToken));
     }
 
-    
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var refreshToken = RefreshTokenCookie.Read(Request);
+        if (refreshToken != null)
+            await _logoutHandler.HandleAsync(new LogoutRequest(refreshToken), cancellationToken);
+
+        RefreshTokenCookie.Clear(Response);
+        return NoContent();
+    }
+
+
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody]VerifyEmailRequest request, CancellationToken cancellationToken)
     {
