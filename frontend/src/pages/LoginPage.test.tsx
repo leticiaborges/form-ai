@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { LoginPage } from "./LoginPage";
 import { server } from "../test/server";
 import { renderWithProviders } from "../test/renderWithProviders";
+import { tokenStore } from "../auth/tokenStore";
 
 const LOGIN_URL = "*/api/auth/login";
 const EMAIL = "testuser@example.com";
@@ -48,7 +49,7 @@ describe("LoginPage", () => {
     expect(calls).toBe(0);
   });
 
-  it("stores the session and navigates to the dashboard on success", async () => {
+  it("keeps the access token in memory and navigates to the dashboard on success", async () => {
     const accessToken = fakeJwt({
       sub: "user-1",
       name: NAME,
@@ -58,7 +59,7 @@ describe("LoginPage", () => {
     server.use(
       http.post(LOGIN_URL, async ({ request }) => {
         requestBody = await request.json();
-        return HttpResponse.json({ accessToken, refreshToken: "refresh-1" });
+        return HttpResponse.json({ accessToken });
       }),
     );
 
@@ -69,8 +70,9 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
     expect(requestBody).toEqual({ email: EMAIL, password: PASSWORD });
-    expect(localStorage.getItem("accessToken")).toBe(accessToken);
-    expect(localStorage.getItem("refreshToken")).toBe("refresh-1");
+    expect(tokenStore.get()).toBe(accessToken);
+    expect(localStorage.getItem("accessToken")).toBeNull();
+    expect(localStorage.getItem("refreshToken")).toBeNull();
     expect(JSON.parse(localStorage.getItem("user")!)).toEqual({
       id: "user-1",
       name: NAME,
@@ -81,7 +83,7 @@ describe("LoginPage", () => {
   it("shows the server message and stays on the page when credentials are wrong", async () => {
     server.use(
       http.post(LOGIN_URL, () =>
-        HttpResponse.json({ message: "Invalid user or password." }, { status: 404 }),
+        HttpResponse.json({ message: "Invalid user or password." }, { status: 401 }),
       ),
     );
 
@@ -92,7 +94,7 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Invalid user or password.")).toBeInTheDocument();
     expect(screen.queryByText("Dashboard page")).not.toBeInTheDocument();
-    expect(localStorage.getItem("accessToken")).toBeNull();
+    expect(tokenStore.get()).toBeNull();
   });
 
   it("falls back to a generic message when the server cannot be reached", async () => {

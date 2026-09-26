@@ -8,6 +8,7 @@ import type { CustomResponse } from "../types/CustomResponse";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/useAuth";
+import { userFromAccessToken } from "../auth/tokenStore";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -31,14 +32,8 @@ export function LoginPage() {
     setServerError(null);
 
     try {
-      const response = await loginUser(data);
-      const payload = JSON.parse(atob(response.accessToken.split(".")[1]));
-
-      login(response.accessToken, response.refreshToken, {
-        id: payload.sub,
-        name: payload.name,
-        email: payload.email,
-      });
+      const { accessToken } = await loginUser(data);
+      login(accessToken, userFromAccessToken(accessToken));
 
       navigate("/dashboard");
     } catch (err: unknown) {

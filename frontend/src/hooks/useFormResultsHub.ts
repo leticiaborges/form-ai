@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
+import { getFreshAccessToken } from "../api/axios";
 
 export function useFormResultsHub(formId: string, onResultsChanged: () => void) {
   const callbackRef = useRef(onResultsChanged);
@@ -11,7 +12,7 @@ export function useFormResultsHub(formId: string, onResultsChanged: () => void) 
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("/hubs/form-results", {
-        accessTokenFactory: () => localStorage.getItem("accessToken") ?? "",
+        accessTokenFactory: () => getFreshAccessToken(),
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .build();
