@@ -1,6 +1,5 @@
 
 
-using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 
@@ -19,26 +18,28 @@ public class RefreshTokenHandler
         _jwtService = jwtService;
     }
 
-    public async Task<LoginResponse> HandleAsync(RefreshTokenRequest request,
+    public async Task<AuthTokens> HandleAsync(RefreshTokenRequest request,
         CancellationToken cancellationToken = default)
     {
-        var token = await _refreshTokens.GetByTokenAsync(request.RefreshToken, cancellationToken);
+        var token = await _refreshTokens.GetByTokenHashAsync(
+            _jwtService.HashRefreshToken(request.RefreshToken), cancellationToken);
         if (token == null || !token.IsActive)
-            throw new NotFoundException("Invalid refresh token");
+            throw new UnauthorizedAccessException("Invalid refresh token");
 
         var user = await _users.GetByIdAsync(token.UserId, cancellationToken);
         if (user == null)
-            throw new NotFoundException("Invalid refresh token");
+            throw new UnauthorizedAccessException("Invalid refresh token");
 
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenStr = _jwtService.GenerateRefreshToken();
+        var refreshTokenExpiresAt = DateTime.UtcNow.Add(_jwtService.RefreshTokenLifetime);
 
-        var newRefreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(RefreshToken.ExpiryDays));
+        var newRefreshToken = RefreshToken.Create(user.Id, _jwtService.HashRefreshToken(refreshTokenStr), refreshTokenExpiresAt);
 
-        token.Revoke(refreshTokenStr);
+        token.Revoke(newRefreshToken.TokenHash);
 
         await _refreshTokens.AddAsync(newRefreshToken, cancellationToken);
 
-        return new LoginResponse(accessToken, refreshTokenStr);
+        return new AuthTokens(accessToken, refreshTokenStr, refreshTokenExpiresAt);
     }
 }

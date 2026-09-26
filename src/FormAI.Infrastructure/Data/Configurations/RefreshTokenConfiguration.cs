@@ -10,11 +10,11 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
     {
         builder.HasKey(s => s.Id);
 
-        builder.Property(s => s.Token)
-            .HasMaxLength(1024)
+        builder.Property(s => s.TokenHash)
+            .HasMaxLength(64)
             .IsRequired(true);
 
-        builder.HasIndex(s => s.Token)
+        builder.HasIndex(s => s.TokenHash)
             .IsUnique();
 
         builder.Property(s => s.ExpiresAt)
@@ -26,8 +26,8 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.Property(s => s.RevokedAt)
             .IsRequired(false);
 
-        builder.Property(s => s.ReplacedByToken)
-            .HasMaxLength(1024)
+        builder.Property(s => s.ReplacedByTokenHash)
+            .HasMaxLength(64)
             .IsRequired(false);
     }
 }

@@ -22,13 +22,13 @@ public class LoginHandler
         _jwtService = jwtService;
     }
 
-    public async Task<LoginResponse> HandleAsync(LoginRequest request,
+    public async Task<AuthTokens> HandleAsync(LoginRequest request,
         CancellationToken cancellationToken = default)
     {
         var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
 
         if (user == null || !_hasher.Verify(request.Password, user.PasswordHash))
-            throw new NotFoundException("Invalid user or password.");
+            throw new UnauthorizedAccessException("Invalid user or password.");
 
         if (!user.IsEmailVerified)
             throw new ValidationException(ValidationErrorCode.EmailNotVerified,
@@ -36,11 +36,12 @@ public class LoginHandler
 
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenStr = _jwtService.GenerateRefreshToken();
+        var refreshTokenExpiresAt = DateTime.UtcNow.Add(_jwtService.RefreshTokenLifetime);
 
-        var refreshToken = RefreshToken.Create(user.Id, refreshTokenStr, DateTime.UtcNow.AddDays(RefreshToken.ExpiryDays));
+        var refreshToken = RefreshToken.Create(user.Id, _jwtService.HashRefreshToken(refreshTokenStr), refreshTokenExpiresAt);
 
         await _refreshTokens.AddAsync(refreshToken, cancellationToken);
 
-        return new LoginResponse(accessToken, refreshTokenStr);
+        return new AuthTokens(accessToken, refreshTokenStr, refreshTokenExpiresAt);
     }
 }

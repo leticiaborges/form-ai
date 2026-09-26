@@ -15,9 +15,9 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         _context = context;
     }
 
-    public async Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
+    public async Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default)
     {
-        return await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token, cancellationToken);
+        return await _context.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
     }
 
     public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
