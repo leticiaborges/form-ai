@@ -10,10 +10,18 @@ import { showSuccess, showError } from "../utils/toast";
 import { DateTimeInput } from "../components/DateTimeInput";
 import { addDays, DATETIME_FORMATS, getDefaultFormatStringDateTime } from "../utils/dateUtils";
 
+const MAX_SOURCE_TEXT_LENGTH = 30_000;
+
 const createFormSchema = z.object({
   title: z.string().max(255, "Title must be at most 255 characters").optional(),
   description: z.string().max(1024, "Description must be at most 1024 characters").optional(),
-  sourceText: z.string().min(50, "Source text must be at least 50 characters long"),
+  sourceText: z
+    .string()
+    .min(1, "Source text must be filled.")
+    .max(
+      MAX_SOURCE_TEXT_LENGTH,
+      `Source text must be at most ${MAX_SOURCE_TEXT_LENGTH} characters long`,
+    ),
   questionCount: z.coerce
     .number()
     .int()

@@ -53,6 +53,8 @@ Forms and questions:
 - Option text is **required and unique within a question** (trimmed, case-insensitive), enforced by `QuestionOptionValidator` in the application layer only — there is no database constraint.
 - Saving the editor diffs against what is stored and **preserves question and option ids** ([ADR 0002](./docs/adr/0002-id-preserving-editor-save.md)). Never regenerate them.
 - Generated forms are created **private**, with `ShowResultsAfterSubmit` false unless the owner ticks it at creation on a graded form, and an expiry **7 days out** by default (chosen by the owner at creation). The owner may change the expiry at any time in the editor; it must always be in the future.
+- `POST /api/forms/generate/text` is **rate limited per signed-in user** with ASP.NET Core's built-in limiter, as a **sliding window** (`RateLimiting:Generate` settings: `PermitLimit` 10, `WindowMinutes` 60, `SegmentsPerWindow` 6). Over the limit it answers 429 with the usual `{ message, errors, code }` body and **no `Retry-After` header**, because a sliding window gives the middleware no retry time to report. The limiter runs before the handler, so a request the handler then rejects with 400 still uses a permit. The counters live in the API process's memory, so the limit holds **per server instance** only (see [`docs/known-gaps.md`](./docs/known-gaps.md)). It is wired in `FormAI.API/RateLimiting/`, and `UseRateLimiter()` must stay after `UseAuthentication()` and `UseAuthorization()`, or every request lands in one partition.
+- `SourceText` is capped at `GenerateFormHandler.MaxSourceTextLength` (30,000 characters), so a single call can't be made arbitrarily expensive; `CreateFormPage` mirrors the same number.
 
 Grading and scoring:
 

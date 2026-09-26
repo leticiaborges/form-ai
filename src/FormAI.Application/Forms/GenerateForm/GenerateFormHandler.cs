@@ -13,6 +13,8 @@ public class GenerateFormHandler
 
     public const string PrefixTitle = "Generated Form –";
 
+    public const int MaxSourceTextLength = 30_000;
+
     public GenerateFormHandler(IFormGenerationService formGenerationService,
         IFormRepository formRepository)
     {
@@ -35,6 +37,14 @@ public class GenerateFormHandler
             throw new ValidationException(new Dictionary<string, string[]>
             {
                 ["sourceText"] = ["Source text is required to generate a form."]
+            });
+        }
+
+        if (request.SourceText.Length > MaxSourceTextLength)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["sourceText"] = [$"Source text must be at most {MaxSourceTextLength} characters."]
             });
         }
 

@@ -1,5 +1,6 @@
 using FormAI.API.Hubs;
 using FormAI.API.Middleware;
+using FormAI.API.RateLimiting;
 using FormAI.Application.Interfaces;
 using FormAI.Infrastructure;
 using Microsoft.OpenApi;
@@ -48,6 +49,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+builder.Services.AddApiRateLimiting(builder.Configuration);
+
+
 builder.Services.AddSignalR().AddStackExchangeRedis(
     builder.Configuration.GetConnectionString("Redis") ??
     throw new InvalidOperationException("ConnectionStrings:Redis is missing")
@@ -70,6 +74,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 app.MapHub<FormResultsHub>("/hubs/form-results");
 app.MapHealthChecks("/health");
