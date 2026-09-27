@@ -53,6 +53,7 @@ module "frontend" {
   name                           = var.name
   frontend_domain_name           = var.frontend_domain_name
   cloudfront_acm_certificate_arn = module.dns_tls.cloudfront_certificate_arn
+  api_domain_name                = var.api_domain_name
 }
 
 # The alias record needs the ALB's dns_name/zone_id, which only exists once
