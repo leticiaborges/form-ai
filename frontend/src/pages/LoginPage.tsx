@@ -49,7 +49,7 @@ export function LoginPage() {
           <Link to="/" className="text-2xl font-bold text-brand-600">
             FormAI
           </Link>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">Welcome back</h1>
+          <h1 className="mt-4 text-2xl font-semibold text-gray-900">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1">
             Don't have an account?{" "}
             <Link to="/register" className="text-brand-600 hover:underline">
