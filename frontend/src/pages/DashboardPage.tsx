@@ -57,8 +57,11 @@ export function DashboardPage() {
           )}
 
           {state === "ready" && forms.length === 0 && (
-            <div className="py-16 text-center text-gray-400">
-              <p className="text-lg">You haven't created any forms yet.</p>
+            <div className="bg-white rounded-2xl shadow-md p-10 text-center">
+              <p className="text-lg text-gray-600">You haven't created any forms yet.</p>
+              <Button className="mt-4" onClick={() => navigate("/forms/new")}>
+                Create your first form
+              </Button>
             </div>
           )}
 

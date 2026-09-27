@@ -27,6 +27,16 @@ export function SubmissionsPerFormChart({
 }: Readonly<SubmissionsPerFormChartProps>) {
   if (forms.length === 0) return null;
 
+  const hasSubmissions = forms.some((form) => form.submissionCount > 0);
+
+  if (!hasSubmissions) {
+    return (
+      <section className="bg-white rounded-2xl shadow-md p-6" aria-label="Submissions per form">
+        <p className="py-8 text-center text-gray-400">No submissions yet.</p>
+      </section>
+    );
+  }
+
   const data: ChartDatum[] = [...forms]
     .sort((a, b) => b.submissionCount - a.submissionCount)
     .slice(0, TOP_FORMS)
