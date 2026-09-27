@@ -60,3 +60,15 @@ variable "claude_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "ses_smtp_username" {
+  description = "AWS SES SMTP username"
+  type        = string
+  sensitive   = true
+}
+
+variable "ses_smtp_password" {
+  description = "AWS SES SMTP password"
+  type        = string
+  sensitive   = true
+}

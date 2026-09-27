@@ -2,15 +2,15 @@ name: Infrastructure
 
 on:
   pull_request:
-    paths: ['infra/**']
+    paths: ["infra/**"]
   push:
     branches: [main]
-    paths: ['infra/**']
+    paths: ["infra/**"]
 
 permissions:
-  id-token: write   # required for OIDC
+  id-token: write # required for OIDC
   contents: read
-  pull-requests: write   # to comment the plan on the PR
+  pull-requests: write # to comment the plan on the PR
 
 jobs:
   plan:
@@ -20,6 +20,8 @@ jobs:
     env:
       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
       TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
+      TF_VAR_ses_smtp_username: ${{ secrets.SES_SMTP_USERNAME }}
+      TF_VAR_ses_smtp_password: ${{ secrets.SES_SMTP_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
@@ -45,7 +47,7 @@ jobs:
   apply:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: production   # see the manual-approval note below
+    environment: production # see the manual-approval note below
     defaults: { run: { working-directory: infra/envs/prod } }
     env:
       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}

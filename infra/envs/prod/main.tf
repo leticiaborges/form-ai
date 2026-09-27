@@ -20,6 +20,8 @@ module "data" {
   private_subnet_ids     = module.networking.private_subnet_ids
   jwt_secret             = var.jwt_secret
   claude_api_key         = var.claude_api_key
+  ses_smtp_username      = var.ses_smtp_username
+  ses_smtp_password      = var.ses_smtp_password
 }
 
 # Cert-only: creating the ALB's DNS-validated cert here has no dependency on the
@@ -35,16 +37,20 @@ module "dns_tls" {
 module "container_platform" {
   source = "../../modules/container-platform"
 
-  name                  = var.name
-  region                = var.region
-  vpc_id                = module.networking.vpc_id
-  public_subnet_ids     = module.networking.public_subnet_ids
-  alb_security_group_id = module.networking.alb_security_group_id
-  ecs_security_group_id = module.networking.ecs_security_group_id
-  acm_certificate_arn   = module.dns_tls.api_certificate_arn
-  app_secrets_arn       = module.data.app_secrets_arn
-  redis_address         = module.data.redis_address
-  frontend_base_url     = "https://${var.frontend_domain_name}"
+  name                      = var.name
+  region                    = var.region
+  vpc_id                    = module.networking.vpc_id
+  public_subnet_ids         = module.networking.public_subnet_ids
+  alb_security_group_id     = module.networking.alb_security_group_id
+  ecs_security_group_id     = module.networking.ecs_security_group_id
+  acm_certificate_arn       = module.dns_tls.api_certificate_arn
+  app_secrets_arn           = module.data.app_secrets_arn
+  redis_address             = module.data.redis_address
+  frontend_base_url         = "https://${var.frontend_domain_name}"
+  ses_email_smtphost        = "email-smtp.us-east-1.amazonaws.com"
+  ses_email_smtpport        = 587
+  ses_email_smtpfromaddress = "noreply@leticiaborgesdev.com"
+  ses_email_smtpfromname    = "noreply"
 }
 
 module "frontend" {
