@@ -10,6 +10,10 @@ permissions:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    secrets:
+      CI_POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+      CI_APP_DB_PASSWORD: ${{ secrets.CI_APP_DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
   build-and-deploy:
     needs: ci

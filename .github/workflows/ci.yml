@@ -3,6 +3,13 @@ name: CI
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      CI_POSTGRES_PASSWORD:
+        required: true
+      CI_APP_DB_PASSWORD:
+        required: true
+      JWT_SECRET:
+        required: true
   push:
     branches:
       - main
