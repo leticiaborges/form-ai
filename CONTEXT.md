@@ -2,7 +2,7 @@
 
 FormAI turns source material into a question form: an owner supplies text, Claude generates questions, the owner edits them, and respondents answer through a shared link.
 
-This file is the glossary — the vocabulary every part of the system should use. It defines what terms *mean*, never how they are implemented. Rules live in [CLAUDE.md](./CLAUDE.md); what isn't built yet lives in [docs/known-gaps.md](./docs/known-gaps.md).
+This file is the glossary — the vocabulary every part of the system should use. It defines what terms _mean_, never how they are implemented. Rules live in [CLAUDE.md](./CLAUDE.md); what isn't built yet lives in [docs/known-gaps.md](./docs/known-gaps.md).
 
 Where the code currently uses a different name for a term, the code name is listed as an alias. New code should use the canonical term.
 
@@ -19,7 +19,7 @@ _Code alias_: `CreatedBy`, `Creator`.
 _Avoid_: author, admin.
 
 **Published form**:
-A form anyone with the link can open and answer. "Published" and "public" describe the same state; prefer *published* when talking to the user and *public* when talking about the flag.
+A form anyone with the link can open and answer. "Published" and "public" describe the same state; prefer _published_ when talking to the user and _public_ when talking about the flag.
 _Code alias_: `IsPublic = true`.
 _Avoid_: live, open, released.
 
@@ -34,7 +34,7 @@ _Code alias_: `ExpiresAt`.
 
 **Expired form**:
 A form whose expiry has passed. It can still be opened and read by the owner; but it can no longer be submitted to or read by others.
-_Avoid_: closed, finished, archived. FormAI has no concept of *closing* a form — see [docs/known-gaps.md](./docs/known-gaps.md).
+_Avoid_: closed, finished, archived. FormAI has no concept of _closing_ a form — see [docs/known-gaps.md](./docs/known-gaps.md).
 
 **Graded form**:
 A form whose questions carry points and an answer key, and whose submissions are scored. A form is graded or it is not; turning grading off discards the answer key and the suggested answers.

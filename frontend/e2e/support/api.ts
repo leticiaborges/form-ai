@@ -42,10 +42,9 @@ export interface SeedOptions {
   showResultsAfterSubmit?: boolean;
 }
 
-export async function seedPublishedGradedForm(
+export async function registerVerifiedUser(
   request: APIRequestContext,
-  { isGraded = true, showResultsAfterSubmit = false }: SeedOptions = {},
-): Promise<SeededForm> {
+): Promise<{ email: string; password: string }> {
   const email = `e2e-${randomUUID()}@example.com`;
   await expectOk(
     await request.post(`${API_URL}/api/auth/register`, {
@@ -54,6 +53,14 @@ export async function seedPublishedGradedForm(
     "register",
   );
   await confirmEmail(request, email);
+  return { email, password: PASSWORD_FORTESTS };
+}
+
+export async function seedPublishedGradedForm(
+  request: APIRequestContext,
+  { isGraded = true, showResultsAfterSubmit = false }: SeedOptions = {},
+): Promise<SeededForm> {
+  const { email } = await registerVerifiedUser(request);
   const login = await request.post(`${API_URL}/api/auth/login`, {
     data: { email, password: PASSWORD_FORTESTS },
   });

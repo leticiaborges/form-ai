@@ -12,3 +12,8 @@ variable "cloudfront_acm_certificate_arn" {
   description = "ACM certificate ARN for the CloudFront distribution, must be in us-east-1 (from the dns-tls module)."
   type        = string
 }
+
+variable "api_domain_name" {
+  description = "Domain the API/ALB answers on, e.g. api.yourdomain.com. Used as the CloudFront origin for /api/* and /hubs/*, so the cookie-based session is same-origin in prod."
+  type        = string
+}

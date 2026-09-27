@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshTokenHandler>();
+        services.AddScoped<LogoutHandler>();
         services.AddScoped<VerifyEmailHandler>();
 
         services.AddScoped<CreateFormHandler>();
@@ -82,6 +83,10 @@ public static class DependencyInjection
 
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()
             ?? throw new InvalidOperationException("Jwt configuration section is missing.");
+
+        if (jwtSettings.ExpiresInMinutes <= 0 || jwtSettings.RefreshTokenExpiryDays <= 0)
+            throw new InvalidOperationException(
+                "Jwt:ExpiresInMinutes and Jwt:RefreshTokenExpiryDays must be greater than zero.");
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

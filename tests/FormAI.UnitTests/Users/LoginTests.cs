@@ -22,6 +22,7 @@ public class LoginTests
         _hasher.Verify(Password, Arg.Any<string>()).Returns(true);
         _jwt.GenerateAccessToken(Arg.Any<User>()).Returns("access-token");
         _jwt.GenerateRefreshToken().Returns("refresh-token");
+        _jwt.ConfigureRefreshTokens();
     }
 
     private User GivenUser(bool verified)
@@ -38,12 +39,33 @@ public class LoginTests
     public async Task VerifiedUser_WithCorrectPassword_ReceivesTokens()
     {
         GivenUser(verified: true);
+        RefreshToken? stored = null;
+        _ = _refreshTokens.AddAsync(Arg.Do<RefreshToken>(token => stored = token), Arg.Any<CancellationToken>());
 
+        var beforeCall = DateTime.UtcNow;
         var response = await _handler.HandleAsync(new LoginRequest(Email, Password));
+        var afterCall = DateTime.UtcNow;
 
         Assert.Equal("access-token", response.AccessToken);
         Assert.Equal("refresh-token", response.RefreshToken);
+        Assert.NotNull(stored);
+        Assert.Equal(stored.ExpiresAt, response.RefreshTokenExpiresAt);
+        Assert.InRange(stored.ExpiresAt, beforeCall.Add(RefreshTokenLifetime), afterCall.Add(RefreshTokenLifetime));
         await _refreshTokens.Received(1).AddAsync(Arg.Any<RefreshToken>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task VerifiedUser_WithCorrectPassword_StoresOnlyTheHashOfTheRefreshToken()
+    {
+        GivenUser(verified: true);
+        RefreshToken? stored = null;
+        _ = _refreshTokens.AddAsync(Arg.Do<RefreshToken>(token => stored = token), Arg.Any<CancellationToken>());
+
+        await _handler.HandleAsync(new LoginRequest(Email, Password));
+
+        Assert.NotNull(stored);
+        Assert.Equal(HashOf("refresh-token"), stored.TokenHash);
+        Assert.NotEqual("refresh-token", stored.TokenHash);
     }
 
     [Fact]
@@ -64,7 +86,7 @@ public class LoginTests
     {
         GivenUser(verified: false);
 
-        await Assert.ThrowsAsync<NotFoundException>(
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => _handler.HandleAsync(new LoginRequest(Email, "wrong-password")));
     }
 
@@ -73,7 +95,7 @@ public class LoginTests
     {
         _users.GetByEmailAsync(Email, Arg.Any<CancellationToken>()).Returns((User?)null);
 
-        await Assert.ThrowsAsync<NotFoundException>(
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => _handler.HandleAsync(new LoginRequest(Email, Password)));
     }
 }
