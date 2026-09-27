@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
+import formAiLogo from "../assets/FormAI.png";
 
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto w-full">
-        <span className="text-2xl font-bold text-brand-600">FormAI</span>
+        <img src={formAiLogo} alt="FormAI" className="h-16 w-auto" />
         <nav className="flex gap-3">
           <Link to="/login">
             <Button variant="outline">Log in</Button>

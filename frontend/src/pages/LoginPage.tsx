@@ -9,6 +9,7 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/useAuth";
 import { userFromAccessToken } from "../auth/tokenStore";
+import formAiLogo from "../assets/FormAI.png";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -46,8 +47,8 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
-          <Link to="/" className="text-2xl font-bold text-brand-600">
-            FormAI
+          <Link to="/" className="inline-flex justify-center">
+            <img src={formAiLogo} alt="FormAI" className="h-16 w-auto" />
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-gray-900">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1">
