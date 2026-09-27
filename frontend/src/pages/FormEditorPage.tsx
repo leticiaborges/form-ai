@@ -240,7 +240,7 @@ export function FormEditorPage() {
   return (
     <BasePage>
       {/* Sticky top bar */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-1 shadow-sm flex items-center justify-between">
         <div>
           <input
             value={title}
