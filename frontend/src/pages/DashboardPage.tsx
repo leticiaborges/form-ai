@@ -28,13 +28,15 @@ export function DashboardPage() {
       });
   }, []);
 
-  return (
-    <BasePage>
-      <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? "User"}!</h3>
-        <Button onClick={() => navigate("/forms/new")}>New form</Button>
-      </header>
+  const dashboardHeader = (
+    <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
+      <h3 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? "User"}!</h3>
+      <Button onClick={() => navigate("/forms/new")}>New form</Button>
+    </header>
+  );
 
+  return (
+    <BasePage stickyHeader={dashboardHeader}>
       <main className="mx-auto max-w-4xl px-4 py-8">
         {state === "ready" && forms.length > 0 && (
           <>
@@ -55,8 +57,11 @@ export function DashboardPage() {
           )}
 
           {state === "ready" && forms.length === 0 && (
-            <div className="py-16 text-center text-gray-400">
-              <p className="text-lg">You haven't created any forms yet.</p>
+            <div className="bg-white rounded-2xl shadow-md p-10 text-center">
+              <p className="text-lg text-gray-600">You haven't created any forms yet.</p>
+              <Button className="mt-4" onClick={() => navigate("/forms/new")}>
+                Create your first form
+              </Button>
             </div>
           )}
 

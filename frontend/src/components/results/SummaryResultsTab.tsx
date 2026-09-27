@@ -59,7 +59,7 @@ export function SummaryResultsTab({ formId, reloadKey }: Readonly<SummaryResults
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-4">
       <p className="text-sm text-gray-500">
         {results.submissionCount} submission{results.submissionCount !== 1 ? "s" : ""}
       </p>

@@ -7,6 +7,7 @@ import { registerUser } from "../api/auth";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import type { CustomResponse } from "../types/CustomResponse";
+import formAiLogo from "../assets/FormAI.png";
 
 const registerSchema = z
   .object({
@@ -65,10 +66,10 @@ export function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
-          <Link to="/" className="text-2xl font-bold text-brand-600">
-            FormAI
+          <Link to="/" className="inline-flex justify-center">
+            <img src={formAiLogo} alt="FormAI" className="h-16 w-auto" />
           </Link>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">Create your account</h1>
+          <h1 className="mt-4 text-2xl font-semibold text-gray-900">Create your account</h1>
           <p className="text-sm text-gray-500 mt-1">
             Already have an account?{" "}
             <Link to="/login" className="text-brand-600 hover:underline">

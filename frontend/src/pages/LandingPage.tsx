@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
+import formAiLogo from "../assets/FormAI.png";
 
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto w-full">
-        <span className="text-2xl font-bold text-brand-600">FormAI</span>
+        <img src={formAiLogo} alt="FormAI" className="h-16 w-auto" />
         <nav className="flex gap-3">
           <Link to="/login">
             <Button variant="outline">Log in</Button>
@@ -18,12 +19,11 @@ export function LandingPage() {
 
       <main className="flex flex-col items-center justify-center flex-1 text-center px-6 gap-8">
         <div className="max-w-2xl">
-          <h1 className="text-5xl font-extrabold text-gray-900 leading-tight">
-            Build forms <span className="text-brand-600">powered by AI</span>
+          <h1 className="text-5xl text-gray-900 leading-tight">
+            Build forms <span className="text-brand-600">with AI</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Describe what you need. FormAI generates smart, beautiful forms in seconds — ready to
-            share.
+            Paste your content. FormAI turns it into a form in seconds — ready to edit and share.
           </p>
         </div>
         <div className="flex gap-4 flex-wrap justify-center">
