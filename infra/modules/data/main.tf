@@ -50,5 +50,7 @@ resource "aws_secretsmanager_secret_version" "app_secrets" {
     ConnectionString = "Host=${aws_db_instance.postgres.address};Database=form_ai;Username=form_ai_app;Password=${jsondecode(data.aws_secretsmanager_secret_version.rds_master.secret_string)["password"]}"
     JwtSecret        = var.jwt_secret # generate once with `openssl rand -base64 64`, pass as a TF_VAR, never commit it
     ClaudeApiKey     = var.claude_api_key
+    SesSmtpUsername  = var.ses_smtp_username
+    SesSmtpPassword  = var.ses_smtp_password
   })
 }

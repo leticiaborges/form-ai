@@ -76,6 +76,10 @@ resource "aws_ecs_task_definition" "api" {
       { name = "Jwt__Issuer", value = "formai" },
       { name = "Jwt__Audience", value = "formai" },
       { name = "Email__FrontendBaseUrl", value = var.frontend_base_url },
+      { name = "Email__SmtpHost", value = var.ses_email_smtphost },
+      { name = "Email__SmtpPort", value = tostring(var.ses_email_smtpport) },
+      { name = "Email__FromAddress", value = var.ses_email_smtpfromaddress },
+      { name = "Email__FromName", value = var.ses_email_smtpfromname },
       # ElastiCache's endpoint is a Terraform-computed value, not a secret — no auth token is
       # configured on the cluster (same as your local docker-compose redis), so this is just a
       # hostname, safe as a plain environment variable rather than routed through Secrets Manager.
@@ -85,7 +89,9 @@ resource "aws_ecs_task_definition" "api" {
     secrets = [
       { name = "ConnectionStrings__DefaultConnection", valueFrom = "${var.app_secrets_arn}:ConnectionString::" },
       { name = "Jwt__Secret", valueFrom = "${var.app_secrets_arn}:JwtSecret::" },
-      { name = "Claude__ApiKey", valueFrom = "${var.app_secrets_arn}:ClaudeApiKey::" }
+      { name = "Claude__ApiKey", valueFrom = "${var.app_secrets_arn}:ClaudeApiKey::" },
+      { name = "Email__Username", valueFrom = "${var.app_secrets_arn}:SesSmtpUsername::" },
+      { name = "Email__Password", valueFrom = "${var.app_secrets_arn}:SesSmtpPassword::" }
     ]
     logConfiguration = {
       logDriver = "awslogs"

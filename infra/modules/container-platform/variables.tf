@@ -47,3 +47,24 @@ variable "frontend_base_url" {
   description = "Public URL of the frontend, used for Email__FrontendBaseUrl."
   type        = string
 }
+
+variable "ses_email_smtphost" {
+  description = "SMTP Host."
+  type        = string
+}
+
+variable "ses_email_smtpport" {
+  description = "SMTP Port."
+  type        = number
+}
+
+variable "ses_email_smtpfromaddress" {
+  description = "SMTP From Address."
+  type        = string
+}
+
+variable "ses_email_smtpfromname" {
+  description = "SMTP From Name."
+  type        = string
+}
+
