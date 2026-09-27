@@ -77,7 +77,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "Jwt__Audience", value = "formai" },
       { name = "Email__FrontendBaseUrl", value = var.frontend_base_url },
       { name = "Email__SmtpHost", value = var.ses_email_smtphost },
-      { name = "Email__SmtpPort", value = var.ses_email_smtpport },
+      { name = "Email__SmtpPort", value = tostring(var.ses_email_smtpport) },
       { name = "Email__FromAddress", value = var.ses_email_smtpfromaddress },
       { name = "Email__FromName", value = var.ses_email_smtpfromname },
       # ElastiCache's endpoint is a Terraform-computed value, not a secret — no auth token is
