@@ -28,13 +28,15 @@ export function DashboardPage() {
       });
   }, []);
 
-  return (
-    <BasePage>
-      <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? "User"}!</h3>
-        <Button onClick={() => navigate("/forms/new")}>New form</Button>
-      </header>
+  const dashboardHeader = (
+    <header className="border-b border-gray-200 bg-white px-6 py-2 shadow-sm flex items-center justify-between">
+      <h3 className="text-xl font-bold text-gray-900">Welcome, {user?.name ?? "User"}!</h3>
+      <Button onClick={() => navigate("/forms/new")}>New form</Button>
+    </header>
+  );
 
+  return (
+    <BasePage stickyHeader={dashboardHeader}>
       <main className="mx-auto max-w-4xl px-4 py-8">
         {state === "ready" && forms.length > 0 && (
           <>

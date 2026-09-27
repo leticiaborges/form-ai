@@ -237,52 +237,48 @@ export function FormEditorPage() {
     default:
       break;
   }
-  return (
-    <BasePage>
-      {/* Sticky top bar */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-1 shadow-sm flex items-center justify-between">
-        <div>
-          <input
-            value={title}
-            maxLength={255}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setTitleError("");
-            }}
-            className={
-              "max-w-xs truncate text-base font-semibold text-gray-900 bg-transparent " +
-              "border border-transparent rounded px-1 -mx-1 outline-none " +
-              "hover:border-gray-200 focus:border-brand-400 focus:ring-1 focus:ring-brand-400 " +
-              (titleError ? "border-red-400" : "")
-            }
-          />
-          {titleError && <p className="text-xs text-red-500 px-1">{titleError}</p>}
-          <p className="text-xs text-gray-400">
-            {questions.length} question{questions.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            Back
-          </Button>
-          <Button
-            onClick={handleSave}
-            isLoading={state === "saving"}
-            disabled={state === "deleting"}
-          >
-            Save
-          </Button>
-          <Button
-            variant="danger"
-            onClick={openDeleteModal}
-            disabled={state === "saving" || state === "deleting"}
-          >
-            Delete
-          </Button>
-        </div>
-      </header>
+  const formHeader = (
+    <header className="border-b border-gray-200 bg-white px-6 py-1 shadow-sm flex items-center justify-between">
+      <div>
+        <input
+          value={title}
+          maxLength={255}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setTitleError("");
+          }}
+          className={
+            "max-w-xs truncate text-base font-semibold text-gray-900 bg-transparent " +
+            "border border-transparent rounded px-1 -mx-1 outline-none " +
+            "hover:border-gray-200 focus:border-brand-400 focus:ring-1 focus:ring-brand-400 " +
+            (titleError ? "border-red-400" : "")
+          }
+        />
+        {titleError && <p className="text-xs text-red-500 px-1">{titleError}</p>}
+        <p className="text-xs text-gray-400">
+          {questions.length} question{questions.length !== 1 ? "s" : ""}
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={() => navigate("/dashboard")}>
+          Back
+        </Button>
+        <Button onClick={handleSave} isLoading={state === "saving"} disabled={state === "deleting"}>
+          Save
+        </Button>
+        <Button
+          variant="danger"
+          onClick={openDeleteModal}
+          disabled={state === "saving" || state === "deleting"}
+        >
+          Delete
+        </Button>
+      </div>
+    </header>
+  );
 
-      {/* Editor area */}
+  return (
+    <BasePage stickyHeader={formHeader}>
       <main className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-3">
         <Tabs tabs={TABS} activeTab={activeTab} onTabChange={changeTab} />
         {currentTab}
