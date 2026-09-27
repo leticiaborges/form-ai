@@ -110,6 +110,8 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
 | `Jwt__Secret` | JWT signing key |
 | `Jwt__Issuer` / `Jwt__Audience` | JWT validation params |
+| `Jwt__ExpiresInMinutes` | Access token lifetime in minutes (default 60) |
+| `Jwt__RefreshTokenExpiryDays` | Refresh token lifetime in days (default 7); the refresh token itself lives only in an `HttpOnly` cookie |
 | `Claude__ApiKey` | Anthropic API key for form generation |
 | `Claude__Model` / `Claude__MaxTokens` | Optional; defaults in `appsettings.json` |
 | `Email__SmtpHost` / `Email__SmtpPort` | SMTP server for confirmation emails (Mailpit locally) |
