@@ -20,7 +20,12 @@ test("the refresh token is an HttpOnly cookie and the tokens never reach JavaScr
 
   const cookies = await page.context().cookies();
   const refresh = cookies.find((c) => c.name === "refresh_token");
-  expect(refresh).toMatchObject({ httpOnly: true, secure: true, sameSite: "Strict", path: "/api/auth" });
+  expect(refresh).toMatchObject({
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+    path: "/api/auth",
+  });
 
   expect(await page.evaluate<string>("document.cookie")).not.toContain("refresh_token");
   const storage = await page.evaluate<string[]>("Object.keys(localStorage)");
