@@ -186,3 +186,126 @@ resource "aws_lb_listener" "http_redirect" {
     }
   }
 }
+
+# --- One-off database jobs: role bootstrap and migrations ---------------------------------
+# RDS is in private subnets and only the ECS tasks' security group can reach it, so anything
+# that needs SQL access (creating roles, applying migrations) runs as a one-off Fargate task
+# started with `aws ecs run-task`, never from the GitHub runner and never at API startup.
+
+resource "aws_ecr_repository" "migrator" {
+  name                 = "${var.name}-migrator"
+  image_tag_mutability = "IMMUTABLE"
+  image_scanning_configuration { scan_on_push = true }
+}
+
+resource "aws_cloudwatch_log_group" "db_jobs" {
+  name              = "/ecs/${var.name}-db-jobs"
+  retention_in_days = 14
+}
+
+# Separate from ecs_execution on purpose: this one may read the master and migrator
+# credentials, and the API's execution role must not be able to.
+resource "aws_iam_role" "ecs_db_jobs_execution" {
+  name = "${var.name}-ecs-db-jobs-execution-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_db_jobs_execution" {
+  role       = aws_iam_role.ecs_db_jobs_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy" "ecs_db_jobs_execution_secrets" {
+  name = "${var.name}-ecs-db-jobs-execution-secrets"
+  role = aws_iam_role.ecs_db_jobs_execution.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "secretsmanager:GetSecretValue"
+      Resource = [var.master_secret_arn, var.db_job_secrets_arn]
+    }]
+  })
+}
+
+# Run once after the database is created (and again to rotate the role passwords): connects as
+# the RDS master user and runs the same script Docker Compose and CI use locally, so the roles
+# and grants cannot drift between environments. Started by hand with the admin's own AWS
+# credentials; the deploy role is deliberately not allowed to run it.
+resource "aws_ecs_task_definition" "db_bootstrap" {
+  family                   = "${var.name}-db-bootstrap"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_db_jobs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name       = "bootstrap"
+    image      = "public.ecr.aws/docker/library/postgres:18-alpine" # only for psql; the mirror avoids Docker Hub's anonymous pull limit
+    essential  = true
+    entryPoint = ["sh", "-c"]
+    command    = [file("${path.module}/../../../docker/postgres/init/01-create-app-user.sh")]
+    environment = [
+      { name = "PGHOST", value = var.rds_address },
+      { name = "PGSSLMODE", value = "require" },
+      { name = "POSTGRES_DB", value = var.db_name },
+    ]
+    secrets = [
+      { name = "POSTGRES_USER", valueFrom = "${var.master_secret_arn}:username::" },
+      { name = "PGPASSWORD", valueFrom = "${var.master_secret_arn}:password::" },
+      { name = "MIGRATOR_DB_PASSWORD", valueFrom = "${var.db_job_secrets_arn}:MigratorPassword::" },
+      { name = "APP_DB_PASSWORD", valueFrom = "${var.db_job_secrets_arn}:AppPassword::" },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.db_jobs.name
+        "awslogs-region"        = var.region
+        "awslogs-stream-prefix" = "bootstrap"
+      }
+    }
+  }])
+}
+
+# Run by deploy.yml before each API rollout, as form_ai_migrator. The image is an EF Core
+# migrations bundle built by the pipeline; it reads its connection string from
+# MIGRATOR_CONNECTION. Same bootstrap-value reasoning as the API task definition above.
+resource "aws_ecs_task_definition" "db_migrate" {
+  family                   = "${var.name}-db-migrate"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_db_jobs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "migrate"
+    image     = "${aws_ecr_repository.migrator.repository_url}:latest"
+    essential = true
+    secrets = [
+      { name = "MIGRATOR_CONNECTION", valueFrom = "${var.db_job_secrets_arn}:MigratorConnectionString::" },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.db_jobs.name
+        "awslogs-region"        = var.region
+        "awslogs-stream-prefix" = "migrate"
+      }
+    }
+  }])
+
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
+}

@@ -112,8 +112,10 @@ cd frontend && npm run dev                   # http://localhost:5173
 
 # EF Core migrations (run from repo root)
 dotnet ef migrations add <MigrationName> --project src/FormAI.Infrastructure --startup-project src/FormAI.API
-dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API
+dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
 ```
+
+There are two database roles, created by `docker/postgres/init/01-create-app-user.sh` (Docker init, CI, and in production a one-off ECS task — the same script everywhere). `form_ai_migrator` owns the database and schema and is the only role that runs DDL; `form_ai_app` is what the API connects as and gets `SELECT/INSERT/UPDATE/DELETE` only, so `dotnet ef database update` needs the `--connection` above. The application never applies migrations at startup: `deploy.yml` builds an EF Core migrations bundle image (`src/FormAI.Infrastructure/Dockerfile.migrator`) and runs it as a one-off ECS task before the API rolls out, and a failed migration stops the deploy ([ADR 0007](./docs/adr/0007-migrations-run-as-a-separate-role-in-a-deploy-job.md)). The EF tools and the bundle build `AppDbContext` through `AppDbContextFactory` (`Infrastructure/Data/`), not the API host (whose `Program.cs` throws without `ConnectionStrings:Redis`), so they need no runtime settings. Both go through `AppDbContextOptions.UseAppDatabase`, the single place that says how the context talks to PostgreSQL — change database options there, not in `AddInfrastructure` or the factory.
 
 Local infrastructure is Docker Compose: PostgreSQL, Mailpit (web inbox at http://localhost:8025, receives all local email) and Redis (the SignalR backplane — no auth, no volume; it's a pure pub/sub relay, so losing it on restart is fine).
 
@@ -133,7 +135,7 @@ Configuration keys are in `appsettings.json`; local values go in `appsettings.De
 Two layers, run separately from `frontend/`:
 
 - **Vitest** (`npm test`, also `test:watch` and `test:coverage`) — component and page tests in jsdom with Testing Library. Tests are colocated as `*.test.tsx` next to the code they cover. The network is stubbed with MSW: `src/test/server.ts` has no default handlers and unhandled requests error, so each test declares exactly the requests it expects. `src/test/renderWithProviders.tsx` wraps a component in the app's providers.
-- **Playwright** (`npm run test:e2e`, or `test:e2e:ui`) — end-to-end specs in `frontend/e2e/`, excluded from Vitest. `playwright.config.ts` starts its own API (`Testing` environment) and Vite dev server on separate ports, so it needs Docker Compose's PostgreSQL, Redis and Mailpit running, plus `JWT_SECRET` and `APP_DB_PASSWORD` (or `E2E_DB_CONNECTION`) in the repo-root `.env`. Specs seed forms through the real HTTP API via `e2e/support/api.ts`, and some assert over HTTP alone rather than in the browser.
+- **Playwright** (`npm run test:e2e`, or `test:e2e:ui`) — end-to-end specs in `frontend/e2e/`, excluded from Vitest. `playwright.config.ts` starts its own API (`Testing` environment) and Vite dev server on separate ports, so it needs Docker Compose's PostgreSQL, Redis and Mailpit running, plus `JWT_SECRET` and `APP_DB_PASSWORD` (or `E2E_DB_CONNECTION`) in the repo-root `.env`; the API runs as `form_ai_app`, and the `form_ai_e2e` database must already be migrated as `form_ai_migrator`. Specs seed forms through the real HTTP API via `e2e/support/api.ts`, and some assert over HTTP alone rather than in the browser.
 
 Use Vitest for behaviour a component can prove with the network stubbed; use Playwright only for flows that must cross the real API and database.
 

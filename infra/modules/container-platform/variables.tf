@@ -48,6 +48,26 @@ variable "frontend_base_url" {
   type        = string
 }
 
+variable "rds_address" {
+  description = "RDS PostgreSQL endpoint hostname (from the data module)."
+  type        = string
+}
+
+variable "db_name" {
+  description = "Name of the application database (from the data module)."
+  type        = string
+}
+
+variable "master_secret_arn" {
+  description = "ARN of the RDS-managed secret holding the master user's username and password (from the data module)."
+  type        = string
+}
+
+variable "db_job_secrets_arn" {
+  description = "ARN of the secret holding the role passwords and the migrator connection string (from the data module)."
+  type        = string
+}
+
 variable "ses_email_smtphost" {
   description = "SMTP Host."
   type        = string

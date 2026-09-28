@@ -27,7 +27,10 @@ data "aws_iam_policy_document" "deploy_permissions" {
       "ecr:BatchCheckLayerAvailability", "ecr:PutImage",
       "ecr:InitiateLayerUpload", "ecr:UploadLayerPart", "ecr:CompleteLayerUpload"
     ]
-    resources = [module.container_platform.ecr_repository_arn]
+    resources = [
+      module.container_platform.ecr_repository_arn,
+      module.container_platform.ecr_migrator_repository_arn,
+    ]
   }
   statement {
     sid       = "ECSDeploy"
@@ -45,7 +48,30 @@ data "aws_iam_policy_document" "deploy_permissions" {
     resources = [
       module.container_platform.ecs_execution_role_arn,
       module.container_platform.ecs_task_role_arn,
+      module.container_platform.ecs_db_jobs_execution_role_arn,
     ]
+  }
+  # Migrations only. The db-bootstrap task uses the RDS master credentials and is
+  # deliberately left out: it is run by hand with an admin's own AWS credentials.
+  statement {
+    sid       = "RunMigrations"
+    actions   = ["ecs:RunTask"]
+    resources = ["${module.container_platform.db_migrate_task_definition_arn_without_revision}:*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+      values   = [module.container_platform.ecs_cluster_arn]
+    }
+  }
+  statement {
+    sid       = "ReadMigrationTasks"
+    actions   = ["ecs:DescribeTasks"]
+    resources = ["${replace(module.container_platform.ecs_cluster_arn, ":cluster/", ":task/")}/*"]
+  }
+  statement {
+    sid       = "ReadMigrationLogs"
+    actions   = ["logs:GetLogEvents"]
+    resources = ["${module.container_platform.db_jobs_log_group_arn}:*"]
   }
 }
 

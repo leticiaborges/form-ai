@@ -15,8 +15,8 @@ resource "aws_db_instance" "postgres" {
   instance_class              = "db.t4g.micro"
   allocated_storage           = 20
   db_name                     = "form_ai"
-  username                    = "form_ai_app"
-  manage_master_user_password = true # RDS-managed secret, one less thing you generate/store yourself
+  username                    = "form_ai_admin" # master: only the one-off db-bootstrap task uses it; the app connects as form_ai_app
+  manage_master_user_password = true            # RDS-managed secret, one less thing you generate/store yourself
   db_subnet_group_name        = aws_db_subnet_group.this.name
   vpc_security_group_ids      = [var.data_security_group_id]
   publicly_accessible         = false
@@ -33,13 +33,23 @@ resource "aws_elasticache_cluster" "redis" {
   security_group_ids = [var.data_security_group_id]
 }
 
-# RDS generated and owns the master password when manage_master_user_password = true —
-# it lives in its own AWS-managed secret, not one you create. Read it back out here
-# so it can be folded into one connection string your app actually understands.
-data "aws_secretsmanager_secret_version" "rds_master" {
-  secret_id = aws_db_instance.postgres.master_user_secret[0].secret_arn
+# The two database roles are created inside the database by the db-bootstrap task
+# (docker/postgres/init/01-create-app-user.sh, see container-platform), not by Terraform:
+# RDS sits in private subnets, so nothing outside the VPC can run SQL against it. Terraform
+# only generates their passwords and stores them, so the same values reach both the task
+# that creates the roles and the tasks that log in with them.
+resource "random_password" "app_db" {
+  length  = 32
+  special = false # ends up in a `key=value;` connection string, where ; and = would need escaping
 }
 
+resource "random_password" "migrator_db" {
+  length  = 32
+  special = false
+}
+
+# Read by the API tasks' execution role (container-platform), so it must hold nothing but what
+# the API needs at runtime: no DDL credentials.
 resource "aws_secretsmanager_secret" "app_secrets" {
   name = "${var.name}-app-secrets"
 }
@@ -47,10 +57,25 @@ resource "aws_secretsmanager_secret" "app_secrets" {
 resource "aws_secretsmanager_secret_version" "app_secrets" {
   secret_id = aws_secretsmanager_secret.app_secrets.id
   secret_string = jsonencode({
-    ConnectionString = "Host=${aws_db_instance.postgres.address};Database=form_ai;Username=form_ai_app;Password=${jsondecode(data.aws_secretsmanager_secret_version.rds_master.secret_string)["password"]}"
+    ConnectionString = "Host=${aws_db_instance.postgres.address};Database=form_ai;Username=form_ai_app;Password=${random_password.app_db.result}"
     JwtSecret        = var.jwt_secret # generate once with `openssl rand -base64 64`, pass as a TF_VAR, never commit it
     ClaudeApiKey     = var.claude_api_key
     SesSmtpUsername  = var.ses_smtp_username
     SesSmtpPassword  = var.ses_smtp_password
+  })
+}
+
+# Read only by the db-bootstrap and db-migrate tasks (a separate execution role in container-platform)
+# and never by the API, so a compromised API container cannot reach the migrator's password.
+resource "aws_secretsmanager_secret" "db_job_secrets" {
+  name = "${var.name}-db-job-secrets"
+}
+
+resource "aws_secretsmanager_secret_version" "db_job_secrets" {
+  secret_id = aws_secretsmanager_secret.db_job_secrets.id
+  secret_string = jsonencode({
+    AppPassword              = random_password.app_db.result
+    MigratorPassword         = random_password.migrator_db.result
+    MigratorConnectionString = "Host=${aws_db_instance.postgres.address};Database=form_ai;Username=form_ai_migrator;Password=${random_password.migrator_db.result}"
   })
 }

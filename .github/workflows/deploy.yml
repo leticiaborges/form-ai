@@ -13,6 +13,7 @@ jobs:
     secrets:
       CI_POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
       CI_APP_DB_PASSWORD: ${{ secrets.CI_APP_DB_PASSWORD }}
+      CI_MIGRATOR_DB_PASSWORD: ${{ secrets.CI_MIGRATOR_DB_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
   build-and-deploy:
@@ -30,6 +31,50 @@ jobs:
           IMAGE="${{ steps.ecr.outputs.registry }}/formai-prod-api:${{ github.sha }}"
           docker build -f src/FormAI.API/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
+      # Migrations run as a one-off Fargate task before the API rolls out, as form_ai_migrator
+      # (docs/adr/0007). RDS is private, so this cannot run from the GitHub runner.
+      - name: Build and push migrator image
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/formai-prod-migrator:${{ github.sha }}"
+          docker build -f src/FormAI.Infrastructure/Dockerfile.migrator -t "$IMAGE" .
+          docker push "$IMAGE"
+      - name: Apply database migrations
+        run: |
+          set -euo pipefail
+          CLUSTER=formai-prod-cluster
+          IMAGE="${{ steps.ecr.outputs.registry }}/formai-prod-migrator:${{ github.sha }}"
+
+          aws ecs describe-task-definition --task-definition formai-prod-db-migrate --query taskDefinition \
+            | jq --arg image "$IMAGE" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[0].image = $image' \
+            > migrate-task-definition.json
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://migrate-task-definition.json \
+            --query taskDefinition.taskDefinitionArn --output text)
+
+          # Same subnets and security group as the API: the only ones RDS accepts.
+          NETWORK=$(aws ecs describe-services --cluster "$CLUSTER" --services formai-prod-api \
+            --query 'services[0].networkConfiguration' --output json)
+          TASK_ARN=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
+            --task-definition "$TASK_DEF_ARN" --network-configuration "$NETWORK" \
+            --query 'tasks[0].taskArn' --output text)
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "::error::The migrate task could not be started"
+            exit 1
+          fi
+
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+
+          echo "--- migrate task log"
+          aws logs get-log-events --log-group-name /ecs/formai-prod-db-jobs \
+            --log-stream-name "migrate/migrate/${TASK_ARN##*/}" \
+            --query 'events[].message' --output text | tr '\t' '\n' || true
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            REASON=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --query 'tasks[0].stoppedReason' --output text)
+            echo "::error::Migrations failed (exit code $EXIT_CODE): $REASON. The API was not deployed."
+            exit 1
+          fi
       - run: aws ecs describe-task-definition --task-definition formai-prod-api --query taskDefinition > task-definition.json
       - uses: aws-actions/amazon-ecs-render-task-definition@v1
         id: render
