@@ -68,9 +68,16 @@ export function RegisterSuccessPage() {
         <p className="mt-2 text-sm text-gray-400">
           The link expires in 15 minutes. Check your spam folder if you don't see it.
         </p>
+        <div className="mt-6">
+          <Link to="/login">
+            <Button variant="outline" className="w-full">
+              Go to login
+            </Button>
+          </Link>
+        </div>
         {email && (
-          <div className="mt-4">
-            <p className="text-sm text-gray-600">
+          <div className="mt-6">
+            <p className="text-xs text-gray-500">
               Didn't get it? If nothing arrives in a few minutes, click below to send a new one.
             </p>
             <Button
@@ -87,20 +94,13 @@ export function RegisterSuccessPage() {
             {notice && (
               <p
                 role={notice.isError ? "alert" : "status"}
-                className={`mt-2 text-sm ${notice.isError ? "text-red-600" : "text-green-700"}`}
+                className={`mt-2 text-sm ${notice.isError ? "text-red-600" : "text-gray-500"}`}
               >
                 {notice.text}
               </p>
             )}
           </div>
         )}
-        <div className="mt-6">
-          <Link to="/login">
-            <Button variant="outline" className="w-full">
-              Go to login
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );
