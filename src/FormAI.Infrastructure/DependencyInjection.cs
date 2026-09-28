@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshTokenHandler>();
         services.AddScoped<LogoutHandler>();
+        services.AddScoped<CleanupExpiredRefreshTokensHandler>();
         services.AddScoped<VerifyEmailHandler>();
 
         services.AddScoped<CreateFormHandler>();

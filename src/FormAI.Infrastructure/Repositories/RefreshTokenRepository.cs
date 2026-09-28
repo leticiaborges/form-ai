@@ -33,7 +33,15 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             return;
 
         token.Revoke();
-        
+
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<int> DeleteInactiveTokensAsync(DateTime olderThan, CancellationToken cancellationToken = default)
+    {
+        return await _context.RefreshTokens
+            .Where(t => (t.RevokedAt != null && t.RevokedAt < olderThan)
+                     || (t.RevokedAt == null && t.ExpiresAt < olderThan))
+            .ExecuteDeleteAsync(cancellationToken);
     }
 }
