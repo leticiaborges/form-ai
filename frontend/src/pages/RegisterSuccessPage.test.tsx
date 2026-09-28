@@ -1,4 +1,4 @@
-import { act, screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse, delay } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -55,8 +55,7 @@ describe("RegisterSuccessPage resend", () => {
 
     await user.click(screen.getByRole("button", RESEND));
 
-    await screen.findByText(/we've sent a new link/i);
-    expect(body).toEqual({ email: EMAIL });
+    await waitFor(() => expect(body).toEqual({ email: EMAIL }));
   });
 
   it("disables the control while the request is in flight", async () => {
@@ -72,20 +71,21 @@ describe("RegisterSuccessPage resend", () => {
     await user.click(screen.getByRole("button", RESEND));
 
     expect(screen.getByRole("button", { name: /loading/i })).toBeDisabled();
-    await screen.findByText(/we've sent a new link/i);
+    await screen.findByRole("button", { name: /\(60s\)/ });
   });
 
-  it("confirms and starts a 60 second countdown after a successful resend", async () => {
+  it("starts a 60 second countdown without a success message after a successful resend", async () => {
     resendReturns(200);
     const user = userEvent.setup();
     renderPage({ email: EMAIL });
 
     await user.click(screen.getByRole("button", RESEND));
 
-    expect(await screen.findByText(/we've sent a new link/i)).toBeInTheDocument();
-    const button = screen.getByRole("button", { name: /resend verification email/i });
+    const button = await screen.findByRole("button", { name: /\(60s\)/ });
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent("60");
+    expect(screen.queryByText(/we've sent a new link/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("counts down and re-enables after 60 seconds", async () => {
@@ -95,8 +95,7 @@ describe("RegisterSuccessPage resend", () => {
     renderPage({ email: EMAIL });
 
     await user.click(screen.getByRole("button", RESEND));
-    await screen.findByText(/we've sent a new link/i);
-    expect(screen.getByRole("button", RESEND)).toHaveTextContent("60");
+    await screen.findByRole("button", { name: /\(60s\)/ });
 
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(screen.getByRole("button", RESEND)).toHaveTextContent("59");

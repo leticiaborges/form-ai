@@ -41,7 +41,8 @@ instead of inventing a second way to mint a confirmation token.
      `SaveChangesAsync` since both are tracked by the same `AppDbContext`), `IEmailService.SendVerificationEmailAsync`
      (existing).
 6. out: `200 { message }` — identical text in every branch above (door 2) — and the frontend
-   shows a confirmation and starts a client-side cooldown on the button.
+   starts a client-side cooldown on the button. No success message is shown: the countdown on the
+   button is the confirmation.
 
 ## Impact
 
@@ -87,13 +88,13 @@ The success page offers a way to trigger a resend when it knows which email to r
    "Resend verification email" link with copy telling the user to click it if nothing arrives in a
    few minutes.
 3. WHILE `/register/success` has no known email (direct or refreshed visit, no router state) THEN the system SHALL NOT render the resend affordance, leaving the rest of the page unchanged.
-4. WHEN the user clicks resend and the request succeeds THEN the system SHALL show a confirmation
-   message and disable the resend control for 60 seconds with a visible countdown.
+4. WHEN the user clicks resend and the request succeeds THEN the system SHALL disable the resend control
+   for 60 seconds with a visible countdown, and SHALL NOT show a success message.
 5. IF the resend request fails (network error or non-429 error status) THEN the system SHALL show
    a generic retry message and re-enable the control immediately.
 
 **Independent test:** register a new account, land on the success page with the email in router
-state, click resend, and see the confirmation message and a disabled/counting-down button.
+state, click resend, and see a disabled, counting-down button and no success message.
 
 ### S2: The resend endpoint issues a fresh token without leaking account state (P1)
 

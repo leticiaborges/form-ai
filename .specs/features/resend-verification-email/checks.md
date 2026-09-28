@@ -35,8 +35,8 @@ Proof: `cd frontend && npx vitest run src/pages/RegisterSuccessPage.test.tsx -t 
 **C5** - While the resend request is in flight the control is disabled (loading state) (Observable: loading state)
 Proof: `cd frontend && npx vitest run src/pages/RegisterSuccessPage.test.tsx -t "disables the control while the request is in flight"`
 
-**C6** - After a successful resend a confirmation message is shown and the control is disabled with a countdown reading 60 (AC 4)
-Proof: `cd frontend && npx vitest run src/pages/RegisterSuccessPage.test.tsx -t "confirms and starts a 60 second countdown after a successful resend"`
+**C6** - After a successful resend the control is disabled with a countdown reading 60 and no success message is shown (AC 4)
+Proof: `cd frontend && npx vitest run src/pages/RegisterSuccessPage.test.tsx -t "starts a 60 second countdown without a success message after a successful resend"`
 
 **C7** - The countdown reads 59 after one second, and after 60 seconds the control is enabled again (AC 4)
 Proof: `cd frontend && npx vitest run src/pages/RegisterSuccessPage.test.tsx -t "counts down and re-enables after 60 seconds"`

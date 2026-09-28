@@ -91,11 +91,8 @@ export function RegisterSuccessPage() {
                 ? `Resend verification email (${secondsLeft}s)`
                 : "Resend verification email"}
             </Button>
-            {notice && (
-              <p
-                role={notice.isError ? "alert" : "status"}
-                className={`mt-2 text-sm ${notice.isError ? "text-red-600" : "text-gray-500"}`}
-              >
+            {notice && notice.isError && (
+              <p role={"alert"} className={`mt-2 text-xs text-red-600`}>
                 {notice.text}
               </p>
             )}
