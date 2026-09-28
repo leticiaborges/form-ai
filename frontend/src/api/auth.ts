@@ -14,3 +14,7 @@ export async function loginUser(data: { email: string; password: string }): Prom
 export async function verifyEmail(token: string): Promise<void> {
   await api.post("/auth/verify-email", { token });
 }
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  await api.post("/auth/resend-verification", { email });
+}
