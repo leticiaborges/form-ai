@@ -155,3 +155,7 @@ None beyond the plan's `## Out of scope`, which is unchanged.
 
 - S1 = ~7k (`RegisterPage`, `RegisterSuccessPage`, `api/auth.ts`, 2 new test files, `renderWithProviders` gains an optional router `state`), S2 = ~6k (new handler, request record, controller action, DI line, 1 new test file), S3 = ~4k (`RateLimitingExtensions`, new options class, `appsettings.json`, e2e config and spec), docs edits ~2k; about 20 KB of touched files plus ~25 KB of new tests, about 19k in total, under the 150k budget - one builder
 - Mechanism: one builder (fits, no ask)
+
+- **Boundary:** C1-C27 closed at the commit that adds this line
+- **Settled mid-build:** the local `form_ai_e2e` database was empty and was migrated as `form_ai_migrator` (the documented prerequisite) to run the e2e proofs; a 429 on the page shows the server's own message with no countdown (C9); the countdown is a `setInterval` (the test advances a fake clock in one jump, which a chained `setTimeout` cannot follow); `renderWithProviders` gained an optional router `state`
+- **Abandoned:** nothing
