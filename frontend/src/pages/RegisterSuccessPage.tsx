@@ -92,7 +92,7 @@ export function RegisterSuccessPage() {
                 : "Resend verification email"}
             </Button>
             {notice && notice.isError && (
-              <p role={"alert"} className={`mt-2 text-xs text-red-600`}>
+              <p role="alert" className={`mt-2 text-xs text-red-600`}>
                 {notice.text}
               </p>
             )}
