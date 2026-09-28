@@ -1,6 +1,7 @@
 using FormAI.API.Hubs;
 using FormAI.API.Middleware;
 using FormAI.API.RateLimiting;
+using FormAI.API.Workers;
 using FormAI.Application.Interfaces;
 using FormAI.Infrastructure;
 using Microsoft.OpenApi;
@@ -58,6 +59,9 @@ builder.Services.AddSignalR().AddStackExchangeRedis(
 );
 
 builder.Services.AddSingleton<IFormResultsNotifier, SignalRFormResultsNotifier>();
+
+builder.Services.Configure<RefreshTokenCleanupOptions>(builder.Configuration.GetSection("RefreshTokenCleanup"));
+builder.Services.AddHostedService<RefreshTokenCleanupWorker>();
 
 builder.Services.AddHealthChecks();
 
