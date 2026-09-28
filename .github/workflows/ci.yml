@@ -8,6 +8,8 @@ on:
         required: true
       CI_APP_DB_PASSWORD:
         required: true
+      CI_MIGRATOR_DB_PASSWORD:
+        required: true
       JWT_SECRET:
         required: true
   push:
@@ -103,7 +105,9 @@ jobs:
         image: axllent/mailpit:latest
         ports: ["1025:1025", "8025:8025"]
     env:
+      # The API (Playwright) connects as the runtime role; only the migration step uses the migrator.
       E2E_DB_CONNECTION: Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_app;Password=${{ secrets.CI_APP_DB_PASSWORD }}
+      E2E_MIGRATOR_DB_CONNECTION: Host=localhost;Port=5432;Database=form_ai_e2e;Username=form_ai_migrator;Password=${{ secrets.CI_MIGRATOR_DB_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
     steps:
       - uses: actions/checkout@v7
@@ -116,7 +120,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Create form_ai_app role (docker/postgres/init/01-create-app-user.sh)
+      - name: Create form_ai_app and form_ai_migrator roles (docker/postgres/init/01-create-app-user.sh)
         env:
           PGHOST: localhost
           PGPORT: "5432"
@@ -124,22 +128,18 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: form_ai_e2e
           APP_DB_PASSWORD: ${{ secrets.CI_APP_DB_PASSWORD }}
+          MIGRATOR_DB_PASSWORD: ${{ secrets.CI_MIGRATOR_DB_PASSWORD }}
         run: sh docker/postgres/init/01-create-app-user.sh
 
       - name: Restore
         run: dotnet restore
 
       - name: Apply migrations
-        env:
-          # dotnet-ef builds the whole app host (Program.cs) to find AppDbContext, and both
-          # AddInfrastructure() and Program.cs fail fast if these are missing entirely.
-          Jwt__Secret: ${{ secrets.JWT_SECRET }}
-          Jwt__Issuer: formai-e2e
-          Jwt__Audience: formai-e2e
-          ConnectionStrings__Redis: localhost:6379
+        # AppDbContextFactory gives the EF tools a context without booting the API host, so no
+        # Redis or Jwt settings are needed here; --connection is the only input.
         run: |
           dotnet tool install --global dotnet-ef
-          dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "$E2E_DB_CONNECTION"
+          dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "$E2E_MIGRATOR_DB_CONNECTION"
       - run: npm ci
         working-directory: frontend
       - run: npx playwright install --with-deps chromium

@@ -46,6 +46,10 @@ module "container_platform" {
   acm_certificate_arn       = module.dns_tls.api_certificate_arn
   app_secrets_arn           = module.data.app_secrets_arn
   redis_address             = module.data.redis_address
+  rds_address               = module.data.rds_address
+  db_name                   = module.data.db_name
+  master_secret_arn         = module.data.master_secret_arn
+  db_job_secrets_arn        = module.data.db_job_secrets_arn
   frontend_base_url         = "https://${var.frontend_domain_name}"
   ses_email_smtphost        = "email-smtp.us-east-1.amazonaws.com"
   ses_email_smtpport        = 587

@@ -49,7 +49,7 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
    cp .env.example .env
    ```
 
-   Fill in `POSTGRES_PASSWORD` and `APP_DB_PASSWORD` in `.env` with values of your choice (these are only used by the local Docker containers).
+   Fill in `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` and `MIGRATOR_DB_PASSWORD` in `.env` with values of your choice (these are only used by the local Docker containers).
 
 2. **Start PostgreSQL and Mailpit**
 
@@ -57,7 +57,9 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
    docker compose up -d
    ```
 
-   PostgreSQL is available at `localhost:5432`. Mailpit's web inbox is at [http://localhost:8025](http://localhost:8025) — the backend sends all local email there instead of a real SMTP provider.
+   PostgreSQL is available at `localhost:5432`. On its first start (empty volume) it creates two roles: `form_ai_migrator`, which owns the database and runs migrations, and `form_ai_app`, which the API connects as and can only read and write data. If you already have a volume from before these roles existed, recreate it with `docker compose down -v` (this deletes the local data).
+
+   Mailpit's web inbox is at [http://localhost:8025](http://localhost:8025) — the backend sends all local email there instead of a real SMTP provider.
 
 3. **Configure backend secrets**
 
@@ -82,8 +84,10 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 4. **Apply database migrations**
 
    ```bash
-   dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API
+   dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD from step 1>"
    ```
+
+   Migrations must run as `form_ai_migrator`. The `form_ai_app` role from step 3 cannot change the schema, so leaving out `--connection` fails.
 
 5. **Run the backend**
 
@@ -103,6 +107,22 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 
    Frontend available at `http://localhost:5173`. Vite proxies `/api` to the backend, so no extra configuration is needed.
 
+## End-to-end tests (Playwright)
+
+The Playwright suite starts its own API against a separate database, `form_ai_e2e`, so it never touches your development data. Create it once, with the same roles and grants as `form_ai` (Docker Compose must be running):
+
+```bash
+sh docker/postgres/create-e2e-db.sh
+```
+
+Then apply the migrations to it as the migrator role (the script is safe to re-run):
+
+```bash
+dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai_e2e;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
+```
+
+Run the suite from `frontend/` with `npm run test:e2e`. It needs `JWT_SECRET` and `APP_DB_PASSWORD` in the repo-root `.env`, plus Redis and Mailpit from Docker Compose.
+
 ## Configuration reference
 
 | Variable | Purpose |
@@ -118,7 +138,7 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 | `Email__FromAddress` / `Email__FromName` | Sender identity |
 | `Email__FrontendBaseUrl` | Base URL used to build confirmation links |
 
-Docker Compose also reads `POSTGRES_PASSWORD` and `APP_DB_PASSWORD` from `.env` (see `.env.example`) — these only apply to the local PostgreSQL container, not the backend app itself.
+Docker Compose also reads `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` and `MIGRATOR_DB_PASSWORD` from `.env` (see `.env.example`) — these only apply to the local PostgreSQL container, not the backend app itself.
 
 ## Commands
 
@@ -134,7 +154,8 @@ dotnet test FormAI.sln
 
 # EF Core migrations (run from repo root)
 dotnet ef migrations add <MigrationName> --project src/FormAI.Infrastructure --startup-project src/FormAI.API
-dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API
+# applying needs the migrator role: form_ai_app cannot change the schema
+dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
 ```
 
 ## Project structure
