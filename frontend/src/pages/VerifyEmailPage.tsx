@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { verifyEmail } from "../api/auth";
 import { Button } from "../components/Button";
@@ -16,8 +16,13 @@ export function VerifyEmailPage() {
     token ? { status: "loading" } : { status: "error", errorMessage: "No token found in the URL" },
   );
 
+  // The token is single-use, so a second call would fail with "already verified" and overwrite the
+  // success. StrictMode runs this effect twice in development but keeps refs between the runs.
+  const requestedToken = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || requestedToken.current === token) return;
+    requestedToken.current = token;
 
     verifyEmail(token)
       .then(() => setState({ status: "success" }))

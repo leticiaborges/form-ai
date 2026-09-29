@@ -1,7 +1,9 @@
 using FormAI.API.Auth;
+using FormAI.API.RateLimiting;
 using FormAI.Application.Users.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FormAI.API.Controllers;
 
@@ -14,16 +16,18 @@ public class AuthController : ControllerBase
     private readonly RefreshTokenHandler _refreshTokenHandler;
     private readonly LogoutHandler _logoutHandler;
     private readonly VerifyEmailHandler _verifyEmailHandler;
+    private readonly ResendVerificationEmailHandler _resendVerificationEmailHandler;
 
     public AuthController(RegisterHandler registerHandler, LoginHandler loginHandler,
         RefreshTokenHandler refreshTokenHandler, LogoutHandler logoutHandler,
-        VerifyEmailHandler verifyEmailHandler)
+        VerifyEmailHandler verifyEmailHandler, ResendVerificationEmailHandler resendVerificationEmailHandler)
     {
         _registerHandler = registerHandler;
         _loginHandler = loginHandler;
         _refreshTokenHandler = refreshTokenHandler;
         _logoutHandler = logoutHandler;
         _verifyEmailHandler = verifyEmailHandler;
+        _resendVerificationEmailHandler = resendVerificationEmailHandler;
     }
 
     [HttpPost("register")]
@@ -70,5 +74,13 @@ public class AuthController : ControllerBase
     {
         await _verifyEmailHandler.HandleAsync(request, cancellationToken);
         return Ok(new { message = "Email verified successfully." });
+    }
+
+    [HttpPost("resend-verification")]
+    [EnableRateLimiting(RateLimitPolicies.ResendVerification)]
+    public async Task<IActionResult> ResendVerification([FromBody]ResendVerificationEmailRequest request, CancellationToken cancellationToken)
+    {
+        await _resendVerificationEmailHandler.HandleAsync(request, cancellationToken);
+        return Ok(new { message = "If an account exists for this email and isn't verified yet, we've sent a new link." });
     }
 }

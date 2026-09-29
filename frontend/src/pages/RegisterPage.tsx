@@ -46,7 +46,7 @@ export function RegisterPage() {
         email: data.email,
         password: data.password,
       });
-      navigate("/register/success");
+      navigate("/register/success", { state: { email: data.email } });
     } catch (err: unknown) {
       const e = err as CustomResponse;
       const fieldErrors = e.response?.data?.errors;

@@ -6,11 +6,15 @@ import { AuthProvider } from "../context/AuthProvider";
 interface Options {
   route?: string;
   path?: string;
+  state?: unknown;
 }
 
-export function renderWithProviders(ui: ReactElement, { route = "/", path = "*" }: Options = {}) {
+export function renderWithProviders(
+  ui: ReactElement,
+  { route = "/", path = "*", state }: Options = {},
+) {
   return render(
-    <MemoryRouter initialEntries={[route]}>
+    <MemoryRouter initialEntries={[{ pathname: route, state }]}>
       <AuthProvider>
         <Routes>
           <Route path={path} element={ui} />

@@ -56,6 +56,9 @@ export default defineConfig({
         Email__FromAddress: "no-reply@formai.test",
         Email__FromName: "FormAI E2E",
         Email__FrontendBaseUrl: WEB_URL,
+        // One test walks every branch of the resend endpoint and then hits the limit; the shipped
+        // default is 3, which that walk would exceed.
+        RateLimiting__ResendVerification__PermitLimit: "5",
       },
     },
     {
