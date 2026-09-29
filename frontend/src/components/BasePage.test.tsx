@@ -5,7 +5,7 @@ import { renderWithProviders } from "../test/renderWithProviders";
 import { tokenStore } from "../auth/tokenStore";
 
 const BANNER =
-  "You're using a demo account. Your forms are only available for 1 day. Create an account to keep them.";
+  "You're using a demo account. Your forms are only available for 1 day. Create an account to create forms and keep them.";
 
 function renderAs(isDemo: boolean) {
   localStorage.setItem(

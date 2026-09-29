@@ -39,7 +39,7 @@ export function BasePage({ children, stickyHeader }: Readonly<BasePageProps>) {
           <Link to="/register" className="font-semibold underline">
             Create an account
           </Link>{" "}
-          to keep them.
+          to create forms and keep them.
         </div>
       )}
       <div className="flex-1 flex flex-col">{children}</div>
