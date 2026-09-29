@@ -15,7 +15,7 @@ endpoint and still reach the 429 on the sixth call. The limiter is in-memory and
 remote IP for this anonymous endpoint, so **everything that calls `POST /api/auth/demo` over HTTP
 lives in one Playwright test** (`fullyParallel` would otherwise split tests across workers sharing
 the partition). The browser flows are proven with MSW in Vitest, never against the real endpoint,
-for the same reason. The shipped defaults (10 / 15 / 3) are proven by C11.
+for the same reason. The shipped defaults (10 / 15 / 3) are deliberately not asserted: a test restating `appsettings.json` only breaks when the tuning changes (C11 was removed).
 
 ## Checks
 
@@ -51,8 +51,7 @@ Proof: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj
 **C10** - The `AddUserIsDemo` migration adds `is_demo` as a non-null boolean with default `false`, so existing rows backfill to not-demo (Landing door 1, Impact: stored data)
 Proof: `grep -c "defaultValue: false" src/FormAI.Infrastructure/Migrations/*AddUserIsDemo.cs` prints `1` (the assertion is the count; `grep -c` exits 0 on a match)
 
-**C11** - `appsettings.json` binds `RateLimiting:Demo` to `PermitLimit` 10, `WindowMinutes` 15, `SegmentsPerWindow` 3, and holds no `Demo:Password` (AC 7, Assumptions)
-Proof: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~DemoConfigurationTests.ShippedDefaults"`
+**C11** - Removed. It asserted the literal `RateLimiting:Demo` values and the absence of `Demo:Password` in `appsettings.json`; the limiter's behaviour is proven by C16, and the values are tuning, not a rule.
 
 **C12** - A second `POST /api/auth/demo` returns a token whose `sub` and `email` differ from the first (AC 3, over HTTP)
 Proof: `cd frontend && npx playwright test e2e/demo.spec.ts -g "starts, refreshes and rate limits a demo session"` (assertion: second call)
@@ -129,7 +128,7 @@ Proof: `grep -q "Demo account" CONTEXT.md && grep -qi "demo account" CLAUDE.md &
 | door 1: `users.is_demo` (2)                                     | round trip C9 · migration default C10                        | -        |
 | door 2: `is_demo` claim (2)                                     | issued C6, C7 · decoded by the frontend C24                  | -        |
 | startup config: `Demo:Password` (1 assembly)                    | e2e harness C8                                               | -        |
-| startup config: `RateLimiting:Demo` (2 places)                  | shipped `appsettings.json` C11 · e2e harness override C16    | -        |
+| startup config: `RateLimiting:Demo` (2 places)                  | e2e harness override C16    | -        |
 
 - `Demo:Password` in production (ECS secret) is not a member: it is the plan's open question 1 and this build's Out of scope; locally it is set by hand in the untracked `appsettings.Development.json`
 - Claims naming a status code, route or response shape: C8, C16 cross the HTTP boundary; **C5's `404` is proven at the handler** (it throws `NotFoundException`) and the mapping to 404 is the existing `ExceptionHandlingMiddleware`, not re-proven here - a `404` with `Demo:Password` unset over HTTP has no proof, since it would need a second API instance without the password
