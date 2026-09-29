@@ -9,7 +9,10 @@ interface Options {
   state?: unknown;
 }
 
-export function renderWithProviders(ui: ReactElement, { route = "/", path = "*", state }: Options = {}) {
+export function renderWithProviders(
+  ui: ReactElement,
+  { route = "/", path = "*", state }: Options = {},
+) {
   return render(
     <MemoryRouter initialEntries={[{ pathname: route, state }]}>
       <AuthProvider>
