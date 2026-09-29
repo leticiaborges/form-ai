@@ -18,8 +18,8 @@ Reuses the login path end to end: `JwtService.GenerateAccessToken`, `RefreshToke
 `RefreshTokenCookie.Set`, `PasswordHasher` and `User.Create` all run as they do today; the demo
 endpoint is `LoginHandler` without the credential check.
 
-1. `LandingPage.tsx` and `LoginPage.tsx` (existing, changed) - both render one shared "Try demo"
-   button component (new, placement); its click -> `startDemo()` in
+1. `LandingPage.tsx` and `LoginPage.tsx` (existing, changed) - both render their own "Try demo" button
+   and share the `useStartDemo` hook (new, placement); its click -> `startDemo()` in
    `frontend/src/api/auth.ts` (existing file, new function, placement) -> `POST /api/auth/demo`.
 2. `AuthController` (existing, new action) - anonymous, `[EnableRateLimiting(RateLimitPolicies.Demo)]`
    (new policy, placement per the two existing ones) -> `StartDemoHandler`.
@@ -31,7 +31,7 @@ endpoint is `LoginHandler` without the credential check.
 5. `JwtService.GenerateAccessToken` (exists, changed) - adds the `is_demo` claim only for a demo
    user (door 2). `RefreshTokenHandler` (exists) reaches the same method, so a refreshed token
    keeps the claim with no change of its own.
-6. The shared button - `login(accessToken, userFromAccessToken(...))` (exists; the function now also
+6. `useStartDemo` - `login(accessToken, userFromAccessToken(...))` (exists; the function now also
    reads `is_demo`), navigate to `/dashboard`.
 7. `BasePage.tsx` (existing, changed) - reads `user.isDemo` from `useAuth()` and renders the demo
    banner above the page content.

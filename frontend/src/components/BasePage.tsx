@@ -30,6 +30,18 @@ export function BasePage({ children, stickyHeader }: Readonly<BasePageProps>) {
         </header>
         {stickyHeader}
       </div>
+      {user?.isDemo && (
+        <div
+          role="status"
+          className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-center text-sm text-amber-900"
+        >
+          You're using a demo account. Your forms are only available for 1 day.{" "}
+          <Link to="/register" className="font-semibold underline">
+            Create an account
+          </Link>{" "}
+          to keep them.
+        </div>
+      )}
       <div className="flex-1 flex flex-col">{children}</div>
     </div>
   );

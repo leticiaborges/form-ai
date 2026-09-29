@@ -77,6 +77,7 @@ describe("LoginPage", () => {
       id: "user-1",
       name: NAME,
       email: EMAIL,
+      isDemo: false,
     });
   });
 
@@ -105,5 +106,92 @@ describe("LoginPage", () => {
     await fillAndSubmit(user);
 
     expect(await screen.findByText("Login failed. Check your credentials.")).toBeInTheDocument();
+  });
+});
+
+describe("LoginPage demo", () => {
+  const DEMO_URL = "*/api/auth/demo";
+  const demoToken = () =>
+    fakeJwt({ sub: "demo-1", name: "Demo user", email: "demo-1@demo.invalid", is_demo: "true" });
+
+  it("leads with a primary Try demo and an outline Log in", () => {
+    renderLogin();
+
+    const tryDemo = screen.getByRole("button", { name: "Try demo" });
+    expect(tryDemo).toHaveClass("bg-brand-600", "w-full");
+    const email = screen.getByLabelText("Email");
+    expect(tryDemo.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const logIn = screen.getByRole("button", { name: "Log in" });
+    expect(logIn).toHaveClass("border-brand-600");
+    expect(logIn).not.toHaveClass("bg-brand-600");
+  });
+
+  it("signs in through Try demo and opens the dashboard", async () => {
+    const accessToken = demoToken();
+    let calls = 0;
+    let body: string | undefined;
+    server.use(
+      http.post(DEMO_URL, async ({ request }) => {
+        calls++;
+        body = await request.text();
+        return HttpResponse.json({ accessToken });
+      }),
+    );
+
+    renderLogin();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Try demo" }));
+
+    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
+    expect(calls).toBe(1);
+    expect(body).toBe("");
+    expect(tokenStore.get()).toBe(accessToken);
+  });
+
+  it("disables Try demo while the request is pending", async () => {
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.post(DEMO_URL, async () => {
+        calls++;
+        await gate;
+        return HttpResponse.json({ accessToken: demoToken() });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderLogin();
+    const button = screen.getByRole("button", { name: "Try demo" });
+    await user.click(button);
+
+    expect(button).toBeDisabled();
+    await user.click(button);
+    release();
+    await screen.findByText("Dashboard page");
+    expect(calls).toBe(1);
+  });
+
+  it("shows why the demo could not start", async () => {
+    server.use(
+      http.post(DEMO_URL, () =>
+        HttpResponse.json(
+          { message: "You have reached the limit.", errors: null, code: null },
+          { status: 429 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderLogin();
+
+    await user.click(screen.getByRole("button", { name: "Try demo" }));
+    expect(await screen.findByText("You have reached the limit.")).toBeInTheDocument();
+    expect(screen.queryByText("Dashboard page")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+
+    server.use(http.post(DEMO_URL, () => HttpResponse.error()));
+    await user.click(screen.getByRole("button", { name: "Try demo" }));
+    expect(
+      await screen.findByText("Could not start the demo. Please try again."),
+    ).toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import z from "zod";
 import { loginUser } from "../api/auth";
+import { useStartDemo } from "../hooks/useStartDemo";
 import type { CustomResponse } from "../types/CustomResponse";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
@@ -22,6 +23,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  const { startDemo, isStarting, error: demoError } = useStartDemo();
 
   const {
     register,
@@ -59,6 +61,18 @@ export function LoginPage() {
           </p>
         </div>
 
+        <Button
+          type="button"
+          isLoading={isStarting}
+          onClick={startDemo}
+          className="w-full py-3 text-base shadow-md"
+        >
+          Try demo
+        </Button>
+        <p className="my-4 text-center text-xs uppercase tracking-wide text-gray-400">
+          or log in with your account
+        </p>
+
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <Input
             label="Email"
@@ -75,13 +89,13 @@ export function LoginPage() {
             {...register("password")}
           />
 
-          {serverError && (
+          {(serverError ?? demoError) && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {serverError}
+              {serverError ?? demoError}
             </div>
           )}
 
-          <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
+          <Button type="submit" variant="outline" isLoading={isSubmitting} className="mt-2 w-full">
             Log in
           </Button>
         </form>

@@ -37,6 +37,7 @@ interface AccessTokenClaims {
   sub: string;
   name: string;
   email: string;
+  is_demo?: string;
   exp?: number;
 }
 
@@ -47,8 +48,8 @@ function decodeClaims(token: string): AccessTokenClaims {
 }
 
 export function userFromAccessToken(token: string): AuthUser {
-  const { sub, name, email } = decodeClaims(token);
-  return { id: sub, name, email };
+  const { sub, name, email, is_demo } = decodeClaims(token);
+  return { id: sub, name, email, isDemo: is_demo === "true" };
 }
 
 /** True when the token has expired or will within `withinMs`. A token without `exp` never does. */
