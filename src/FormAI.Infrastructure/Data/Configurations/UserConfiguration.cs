@@ -41,6 +41,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.VerifiedAt)
         .IsRequired(false);      
 
+        builder.Property(u => u.IsDemo)
+        .IsRequired()
+        .HasDefaultValue(false);
+
         builder.HasMany(u => u.Forms)
             .WithOne(f => f.Creator)
             .HasForeignKey(f => f.CreatedBy)

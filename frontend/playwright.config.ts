@@ -59,6 +59,10 @@ export default defineConfig({
         // One test walks every branch of the resend endpoint and then hits the limit; the shipped
         // default is 3, which that walk would exceed.
         RateLimiting__ResendVerification__PermitLimit: "5",
+        // Not a secret: the demo accounts of the e2e database. One test walks the endpoint and then
+        // hits the limit, so the permit count is raised from the shipped 10 to a known 5.
+        Demo__Password: "e2e-demo-password",
+        RateLimiting__Demo__PermitLimit: "5",
       },
     },
     {
