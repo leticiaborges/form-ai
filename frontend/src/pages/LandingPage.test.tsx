@@ -28,6 +28,8 @@ describe("LandingPage demo", () => {
     const startForFree = within(hero).getByRole("button", { name: "Start for free" });
     expect(startForFree).toHaveClass("border-brand-600");
     expect(startForFree).not.toHaveClass("bg-brand-600");
+    expect(buttons[0]).toHaveClass("px-8", "py-3", "text-base");
+    expect(startForFree).toHaveClass("px-8", "py-3", "text-base");
   });
 
   it("signs in through Try demo and opens the dashboard", async () => {

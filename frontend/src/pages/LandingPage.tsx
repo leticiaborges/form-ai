@@ -33,7 +33,7 @@ export function LandingPage() {
           <Button
             isLoading={isStarting}
             onClick={startDemo}
-            className="px-10 py-3 text-lg shadow-lg ring-4 ring-brand-200"
+            className="px-8 py-3 text-base shadow-lg ring-4 ring-brand-200"
           >
             Try demo
           </Button>

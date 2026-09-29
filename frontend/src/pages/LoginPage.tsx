@@ -64,7 +64,10 @@ export function LoginPage() {
         <Button
           type="button"
           isLoading={isStarting}
-          onClick={startDemo}
+          onClick={() => {
+            setServerError(null);
+            startDemo();
+          }}
           className="w-full py-3 text-base shadow-md"
         >
           Try demo

@@ -3,7 +3,7 @@
 Profile: light
 Plan: `.specs/features/demo-login/plan.md`
 
-28 checks in 4 slices · 2 one-way doors · 1 open, of which 1 blocks go-live
+29 checks in 4 slices · 2 one-way doors · 1 open, of which 1 blocks go-live
 
 Proof commands run from the repo root. `dotnet test` targets one project and filters to one test
 class; `vitest` and `playwright` run from `frontend/`. The Docker proofs (C9) and the e2e proof
@@ -71,7 +71,7 @@ Proof: `cd frontend && npx playwright test e2e/demo.spec.ts -g "starts, refreshe
 
 ### S2 - "Try demo" leads on the landing and login pages · 6 files · 22 KB · ~8k
 
-**C17** - `LandingPage` renders "Try demo" first in the hero button row in the primary style (`bg-brand-600`), and "Start for free" in the outline style (AC 9a)
+**C17** - `LandingPage` renders "Try demo" first in the hero button row in the primary style (`bg-brand-600`) at the same size classes as "Start for free" (`px-8 py-3 text-base`), and "Start for free" in the outline style (AC 9a)
 Proof: `cd frontend && npx vitest run src/pages/LandingPage.test.tsx -t "leads the hero with a primary Try demo"`
 
 **C18** - `LoginPage` renders a full-width primary "Try demo" before the Email field in document order, and the form's "Log in" submit button in the outline style (AC 9)
@@ -91,6 +91,9 @@ Proof: `cd frontend && npx vitest run src/pages/LoginPage.test.tsx -t "shows why
 
 **C23** - On `/` a failed demo request shows the same fallback text next to the button and stays on `/` (AC 12, on `/`)
 Proof: `cd frontend && npx vitest run src/pages/LandingPage.test.tsx -t "shows why the demo could not start"`
+
+**C29** - After a failed password login, a failed demo request replaces the login error with the demo failure text on `/login`; the old login error is no longer shown (AC 12)
+Proof: `cd frontend && npx vitest run src/pages/LoginPage.test.tsx -t "replaces an earlier login error with the demo failure"`
 
 ### S3 - A demo user is told the account is temporary · 4 files · 12 KB · ~4k
 

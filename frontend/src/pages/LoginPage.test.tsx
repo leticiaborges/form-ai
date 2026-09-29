@@ -110,6 +110,26 @@ describe("LoginPage", () => {
 });
 
 describe("LoginPage demo", () => {
+  it("replaces an earlier login error with the demo failure", async () => {
+    server.use(
+      http.post("*/api/auth/login", () =>
+        HttpResponse.json({ message: "Invalid user or password." }, { status: 401 }),
+      ),
+      http.post("*/api/auth/demo", () => HttpResponse.error()),
+    );
+    const user = userEvent.setup();
+    renderLogin();
+
+    await fillAndSubmit(user);
+    expect(await screen.findByText("Invalid user or password.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try demo" }));
+
+    expect(
+      await screen.findByText("Could not start the demo. Please try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Invalid user or password.")).not.toBeInTheDocument();
+  });
+
   const DEMO_URL = "*/api/auth/demo";
   const demoToken = () =>
     fakeJwt({ sub: "demo-1", name: "Demo user", email: "demo-1@demo.invalid", is_demo: "true" });
