@@ -1,127 +1,133 @@
 # Demo login verification
 
-**Verdict**: FAIL
+**Verdict**: PASS
 **Profile**: light
-**Diff range**: 4c52b5d..39dd584
-**Round**: 1 - full
+**Diff range**: 4c52b5d..ae56c3e (fix: 39dd584..ae56c3e)
+**Round**: 2 - scoped
 **Verifier**: independent sub-agent (author != verifier)
 
-All 28 checks are proven at HEAD with located evidence. The feature still fails: plan criterion
-**9a** requires the landing "Try demo" button to be "at the size of the existing hero buttons", no
-check covers that clause, and the code makes it larger (`frontend/src/pages/LandingPage.tsx:36`
-`px-10 py-3 text-lg shadow-lg ring-4 ring-brand-200` against `px-8 py-3 text-base` at
-`LandingPage.tsx:41` and `:46`). A second uncovered defect against criterion 12 sits in
-`LoginPage.tsx:92-94`. See "Plan criteria against checks" and "Ranked gaps".
+All 29 checks are proven at HEAD `ae56c3e` with located evidence. Both round-1 FAIL findings are
+closed. The hero "Try demo" button now uses the same size classes as the other hero buttons, and
+a demo click now clears the stale login error. The remaining findings are notes. None of them
+contradicts a criterion, and each is either an accepted limitation in checks.md or a clause that
+the code meets, with the file:line evidence given below.
 
 No faults injected - profile light.
 
+## Scope of this round
+
+- The fix diff `39dd584..ae56c3e` touches only `frontend/src/pages/LandingPage.tsx` (+1/-1),
+  `LandingPage.test.tsx` (+2), `LoginPage.tsx` (+4/-1), `LoginPage.test.tsx` (+20) and
+  `.specs/.../checks.md` (C17 claim widened, C29 added). No backend, e2e, `BasePage` or
+  `tokenStore` file changed (`git diff --stat 39dd584..ae56c3e -- src tests frontend/e2e` is empty).
+- **Proofs:** re-run in full at `ae56c3e` for all of C1-C29 (see Gate).
+- **Citations:** refreshed at `ae56c3e` for C17, C22, C29 (touched), and for C18-C21, C23 (their lines
+  moved because tests were inserted above them). All other evidence is marked `carried from 39dd584`.
+  Those files are byte-identical between the two commits, so the round-1 line numbers still hold.
+- **Round-1 gaps:** each one is re-judged below, under "Round-1 gaps re-judged".
+
 ## Binding sources
 
-The plan marks no source binding (`Sources`: the user's task description, `CLAUDE.md` and
-`docs/known-gaps.md`, none marked binding), and profile `light` does not run step 1. n/a.
+Carried from 39dd584. The plan marks no source as binding, and profile `light` does not run step 1. n/a.
 
 ## Checks
 
 | Check | Claim | Proof run | Evidence | Result |
 | --- | --- | --- | --- | --- |
-| C1 | handler adds one verified demo user, name `Demo user`, email `^demo-[0-9a-f-]{36}@demo\.invalid$` | unit batch, `Passed StartDemoTests.CreatesAVerifiedDemoUser` | `tests/FormAI.UnitTests/Users/StartDemoTests.cs:45` `Assert.Single(added)`; `:46` `Assert.True(user.IsDemo)`; `:47` `Assert.True(user.IsEmailVerified)`; `:48` `Assert.NotNull(user.VerifiedAt)`; `:49` `Assert.Equal("Demo user", user.Name)`; `:50` `Assert.Matches(new Regex(@"^demo-[0-9a-f-]{36}@demo\.invalid$"), user.Email)` | PASS |
-| C2 | stored hash is `IPasswordHasher.Hash(configured password)` | unit batch, `Passed StartDemoTests.HashesTheConfiguredPassword` | `StartDemoTests.cs:60` `Assert.Equal(HashedPassword, Assert.Single(added).PasswordHash)`; `:61` `_hasher.Received(1).Hash(DemoPassword)` (stub `:22` maps `DemoPassword` -> `HashedPassword`) | PASS |
-| C3 | issues access token, stores refresh token hashed via `HashRefreshToken`, expiry `RefreshTokenLifetime`, returns `AuthTokens` | unit batch, `Passed StartDemoTests.IssuesTokensLikeLogin` | `StartDemoTests.cs:76` `_jwt.Received(1).GenerateAccessToken(user)`; `:78` `Assert.Equal("refresh-token", tokens.RefreshToken)`; `:81` `Assert.Equal(HashOf("refresh-token"), stored.TokenHash)`; `:82` `Assert.InRange(stored.ExpiresAt, before + RefreshTokenLifetime, after + RefreshTokenLifetime)`; `:83` `Assert.Equal(stored.ExpiresAt, tokens.RefreshTokenExpiresAt)`. Expected hash/lifetime live in `tests/FormAI.UnitTests/Users/AuthTestData.cs:13,15,20` (helper-defined, not readable at the assertion - minor test finding) | PASS |
-| C4 | two calls, two users, different ids and emails | unit batch, `Passed StartDemoTests.EveryCallCreatesADistinctUser` | `StartDemoTests.cs:95` `Assert.Equal(2, added.Count)`; `:96` `Assert.NotEqual(added[0].Id, added[1].Id)`; `:97` `Assert.NotEqual(added[0].Email, added[1].Email)` | PASS |
-| C5 | `null`/`""`/whitespace password throws `NotFoundException`, adds no user, no refresh token | unit batch, 3 cases passed: `(password: null)`, `(password: "")`, `(password: "   ")` | `StartDemoTests.cs:101-103` `[InlineData(null)] [InlineData("")] [InlineData("   ")]`; `:106` `Assert.ThrowsAsync<NotFoundException>(...)`; `:108` `_users.DidNotReceive().AddAsync(...)`; `:109` `_refreshTokens.DidNotReceive().AddAsync(...)`. Level gap on the route's 404, see below | PASS |
-| C6 | demo user's token carries `is_demo` = `"true"` | integration batch, `Passed JwtServiceDemoClaimTests.DemoUserTokenCarriesIsDemoTrue` | `tests/FormAI.IntegrationTests/JwtServiceDemoClaimTests.cs:24` `Assert.Equal("true", token.Claims.Single(c => c.Type == "is_demo").Value)` | PASS |
-| C7 | `User.Create` user's token has no `is_demo` claim | integration batch, `Passed JwtServiceDemoClaimTests.RegularUserTokenHasNoIsDemoClaim` | `JwtServiceDemoClaimTests.cs:32` `Assert.DoesNotContain(token.Claims, c => c.Type == "is_demo")` | PASS |
-| C8 | `POST /api/auth/demo` -> 200, `accessToken`, refresh cookie as login, `is_demo` "true", name `Demo user` | `npx playwright test e2e/demo.spec.ts` - `✓ [chromium] › e2e\demo.spec.ts:21:1 › starts, refreshes and rate limits a demo session` | `frontend/e2e/demo.spec.ts:23` `expect(first.status()).toBe(200)`; `:28` `expect(claims.is_demo).toBe("true")`; `:29` `expect(claims.name).toBe("Demo user")`; `:37-40` `toMatch(/httponly/i)`, `/secure/i`, `/samesite=strict/i`, `/path=\/api\/auth/i` | PASS |
-| C9 | demo user round-trips `IsDemo` true, regular false, migrated DB | integration batch, `Passed UserRepositoryTests.PersistsTheDemoFlag` | `tests/FormAI.IntegrationTests/UserRepositoryTests.cs:49` `await context.Database.MigrateAsync()`; `:59` `Assert.True((await freshRepo.GetByIdAsync(demo.Id))!.IsDemo)`; `:60` `Assert.False((await freshRepo.GetByIdAsync(regular.Id))!.IsDemo)` (fresh context `:57`) | PASS |
-| C10 | migration adds `is_demo` non-null boolean default false | `grep -c "defaultValue: false" .../*AddUserIsDemo.cs` printed `1`, exit 0 | `src/FormAI.Infrastructure/Migrations/20260929130710_AddUserIsDemo.cs:16` `type: "boolean"`; `:17` `nullable: false`; `:18` `defaultValue: false`; model side `src/FormAI.Infrastructure/Data/Configurations/UserConfiguration.cs:44-46` `.IsRequired().HasDefaultValue(false)` | PASS |
-| C11 | `appsettings.json` Demo limits 10/15/3, no `Demo:Password` | integration batch, `Passed DemoConfigurationTests.ShippedDefaults` | `tests/FormAI.IntegrationTests/DemoConfigurationTests.cs:24` `Assert.Equal(10, demo.PermitLimit)`; `:25` `Assert.Equal(15, demo.WindowMinutes)`; `:26` `Assert.Equal(3, demo.SegmentsPerWindow)`; `:27` `Assert.Null(configuration["Demo:Password"])`; source `src/FormAI.API/appsettings.json:28-31` | PASS |
-| C12 | second call's token differs in `sub` and `email` | same Playwright run (single test, passed) | `demo.spec.ts:44` `expect(second.status()).toBe(200)`; `:46` `expect(other.sub).not.toBe(claims.sub)`; `:47` `expect(other.email).not.toBe(claims.email)` | PASS |
-| C13 | refresh with the demo cookie keeps `is_demo` "true" | same Playwright run | `demo.spec.ts:53` `expect(refreshed.status()).toBe(200)`; `:55` `expect(refreshedClaims.sub).toBe(claims.sub)`; `:56` `expect(refreshedClaims.is_demo).toBe("true")` | PASS |
-| C14 | login with demo email + configured password -> 200 | same Playwright run | `demo.spec.ts:60` `data: { email: claims.email, password: "e2e-demo-password" }` (matches `frontend/playwright.config.ts:64` `Demo__Password: "e2e-demo-password"`); `:62` `expect(login.status()).toBe(200)` | PASS |
-| C15 | no Mailpit message to the demo email | same Playwright run | `demo.spec.ts:66` `query: \`to:${claims.email}\``; `:68` `expect((await mail.json()).messages ?? []).toHaveLength(0)`. Precision note: the Mailpit response status is not asserted and `?? []` would also pass on a body without `messages`; structurally backed by `StartDemoHandler` having no email dependency (`src/FormAI.Application/Users/Auth/StartDemoHandler.cs:15-16`) | PASS |
-| C16 | sixth call with limit 5 -> 429, `errors`/`code` null, message names limit and window | same Playwright run | `demo.spec.ts:71` three more 200s; `:73` `expect(limited.status()).toBe(429)`; `:75` `expect(body.errors).toBeNull()`; `:76` `expect(body.code).toBeNull()`; `:77` `toContain("5 demo sessions")`; `:78` `toContain("15 minutes")`; harness `playwright.config.ts:65` `RateLimiting__Demo__PermitLimit: "5"` | PASS |
-| C17 | landing: Try demo first in hero row, primary (`bg-brand-600`); Start for free outline | vitest batch, `✓ LandingPage demo > leads the hero with a primary Try demo` | `frontend/src/pages/LandingPage.test.tsx:26` `expect(buttons[0]).toHaveTextContent("Try demo")`; `:27` `expect(buttons[0]).toHaveClass("bg-brand-600")`; `:29` `expect(startForFree).toHaveClass("border-brand-600")`; `:30` `.not.toHaveClass("bg-brand-600")`. The claim as written holds; it omits AC 9a's size clause (gap 1) | PASS |
-| C18 | login: full-width primary Try demo before Email; Log in outline | vitest batch, `✓ LoginPage demo > leads with a primary Try demo and an outline Log in` | `frontend/src/pages/LoginPage.test.tsx:121` `expect(tryDemo).toHaveClass("bg-brand-600", "w-full")`; `:123` `expect(tryDemo.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()`; `:125` `expect(logIn).toHaveClass("border-brand-600")`; `:126` `.not.toHaveClass("bg-brand-600")` | PASS |
-| C19 | login Try demo: POST with no body, token stored, lands on `/dashboard` | vitest batch, `✓ LoginPage demo > signs in through Try demo and opens the dashboard` | `LoginPage.test.tsx:144` `findByText("Dashboard page")`; `:145` `expect(calls).toBe(1)`; `:146` `expect(body).toBe("")`; `:147` `expect(tokenStore.get()).toBe(accessToken)` | PASS |
-| C20 | landing Try demo lands on `/dashboard` | vitest batch, `✓ LandingPage demo > signs in through Try demo and opens the dashboard` | `LandingPage.test.tsx:45` `expect(await screen.findByText("Dashboard page")).toBeInTheDocument()`; `:46` `expect(tokenStore.get()).toBe(accessToken)` | PASS |
-| C21 | pending: disabled, loading state, second click sends nothing | vitest batch, `✓ LoginPage demo > disables Try demo while the request is pending` | `LoginPage.test.tsx:167` `expect(button).toBeDisabled()`; `:171` `expect(calls).toBe(1)`. Precision note: the loading indicator is not asserted directly; `frontend/src/components/Button.tsx` sets `disabled={disabled \|\| isLoading}` and the Try demo button passes no `disabled`, so disabled implies the `isLoading` branch that renders the spinner | PASS |
-| C22 | login: 429 `message` shown, stays on `/login`; no message -> fallback | vitest batch, `✓ LoginPage demo > shows why the demo could not start` | `LoginPage.test.tsx:187` `findByText("You have reached the limit.")`; `:188` `queryByText("Dashboard page")).not.toBeInTheDocument()`; `:189` `getByLabelText("Email")).toBeInTheDocument()`; `:193-194` `findByText("Could not start the demo. Please try again.")`. Precision note: "in the login form's error box" is not asserted (code: `frontend/src/pages/LoginPage.tsx:92-94`) | PASS |
-| C23 | landing: fallback text next to button, stays on `/` | vitest batch, `✓ LandingPage demo > shows why the demo could not start` | `LandingPage.test.tsx:55` `findByText("Could not start the demo. Please try again.")).toBeVisible()`; `:56` no `Dashboard page`; `:57` `getByRole("main")`. Precision note: "next to the button" not asserted (code `frontend/src/pages/LandingPage.tsx:51-53`) | PASS |
-| C24 | `userFromAccessToken` isDemo true/false | vitest batch, `✓ userFromAccessToken > reads the is_demo claim` | `frontend/src/auth/tokenStore.test.ts:12` `expect(userFromAccessToken(fakeJwt({ ...base, is_demo: "true" })).isDemo).toBe(true)`; `:13` `expect(userFromAccessToken(fakeJwt(base)).isDemo).toBe(false)` | PASS |
-| C25 | demo user sees exact banner, "Create an account" -> `/register` | vitest batch, `✓ BasePage demo banner > warns a demo user and links to register` | `frontend/src/components/BasePage.test.tsx:31` `expect(banner).toHaveTextContent(BANNER)` (BANNER `:7-8` is the exact AC 13 string); `:32-35` `getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register")` | PASS |
-| C26 | regular user sees no banner | vitest batch, `✓ BasePage demo banner > shows no banner to a regular user` | `BasePage.test.tsx:42` `expect(screen.queryByRole("status")).not.toBeInTheDocument()`; `:43` `expect(screen.queryByText(/demo account/i)).not.toBeInTheDocument()` | PASS |
-| C27 | banner has no control but the link | vitest batch, `✓ BasePage demo banner > offers no way to dismiss the banner` | `BasePage.test.tsx:50` `expect(within(banner).queryAllByRole("button")).toHaveLength(0)`; `:51` `expect(within(banner).getAllByRole("link")).toHaveLength(1)` | PASS |
-| C28 | CONTEXT.md, CLAUDE.md, known-gaps.md document demo accounts | grep chain exit 0 | `CONTEXT.md:13` `**Demo account**:`; `CLAUDE.md:41` "creates a **demo account**: `User.CreateDemo` ..."; `docs/known-gaps.md:20` `\| **Demo accounts are never cleaned up** \|` | PASS |
+| C1 | handler adds one verified demo user, name `Demo user`, email `^demo-[0-9a-f-]{36}@demo\.invalid$` | unit batch @ae56c3e, `Passed StartDemoTests.CreatesAVerifiedDemoUser` | carried from 39dd584: `tests/FormAI.UnitTests/Users/StartDemoTests.cs:45` `Assert.Single(added)`; `:46` `Assert.True(user.IsDemo)`; `:47` `Assert.True(user.IsEmailVerified)`; `:48` `Assert.NotNull(user.VerifiedAt)`; `:49` `Assert.Equal("Demo user", user.Name)`; `:50` `Assert.Matches(new Regex(@"^demo-[0-9a-f-]{36}@demo\.invalid$"), user.Email)` | PASS |
+| C2 | stored hash is `IPasswordHasher.Hash(configured password)` | unit batch @ae56c3e, `Passed StartDemoTests.HashesTheConfiguredPassword` | carried from 39dd584: `StartDemoTests.cs:60` `Assert.Equal(HashedPassword, Assert.Single(added).PasswordHash)`; `:61` `_hasher.Received(1).Hash(DemoPassword)` | PASS |
+| C3 | issues tokens and stores hashed refresh token as `LoginHandler` does | unit batch @ae56c3e, `Passed StartDemoTests.IssuesTokensLikeLogin` | carried from 39dd584: `StartDemoTests.cs:76` `_jwt.Received(1).GenerateAccessToken(user)`; `:81` `Assert.Equal(HashOf("refresh-token"), stored.TokenHash)`; `:82` `Assert.InRange(stored.ExpiresAt, before + RefreshTokenLifetime, after + RefreshTokenLifetime)`; `:83` `Assert.Equal(stored.ExpiresAt, tokens.RefreshTokenExpiresAt)` | PASS |
+| C4 | two calls, two users, different ids and emails | unit batch @ae56c3e, `Passed StartDemoTests.EveryCallCreatesADistinctUser` | carried from 39dd584: `StartDemoTests.cs:95` `Assert.Equal(2, added.Count)`; `:96` `Assert.NotEqual(added[0].Id, added[1].Id)`; `:97` `Assert.NotEqual(added[0].Email, added[1].Email)` | PASS |
+| C5 | `null`/`""`/whitespace password -> `NotFoundException`, no user, no refresh token | unit batch @ae56c3e, 3 cases passed: `(password: null)`, `(password: "")`, `(password: "   ")` | carried from 39dd584: `StartDemoTests.cs:101-103` three `InlineData`; `:106` `Assert.ThrowsAsync<NotFoundException>(...)`; `:108` `_users.DidNotReceive().AddAsync(...)`; `:109` `_refreshTokens.DidNotReceive().AddAsync(...)` | PASS |
+| C6 | demo user's token carries `is_demo` = `"true"` | integration batch @ae56c3e, `Passed JwtServiceDemoClaimTests.DemoUserTokenCarriesIsDemoTrue` | carried from 39dd584: `tests/FormAI.IntegrationTests/JwtServiceDemoClaimTests.cs:24` `Assert.Equal("true", token.Claims.Single(c => c.Type == "is_demo").Value)` | PASS |
+| C7 | `User.Create` user's token has no `is_demo` claim | integration batch @ae56c3e, `Passed JwtServiceDemoClaimTests.RegularUserTokenHasNoIsDemoClaim` | carried from 39dd584: `JwtServiceDemoClaimTests.cs:32` `Assert.DoesNotContain(token.Claims, c => c.Type == "is_demo")` | PASS |
+| C8 | `POST /api/auth/demo` -> 200, `accessToken`, refresh cookie as login, `is_demo` "true", name `Demo user` | playwright @ae56c3e, `✓ [chromium] › e2e\demo.spec.ts:21:1 › starts, refreshes and rate limits a demo session` | carried from 39dd584: `frontend/e2e/demo.spec.ts:23` `expect(first.status()).toBe(200)`; `:28` `expect(claims.is_demo).toBe("true")`; `:29` `expect(claims.name).toBe("Demo user")`; `:37-40` `/httponly/i`, `/secure/i`, `/samesite=strict/i`, `/path=\/api\/auth/i` | PASS |
+| C9 | `IsDemo` round-trips true/false against a migrated DB | integration batch @ae56c3e, `Passed UserRepositoryTests.PersistsTheDemoFlag` | carried from 39dd584: `tests/FormAI.IntegrationTests/UserRepositoryTests.cs:49` `MigrateAsync()`; `:59` `Assert.True((await freshRepo.GetByIdAsync(demo.Id))!.IsDemo)`; `:60` `Assert.False((await freshRepo.GetByIdAsync(regular.Id))!.IsDemo)` | PASS |
+| C10 | migration adds `is_demo` non-null boolean default false | `grep -c "defaultValue: false" .../*AddUserIsDemo.cs` @ae56c3e printed `1`, exit 0 | carried from 39dd584: `src/FormAI.Infrastructure/Migrations/20260929130710_AddUserIsDemo.cs:16` `type: "boolean"`; `:17` `nullable: false`; `:18` `defaultValue: false` | PASS |
+| C11 | `appsettings.json` Demo limits 10/15/3, no `Demo:Password` | integration batch @ae56c3e, `Passed DemoConfigurationTests.ShippedDefaults` | carried from 39dd584: `tests/FormAI.IntegrationTests/DemoConfigurationTests.cs:24` `Assert.Equal(10, demo.PermitLimit)`; `:25` `Assert.Equal(15, demo.WindowMinutes)`; `:26` `Assert.Equal(3, demo.SegmentsPerWindow)`; `:27` `Assert.Null(configuration["Demo:Password"])` | PASS |
+| C12 | second call's token differs in `sub` and `email` | same playwright test @ae56c3e, passed | carried from 39dd584: `demo.spec.ts:44` `expect(second.status()).toBe(200)`; `:46` `expect(other.sub).not.toBe(claims.sub)`; `:47` `expect(other.email).not.toBe(claims.email)` | PASS |
+| C13 | refresh keeps `is_demo` "true" | same playwright test @ae56c3e, passed | carried from 39dd584: `demo.spec.ts:53` `expect(refreshed.status()).toBe(200)`; `:56` `expect(refreshedClaims.is_demo).toBe("true")` | PASS |
+| C14 | login with demo email + configured password -> 200 | same playwright test @ae56c3e, passed | carried from 39dd584: `demo.spec.ts:60` `password: "e2e-demo-password"` (= `frontend/playwright.config.ts:64`); `:62` `expect(login.status()).toBe(200)` | PASS |
+| C15 | no Mailpit message to the demo email | same playwright test @ae56c3e, passed | carried from 39dd584: `demo.spec.ts:66` `query: \`to:${claims.email}\``; `:68` `expect((await mail.json()).messages ?? []).toHaveLength(0)` (precision note unchanged, see below) | PASS |
+| C16 | sixth call with limit 5 -> 429, `errors`/`code` null, message names limit and window | same playwright test @ae56c3e, passed | carried from 39dd584: `demo.spec.ts:73` `expect(limited.status()).toBe(429)`; `:75` `expect(body.errors).toBeNull()`; `:76` `expect(body.code).toBeNull()`; `:77` `toContain("5 demo sessions")`; `:78` `toContain("15 minutes")` | PASS |
+| C17 | landing: Try demo first in hero row, primary, **same size classes as Start for free (`px-8 py-3 text-base`)**; Start for free outline | vitest @ae56c3e, `✓ LandingPage demo > leads the hero with a primary Try demo` | verified at ae56c3e: `frontend/src/pages/LandingPage.test.tsx:26` `expect(buttons[0]).toHaveTextContent("Try demo")`; `:27` `expect(buttons[0]).toHaveClass("bg-brand-600")`; `:29` `expect(startForFree).toHaveClass("border-brand-600")`; `:30` `expect(startForFree).not.toHaveClass("bg-brand-600")`; `:31` `expect(buttons[0]).toHaveClass("px-8", "py-3", "text-base")`; `:32` `expect(startForFree).toHaveClass("px-8", "py-3", "text-base")`. Code: `frontend/src/pages/LandingPage.tsx:36` `className="px-8 py-3 text-base shadow-lg ring-4 ring-brand-200"`, `:41` and `:46` `className="px-8 py-3 text-base"` | PASS |
+| C18 | login: full-width primary Try demo before Email; Log in outline | vitest @ae56c3e, `✓ LoginPage demo > leads with a primary Try demo and an outline Log in` | verified at ae56c3e (lines moved +20): `frontend/src/pages/LoginPage.test.tsx:141` `expect(tryDemo).toHaveClass("bg-brand-600", "w-full")`; `:143` `expect(tryDemo.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()`; `:145` `expect(logIn).toHaveClass("border-brand-600")`; `:146` `expect(logIn).not.toHaveClass("bg-brand-600")` | PASS |
+| C19 | login Try demo: POST with no body, token stored, lands on `/dashboard` | vitest @ae56c3e, `✓ LoginPage demo > signs in through Try demo and opens the dashboard` | verified at ae56c3e: `LoginPage.test.tsx:164` `findByText("Dashboard page")`; `:165` `expect(calls).toBe(1)`; `:166` `expect(body).toBe("")`; `:167` `expect(tokenStore.get()).toBe(accessToken)` | PASS |
+| C20 | landing Try demo lands on `/dashboard` | vitest @ae56c3e, `✓ LandingPage demo > signs in through Try demo and opens the dashboard` | verified at ae56c3e (lines moved +2): `LandingPage.test.tsx:47` `expect(await screen.findByText("Dashboard page")).toBeInTheDocument()`; `:48` `expect(tokenStore.get()).toBe(accessToken)` | PASS |
+| C21 | pending: disabled, loading, second click sends nothing | vitest @ae56c3e, `✓ LoginPage demo > disables Try demo while the request is pending` | verified at ae56c3e: `LoginPage.test.tsx:187` `expect(button).toBeDisabled()`; `:191` `expect(calls).toBe(1)` (precision note unchanged) | PASS |
+| C22 | login: 429 `message` shown, stays on `/login`; no message -> fallback | vitest @ae56c3e, `✓ LoginPage demo > shows why the demo could not start` | verified at ae56c3e: `LoginPage.test.tsx:207` `expect(await screen.findByText("You have reached the limit.")).toBeInTheDocument()`; `:208` `expect(screen.queryByText("Dashboard page")).not.toBeInTheDocument()`; `:209` `expect(screen.getByLabelText("Email")).toBeInTheDocument()`; `:213-215` `findByText("Could not start the demo. Please try again.")`. Code: the error box is `frontend/src/pages/LoginPage.tsx:95-99` | PASS |
+| C23 | landing: fallback text shown, stays on `/` | vitest @ae56c3e, `✓ LandingPage demo > shows why the demo could not start` | verified at ae56c3e (lines moved +2): `LandingPage.test.tsx:57` `expect(await screen.findByText("Could not start the demo. Please try again.")).toBeVisible()`; `:58` `queryByText("Dashboard page")).not.toBeInTheDocument()`; `:59` `getByRole("main")` | PASS |
+| C24 | `userFromAccessToken` isDemo true/false | vitest @ae56c3e, `✓ userFromAccessToken > reads the is_demo claim` | carried from 39dd584: `frontend/src/auth/tokenStore.test.ts:12` `.isDemo).toBe(true)`; `:13` `.isDemo).toBe(false)` | PASS |
+| C25 | demo user sees exact banner, "Create an account" -> `/register` | vitest @ae56c3e, `✓ BasePage demo banner > warns a demo user and links to register` | carried from 39dd584: `frontend/src/components/BasePage.test.tsx:31` `expect(banner).toHaveTextContent(BANNER)`; `:32-35` `toHaveAttribute("href", "/register")` | PASS |
+| C26 | regular user sees no banner | vitest @ae56c3e, `✓ BasePage demo banner > shows no banner to a regular user` | carried from 39dd584: `BasePage.test.tsx:42` `queryByRole("status")).not.toBeInTheDocument()`; `:43` `queryByText(/demo account/i)).not.toBeInTheDocument()` | PASS |
+| C27 | banner has no control but the link | vitest @ae56c3e, `✓ BasePage demo banner > offers no way to dismiss the banner` | carried from 39dd584: `BasePage.test.tsx:50` `queryAllByRole("button")).toHaveLength(0)`; `:51` `getAllByRole("link")).toHaveLength(1)` | PASS |
+| C28 | CONTEXT.md, CLAUDE.md, known-gaps.md document demo accounts | grep chain @ae56c3e exit 0 | carried from 39dd584: `CONTEXT.md:13` `**Demo account**:`; `CLAUDE.md:41` "creates a **demo account**"; `docs/known-gaps.md:20` `**Demo accounts are never cleaned up**` | PASS |
+| C29 | after a failed password login, a failed demo request replaces the login error with the demo failure text | vitest @ae56c3e, `✓ LoginPage demo > replaces an earlier login error with the demo failure` | verified at ae56c3e: precondition `LoginPage.test.tsx:124` `expect(await screen.findByText("Invalid user or password.")).toBeInTheDocument()`; `:127-129` `expect(await screen.findByText("Could not start the demo. Please try again.")).toBeInTheDocument()`; `:130` `expect(screen.queryByText("Invalid user or password.")).not.toBeInTheDocument()`. Code: `frontend/src/pages/LoginPage.tsx:67-70` `onClick={() => { setServerError(null); startDemo(); }}` | PASS |
 
-All named tests confirmed to exist by `rg -n` (line numbers above) and all were added in the diff range
-(`git diff --stat 4c52b5d..HEAD` lists `StartDemoTests.cs`, `JwtServiceDemoClaimTests.cs`,
-`DemoConfigurationTests.cs`, `UserRepositoryTests.cs` +21, `demo.spec.ts`, `LandingPage.test.tsx`,
-`LoginPage.test.tsx` +88, `BasePage.test.tsx`, `tokenStore.test.ts`).
+Every named test appears individually as passed in the runner output at `ae56c3e` (Gate). C17 and
+C29 are the fix's new assertions; both were added in `39dd584..ae56c3e`. The other tests were
+confirmed in round 1 as added in `4c52b5d..39dd584`.
+
+## Round-1 gaps re-judged
+
+| # | Round-1 gap | Status at ae56c3e | Basis |
+| --- | --- | --- | --- |
+| 1 | AC 9a size clause uncovered and contradicted | **closed** | `LandingPage.tsx:36` now `px-8 py-3 text-base`, identical size utilities to `:41` and `:46`. C17 widened to assert them (`LandingPage.test.tsx:31-32`). The extra `shadow-lg ring-4 ring-brand-200` is a box-shadow ring, so it adds emphasis without changing the button's box size. The plan's claim "at the size of the existing hero buttons" now matches the file |
+| 2 | AC 12 stale login error masks the demo failure | **closed** | `LoginPage.tsx:67-70` clears `serverError` before `startDemo()`. `useStartDemo` clears its own error at start (`frontend/src/hooks/useStartDemo.ts` `setError(null)`). New check C29 proves it (`LoginPage.test.tsx:124,127-130`) |
+| 3 | Surface `404` has no HTTP-level proof | **note (accepted limitation)** | checks.md documents it explicitly (Coverage bullets): proving it over HTTP would need a second API instance with no password configured. The handler throws `NotFoundException` (C5, `StartDemoTests.cs:106`). The controller does not catch it (`src/FormAI.API/Controllers/AuthController.cs:51-58`). The existing middleware maps it (`src/FormAI.API/Middleware/ExceptionHandlingMiddleware.cs:37`). This is a level gap with located evidence at each hop, not an unproven check |
+| 4a | AC 7 "SHALL NOT create a user" at 429 has no check | **note** | Met by construction: `[EnableRateLimiting(RateLimitPolicies.Demo)]` at `AuthController.cs:52`, and `UseRateLimiter()` at `src/FormAI.API/Program.cs:81` runs in the middleware pipeline, so a rejected request never reaches the action at `:53-58` or `StartDemoHandler`. To close it: after the sixth call (429) in `e2e/demo.spec.ts`, count `users` rows with `email like 'demo-%@demo.invalid'` in the e2e DB and assert the count is unchanged. Alternatively, write a `WebApplicationFactory` test with `RateLimiting:Demo:PermitLimit=1` and a substituted `IUserRepository`, asserting that `AddAsync` is received once across two calls |
+| 4b | AC 2 "SHALL NOT create a `UserConfirmationToken`" has no check | **note** | Met by construction: the constructor of `src/FormAI.Application/Users/Auth/StartDemoHandler.cs:15-16` takes only `IUserRepository`, `IRefreshTokenRepository`, `IPasswordHasher`, `IJwtService` and `DemoAccountSettings`, with no confirmation-token repository. `User.CreateDemo` (`src/FormAI.Domain/Entities/User.cs:37-43`) never touches `ConfirmationTokens` (`:20`). To close it: in the e2e test, after the first demo call, assert `select count(*) from user_confirmation_tokens where user_id = <sub>` is 0. Alternatively, in `StartDemoTests.CreatesAVerifiedDemoUser`, assert `Assert.Empty(user.ConfirmationTokens)` |
+| 5 | AC 11 loading state on `/` unproven (C21 is `/login` only) | **note** | The same hook and the same `Button` are used: `LandingPage.tsx:34` `isLoading={isStarting}`, and `Button` sets `disabled={disabled \|\| isLoading}`. To close it, run a copy of C21 against `LandingPage` |
+
+**Why 4a and 4b are notes rather than FAILs.** Under verify.md, a FAIL comes from "any check
+without a located `file:line`", a failing check, an unproven coverage member, or an element that a
+*binding* source decides with no covering check. Clauses 4a and 4b are neither checks nor members
+of a binding source. The plan marks no source as binding, and profile `light` does not run the
+Coverage recompute, which is where an uncovered member named in prose would turn into a FAIL.
+Each clause is a negative obligation that the code meets, and the evidence for it is located at
+file:line above. Round 1 set the line consistently: an uncovered clause that the code
+*contradicts* (AC 9a, AC 12) fails, and one it *satisfies* by construction is a note. Both remain
+real residual risk: a future edit that inserts the handler before the limiter, or that injects a
+confirmation-token repository, would pass every check. That is why the closing check is named for
+each.
 
 ## Level and precision findings
 
-- **Level gap, Surface `404`.** The plan's Surface lists `404` for `POST /api/auth/demo`; its only
-  proof is at the handler (C5, `StartDemoTests.cs:106`, `NotFoundException`). The mapping is existing
-  code (`src/FormAI.API/Middleware/ExceptionHandlingMiddleware.cs:37`
-  `NotFoundException ex => (HttpStatusCode.NotFound, ...)`), and the controller action does not
-  catch it (`src/FormAI.API/Controllers/AuthController.cs:51-58`), so the 404 is well-founded by
-  reading, but no proof crosses the HTTP boundary for it. checks.md states this openly; it remains
-  a level gap, not a proof.
-- **Precision:** C15 does not assert the Mailpit call succeeded; C21 asserts disabled, not the
-  loading indicator; C22 does not assert the error box; C23 does not assert placement. Each is
-  satisfied by the code as read, so none is downgraded.
-- **Test finding:** C3's expected hash and lifetime come from `AuthTestData.cs` helpers, not from
-  the assertion site.
-
-## Plan criteria against checks
-
-| Criterion / surface | Covered by | Finding |
-| --- | --- | --- |
-| AC 1 | C1, C2, C3, C8 | - |
-| AC 2 "no email" | C15 | - |
-| AC 2 "SHALL NOT create a `UserConfirmationToken`" | none | uncovered clause; structurally satisfied - `StartDemoHandler.cs:15-16` takes no confirmation-token dependency and `User.CreateDemo` (`src/FormAI.Domain/Entities/User.cs:37-42`) creates none |
-| AC 3 | C4, C12 | "each token carries its own user's `sub`" is proven as "subs differ" (C12) plus `sub` stable across refresh (C13); `sub == user.Id` is existing `JwtService` code |
-| AC 4 | C6, C8, C13 | - |
-| AC 5 | C7 | - |
-| AC 6 | C5 | level gap on 404 (above) |
-| AC 7 "429 with shape" | C16, C11 | - |
-| AC 7 "SHALL NOT create a user" at 429 | none | uncovered clause; structurally satisfied - the limiter rejects before the action runs (`AuthController.cs:52` `[EnableRateLimiting(RateLimitPolicies.Demo)]`, `src/FormAI.API/Program.cs:81` `UseRateLimiter()` after auth) |
-| AC 8 | C14 | - |
-| AC 9 | C18 | - |
-| **AC 9a** "at the size of the existing hero buttons" | none | **uncovered and contradicted**: `LandingPage.tsx:36` `className="px-10 py-3 text-lg shadow-lg ring-4 ring-brand-200"` vs the existing hero buttons `LandingPage.tsx:41,46` `className="px-8 py-3 text-base"`. C17 checks order and variant only |
-| AC 10 | C19, C20 | - |
-| AC 11 | C21 (login only) | `/` loading state has no proof (Observable row for `/` lists AC 11); same hook and `Button` (`LandingPage.tsx:34` `isLoading={isStarting}`), so low risk |
-| AC 12 | C22, C23 | **defect outside the checks**: `LoginPage.tsx:92-94` renders `serverError ?? demoError`, and a demo click never clears `serverError` (only `onSubmit` does, `LoginPage.tsx:35`). After a failed login, a failed demo request shows the stale login error, not the demo's message, violating "SHALL show the server's `message`" |
-| AC 13 | C25 | "on every page that uses `BasePage`" is structural (`frontend/src/components/BasePage.tsx:33` inside `BasePage`, before `children` at `:45`) |
-| AC 14 | C26 | - |
-| AC 15 | C27 | - |
-| Landing door 1 | C9, C10 | `private set` and set only by `CreateDemo`: `User.cs:15` `public bool IsDemo { get; private set; }`, `User.cs:40` the only assignment |
-| Landing door 2 | C6, C7, C24 | code `src/FormAI.Infrastructure/Security/JwtService.cs:36-37`, `frontend/src/auth/tokenStore.ts:52` |
-| Surface 200 / 404 / 429 | C8 / C5 (handler only) / C16 | 404 level gap |
+- **Precision (carried from 39dd584, still open):** C15 does not assert that the Mailpit call
+  succeeded (`?? []`). C21 asserts disabled, not the spinner. C22 does not assert the error box
+  container. C23 does not assert placement next to the button. The code meets each of these as read.
+- **Precision (new, C17):** the assertion is on class presence. jsdom has no layout, so the
+  computed size is not measured. `Button`'s base (`frontend/src/components/Button.tsx`) also
+  carries `px-3 py-1 text-sm`, and the override relies on Tailwind's utility ordering. All three
+  hero buttons share the same base and override, so they render at the same size in any case.
+- **Test finding (carried):** C3's expected hash and lifetime come from `AuthTestData.cs` helpers,
+  not from the assertion site.
 
 ## Swept existing
 
-- **authorization: existing** - "anonymous by design like `Register` and `Login`". Confirmed:
-  `AuthController.cs:10-12` carries no `[Authorize]`; `Register` (`:36`) and `Login` (`:43`) have
-  none either, and `StartDemo` (`:51-53`) matches them. The e2e call at `demo.spec.ts:16` sends no
-  credentials and gets 200 (`:23`). The rate-limit partition for an anonymous caller is the remote
-  IP (`src/FormAI.API/RateLimiting/RateLimitingExtensions.cs:90-94`), as checks.md states. Holds.
+Carried from 39dd584. The row is `authorization: existing`, "anonymous by design like `Register`
+and `Login`". It still holds: `AuthController.cs` was not touched by the fix, `StartDemo`
+(`:51-53`) has no `[Authorize]`, and the e2e anonymous call gets 200 (`demo.spec.ts:23`).
 
 ## Gate
 
-- `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj --filter "FullyQualifiedName~StartDemoTests" --logger "console;verbosity=normal"` - 7 passed, 0 failed (5 facts + 3 theory cases counted as 7 rows: CreatesAVerifiedDemoUser, HashesTheConfiguredPassword, IssuesTokensLikeLogin, EveryCallCreatesADistinctUser, BlankPasswordIsNotFoundAndCreatesNothing x3)
-- `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~JwtServiceDemoClaimTests|FullyQualifiedName~UserRepositoryTests.PersistsTheDemoFlag|FullyQualifiedName~DemoConfigurationTests.ShippedDefaults" --logger "console;verbosity=normal"` - 4 passed, 0 failed
-- `cd frontend && npx vitest run src/pages/LandingPage.test.tsx src/pages/LoginPage.test.tsx src/auth/tokenStore.test.ts src/components/BasePage.test.tsx --reporter=verbose` - 15 passed, 0 failed (4 files; 11 are the named demo tests, 4 pre-existing LoginPage tests)
-- `cd frontend && npx playwright test e2e/demo.spec.ts --reporter=list` - 1 passed, 0 failed (carries C8, C12-C16)
-- `grep -c "defaultValue: false" src/FormAI.Infrastructure/Migrations/*AddUserIsDemo.cs` - `1`, exit 0 (C10)
-- `grep -q "Demo account" CONTEXT.md && grep -qi "demo account" CLAUDE.md && grep -qi "demo account" docs/known-gaps.md` - exit 0 (C28)
+All run at `ae56c3e` from the worktree root.
+
+- `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj --filter "FullyQualifiedName~StartDemoTests" --logger "console;verbosity=normal"`: 7 passed, 0 failed. Rows: CreatesAVerifiedDemoUser, HashesTheConfiguredPassword, IssuesTokensLikeLogin, EveryCallCreatesADistinctUser, and BlankPasswordIsNotFoundAndCreatesNothing for `null`, `""` and `"   "` (C1-C5).
+- `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~JwtServiceDemoClaimTests|FullyQualifiedName~UserRepositoryTests.PersistsTheDemoFlag|FullyQualifiedName~DemoConfigurationTests.ShippedDefaults" --logger "console;verbosity=normal"`: 4 passed, 0 failed (C6, C7, C9, C11).
+- `cd frontend && npx vitest run src/pages/LandingPage.test.tsx src/pages/LoginPage.test.tsx src/auth/tokenStore.test.ts src/components/BasePage.test.tsx --reporter=verbose`: 16 passed, 0 failed across 4 files. 12 are the named demo tests (C17-C27, C29) and 4 are pre-existing LoginPage tests.
+- `cd frontend && npx playwright test e2e/demo.spec.ts --reporter=list`: 1 passed, 0 failed (`demo.spec.ts:21:1`, which carries C8 and C12-C16).
+- `grep -c "defaultValue: false" src/FormAI.Infrastructure/Migrations/*AddUserIsDemo.cs`: printed `1`, exit 0 (C10).
+- `grep -q "Demo account" CONTEXT.md && grep -qi "demo account" CLAUDE.md && grep -qi "demo account" docs/known-gaps.md`: exit 0 (C28).
 
 Faults: no faults injected - profile light.
 
 ## Ranked gaps
 
-1. AC 9a size clause uncovered by any check and contradicted by the code - no check - `frontend/src/pages/LandingPage.tsx:36` vs `:41`, `:46`
-2. AC 12 stale-error defect: a prior login `serverError` masks the demo failure message - no check - `frontend/src/pages/LoginPage.tsx:92-94`, `:35`
-3. Surface `404` has no HTTP-level proof (handler level only) - C5 - `tests/FormAI.UnitTests/Users/StartDemoTests.cs:106`, mapping `src/FormAI.API/Middleware/ExceptionHandlingMiddleware.cs:37`
-4. AC 7 "no user at 429" and AC 2 "no `UserConfirmationToken`" clauses have no check (structurally satisfied) - no check - `AuthController.cs:52`, `StartDemoHandler.cs:15-16`
-5. AC 11 loading state on `/` unproven (login only) - C21 - `LandingPage.tsx:34`
+None fail the feature. Remaining notes, most significant first:
+
+1. AC 7 "no user created on 429" has no check. It holds by construction (`AuthController.cs:52`, `Program.cs:81`). Close it with a user-count assertion after the 429 in `e2e/demo.spec.ts`.
+2. AC 2 "no `UserConfirmationToken`" has no check. It holds by construction (`StartDemoHandler.cs:15-16`, `User.cs:37-43`). Close it with `Assert.Empty(user.ConfirmationTokens)` or a DB count in e2e.
+3. Surface `404` is proven at the handler only. This is an accepted limitation in checks.md (C5, `StartDemoTests.cs:106`, `ExceptionHandlingMiddleware.cs:37`).
+4. The AC 11 loading state on `/` is unproven. It uses the same hook and `Button` as `/login` (`LandingPage.tsx:34`).
+5. Precision notes on C15, C17, C21, C22 and C23 (above).
