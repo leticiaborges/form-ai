@@ -59,22 +59,21 @@ export function LoginPage() {
               Sign up
             </Link>
           </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Just looking around?{" "}
+            <button
+              type="button"
+              disabled={isStarting}
+              onClick={() => {
+                setServerError(null);
+                startDemo();
+              }}
+              className="text-brand-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Try demo
+            </button>
+          </p>
         </div>
-
-        <Button
-          type="button"
-          isLoading={isStarting}
-          onClick={() => {
-            setServerError(null);
-            startDemo();
-          }}
-          className="w-full py-3 text-base shadow-md"
-        >
-          Try demo
-        </Button>
-        <p className="my-4 text-center text-xs uppercase tracking-wide text-gray-400">
-          or log in with your account
-        </p>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <Input
@@ -98,7 +97,7 @@ export function LoginPage() {
             </div>
           )}
 
-          <Button type="submit" variant="outline" isLoading={isSubmitting} className="mt-2 w-full">
+          <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
             Log in
           </Button>
         </form>

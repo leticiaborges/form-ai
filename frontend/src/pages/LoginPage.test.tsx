@@ -134,16 +134,18 @@ describe("LoginPage demo", () => {
   const demoToken = () =>
     fakeJwt({ sub: "demo-1", name: "Demo user", email: "demo-1@demo.invalid", is_demo: "true" });
 
-  it("leads with a primary Try demo and an outline Log in", () => {
+  it("offers Try demo as a link above a primary Log in", () => {
     renderLogin();
 
     const tryDemo = screen.getByRole("button", { name: "Try demo" });
-    expect(tryDemo).toHaveClass("bg-brand-600", "w-full");
+    expect(tryDemo).toHaveClass("text-brand-600");
+    expect(tryDemo).not.toHaveClass("bg-brand-600");
+    expect(tryDemo).not.toHaveClass("w-full");
     const email = screen.getByLabelText("Email");
     expect(tryDemo.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const logIn = screen.getByRole("button", { name: "Log in" });
-    expect(logIn).toHaveClass("border-brand-600");
-    expect(logIn).not.toHaveClass("bg-brand-600");
+    expect(logIn).toHaveClass("bg-brand-600");
+    expect(logIn).not.toHaveClass("border-brand-600");
   });
 
   it("signs in through Try demo and opens the dashboard", async () => {

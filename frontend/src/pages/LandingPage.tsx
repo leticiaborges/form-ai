@@ -37,14 +37,14 @@ export function LandingPage() {
           >
             Try demo
           </Button>
-          <Link to="/register">
-            <Button variant="outline" className="px-8 py-3 text-base">
-              Start for free
-            </Button>
-          </Link>
           <Link to="/login">
             <Button variant="outline" className="px-8 py-3 text-base">
               Log in
+            </Button>
+          </Link>
+          <Link to="/register">
+            <Button variant="outline" className="px-8 py-3 text-base">
+              Get started
             </Button>
           </Link>
         </div>

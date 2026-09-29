@@ -71,11 +71,11 @@ Proof: `cd frontend && npx playwright test e2e/demo.spec.ts -g "starts, refreshe
 
 ### S2 - "Try demo" leads on the landing and login pages · 6 files · 22 KB · ~8k
 
-**C17** - `LandingPage` renders "Try demo" first in the hero button row in the primary style (`bg-brand-600`) at the same size classes as "Start for free" (`px-8 py-3 text-base`), and "Start for free" in the outline style (AC 9a)
+**C17** - `LandingPage` renders "Try demo" first in the hero button row in the primary style (`bg-brand-600`) at the same size classes as "Get started" (`px-8 py-3 text-base`), and "Get started" in the outline style (AC 9a)
 Proof: `cd frontend && npx vitest run src/pages/LandingPage.test.tsx -t "leads the hero with a primary Try demo"`
 
-**C18** - `LoginPage` renders a full-width primary "Try demo" before the Email field in document order, and the form's "Log in" submit button in the outline style (AC 9)
-Proof: `cd frontend && npx vitest run src/pages/LoginPage.test.tsx -t "leads with a primary Try demo and an outline Log in"`
+**C18** - `LoginPage` renders "Try demo" as a text link-style control (`text-brand-600`, no `bg-brand-600`, no `w-full`) in the header block, before the Email field in document order, and the form's "Log in" submit button in the primary style (AC 9)
+Proof: `cd frontend && npx vitest run src/pages/LoginPage.test.tsx -t "offers Try demo as a link above a primary Log in"`
 
 **C19** - Clicking "Try demo" on `/login` sends `POST /api/auth/demo` with no body, stores the returned token in `tokenStore`, and lands on `/dashboard` (AC 10)
 Proof: `cd frontend && npx vitest run src/pages/LoginPage.test.tsx -t "signs in through Try demo and opens the dashboard"`
@@ -116,20 +116,20 @@ Proof: `grep -q "Demo account" CONTEXT.md && grep -qi "demo account" CLAUDE.md &
 
 ## Coverage
 
-| Set (size) | Member -> proof | Unproven |
-| --- | --- | --- |
-| `POST /api/auth/demo` statuses (3) | 200 C8 · 404 C5 · 429 C16 | - |
-| blank demo password (3) | `null` C5 · `""` C5 · whitespace C5, table-driven over all 3 | - |
-| access token by user kind (2) | demo C6 · regular C7 | - |
-| the shape of the `is_demo` claim: at demo start, at refresh (2) | start C8 · refresh C13 | - |
-| pages carrying "Try demo" (2) | `/` C17 C20 C23 · `/login` C18 C19 C21 C22 | - |
-| hero button styles (2) | Try demo primary C17 · Start for free outline C17 | - |
-| demo failure text sources (2) | server `message` C22 · fallback C22, C23 | - |
-| banner states (2) | demo user C25 · regular user C26 | - |
-| door 1: `users.is_demo` (2) | round trip C9 · migration default C10 | - |
-| door 2: `is_demo` claim (2) | issued C6, C7 · decoded by the frontend C24 | - |
-| startup config: `Demo:Password` (1 assembly) | e2e harness C8 | - |
-| startup config: `RateLimiting:Demo` (2 places) | shipped `appsettings.json` C11 · e2e harness override C16 | - |
+| Set (size)                                                      | Member -> proof                                              | Unproven |
+| --------------------------------------------------------------- | ------------------------------------------------------------ | -------- |
+| `POST /api/auth/demo` statuses (3)                              | 200 C8 · 404 C5 · 429 C16                                    | -        |
+| blank demo password (3)                                         | `null` C5 · `""` C5 · whitespace C5, table-driven over all 3 | -        |
+| access token by user kind (2)                                   | demo C6 · regular C7                                         | -        |
+| the shape of the `is_demo` claim: at demo start, at refresh (2) | start C8 · refresh C13                                       | -        |
+| pages carrying "Try demo" (2)                                   | `/` C17 C20 C23 · `/login` C18 C19 C21 C22 C29               | -        |
+| hero button styles (2)                                          | Try demo primary C17 · Get started outline C17               | -        |
+| demo failure text sources (2)                                   | server `message` C22 · fallback C22, C23                     | -        |
+| banner states (2)                                               | demo user C25 · regular user C26                             | -        |
+| door 1: `users.is_demo` (2)                                     | round trip C9 · migration default C10                        | -        |
+| door 2: `is_demo` claim (2)                                     | issued C6, C7 · decoded by the frontend C24                  | -        |
+| startup config: `Demo:Password` (1 assembly)                    | e2e harness C8                                               | -        |
+| startup config: `RateLimiting:Demo` (2 places)                  | shipped `appsettings.json` C11 · e2e harness override C16    | -        |
 
 - `Demo:Password` in production (ECS secret) is not a member: it is the plan's open question 1 and this build's Out of scope; locally it is set by hand in the untracked `appsettings.Development.json`
 - Claims naming a status code, route or response shape: C8, C16 cross the HTTP boundary; **C5's `404` is proven at the handler** (it throws `NotFoundException`) and the mapping to 404 is the existing `ExceptionHandlingMiddleware`, not re-proven here - a `404` with `Demo:Password` unset over HTTP has no proof, since it would need a second API instance without the password

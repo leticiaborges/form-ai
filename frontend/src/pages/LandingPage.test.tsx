@@ -25,7 +25,7 @@ describe("LandingPage demo", () => {
     const buttons = within(hero).getAllByRole("button");
     expect(buttons[0]).toHaveTextContent("Try demo");
     expect(buttons[0]).toHaveClass("bg-brand-600");
-    const startForFree = within(hero).getByRole("button", { name: "Start for free" });
+    const startForFree = within(hero).getByRole("button", { name: "Get started" });
     expect(startForFree).toHaveClass("border-brand-600");
     expect(startForFree).not.toHaveClass("bg-brand-600");
     expect(buttons[0]).toHaveClass("px-8", "py-3", "text-base");
