@@ -8,6 +8,13 @@ Where the code currently uses a different name for a term, the code name is list
 
 ## Language
 
+### The demo
+
+**Demo account**:
+A throwaway user created by one click on "Try demo", flagged `IsDemo`, confirmed on creation and sharing one configured password (`Demo:Password`). It exists so a visitor can try the product without registering; its forms are meant to last one day, and a separate cleanup deletes the account and its forms. A demo account is never turned into a real one.
+_Code alias_: `User.IsDemo`, the `is_demo` access-token claim.
+_Avoid_: guest, trial, sandbox user.
+
 ### The form
 
 **Form**:
