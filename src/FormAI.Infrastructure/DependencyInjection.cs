@@ -63,6 +63,8 @@ public static class DependencyInjection
         services.AddScoped<CleanupExpiredRefreshTokensHandler>();
         services.AddScoped<VerifyEmailHandler>();
         services.AddScoped<ResendVerificationEmailHandler>();
+        services.AddSingleton(new DemoAccountSettings(configuration["Demo:Password"]));
+        services.AddScoped<StartDemoHandler>();
 
         services.AddScoped<CreateFormHandler>();
         services.AddScoped<DeleteFormHandler>();

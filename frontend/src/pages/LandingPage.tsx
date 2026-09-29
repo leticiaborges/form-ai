@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
+import { useStartDemo } from "../hooks/useStartDemo";
 import formAiLogo from "../assets/FormAI.png";
 
 export function LandingPage() {
+  const { startDemo, isStarting, error: demoError } = useStartDemo();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto w-full">
@@ -27,15 +30,29 @@ export function LandingPage() {
           </p>
         </div>
         <div className="flex gap-4 flex-wrap justify-center">
-          <Link to="/register">
-            <Button className="px-8 py-3 text-base">Start for free</Button>
-          </Link>
+          <Button
+            isLoading={isStarting}
+            onClick={startDemo}
+            className="px-8 py-3 text-base shadow-lg ring-4 ring-brand-200"
+          >
+            Try demo
+          </Button>
           <Link to="/login">
             <Button variant="outline" className="px-8 py-3 text-base">
               Log in
             </Button>
           </Link>
+          <Link to="/register">
+            <Button variant="outline" className="px-8 py-3 text-base">
+              Get started
+            </Button>
+          </Link>
         </div>
+        {demoError && (
+          <p role="alert" className="text-sm text-red-700">
+            {demoError}
+          </p>
+        )}
       </main>
 
       <footer className="text-center text-sm text-gray-400 py-6">

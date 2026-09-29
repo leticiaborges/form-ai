@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import z from "zod";
 import { loginUser } from "../api/auth";
+import { useStartDemo } from "../hooks/useStartDemo";
 import type { CustomResponse } from "../types/CustomResponse";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
@@ -22,6 +23,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  const { startDemo, isStarting, error: demoError } = useStartDemo();
 
   const {
     register,
@@ -57,6 +59,20 @@ export function LoginPage() {
               Sign up
             </Link>
           </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Just looking around?{" "}
+            <button
+              type="button"
+              disabled={isStarting}
+              onClick={() => {
+                setServerError(null);
+                startDemo();
+              }}
+              className="text-brand-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Try demo
+            </button>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
@@ -75,9 +91,9 @@ export function LoginPage() {
             {...register("password")}
           />
 
-          {serverError && (
+          {(serverError ?? demoError) && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {serverError}
+              {serverError ?? demoError}
             </div>
           )}
 

@@ -2,6 +2,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  isDemo?: boolean;
 }
 
 export interface LoginResponse {

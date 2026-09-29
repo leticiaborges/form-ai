@@ -11,6 +11,11 @@ export async function loginUser(data: { email: string; password: string }): Prom
   return response.data;
 }
 
+export async function startDemo(): Promise<LoginResponse> {
+  const response = await api.post<LoginResponse>("/auth/demo");
+  return response.data;
+}
+
 export async function verifyEmail(token: string): Promise<void> {
   await api.post("/auth/verify-email", { token });
 }

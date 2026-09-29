@@ -17,10 +17,12 @@ public class AuthController : ControllerBase
     private readonly LogoutHandler _logoutHandler;
     private readonly VerifyEmailHandler _verifyEmailHandler;
     private readonly ResendVerificationEmailHandler _resendVerificationEmailHandler;
+    private readonly StartDemoHandler _startDemoHandler;
 
     public AuthController(RegisterHandler registerHandler, LoginHandler loginHandler,
         RefreshTokenHandler refreshTokenHandler, LogoutHandler logoutHandler,
-        VerifyEmailHandler verifyEmailHandler, ResendVerificationEmailHandler resendVerificationEmailHandler)
+        VerifyEmailHandler verifyEmailHandler, ResendVerificationEmailHandler resendVerificationEmailHandler,
+        StartDemoHandler startDemoHandler)
     {
         _registerHandler = registerHandler;
         _loginHandler = loginHandler;
@@ -28,6 +30,7 @@ public class AuthController : ControllerBase
         _logoutHandler = logoutHandler;
         _verifyEmailHandler = verifyEmailHandler;
         _resendVerificationEmailHandler = resendVerificationEmailHandler;
+        _startDemoHandler = startDemoHandler;
     }
 
     [HttpPost("register")]
@@ -41,6 +44,15 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody]LoginRequest request, CancellationToken cancellationToken)
     {
         var tokens = await _loginHandler.HandleAsync(request, cancellationToken);
+        RefreshTokenCookie.Set(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
+        return Ok(new LoginResponse(tokens.AccessToken));
+    }
+
+    [HttpPost("demo")]
+    [EnableRateLimiting(RateLimitPolicies.Demo)]
+    public async Task<IActionResult> StartDemo(CancellationToken cancellationToken)
+    {
+        var tokens = await _startDemoHandler.HandleAsync(cancellationToken);
         RefreshTokenCookie.Set(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
         return Ok(new LoginResponse(tokens.AccessToken));
     }

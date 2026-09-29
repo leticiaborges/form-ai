@@ -12,6 +12,7 @@ public class User
     public DateTime? PendingRegistrationExpiresAt { get; private set;}
     public bool IsEmailVerified { get; private set; }
     public DateTime? VerifiedAt { get; private set; }
+    public bool IsDemo { get; private set; }
     
     public List<Form> Forms { get; private set; } = new();
     public List<RefreshToken> RefreshTokens { get; private set; } = new ();
@@ -31,6 +32,14 @@ public class User
             CreatedAt = DateTime.UtcNow,
             IsEmailVerified = false
         };
+    }
+
+    public static User CreateDemo(string passwordHash)
+    {
+        var user = Create("Demo user", $"demo-{Guid.NewGuid()}@demo.invalid", passwordHash);
+        user.IsDemo = true;
+        user.MarkAsVerified();
+        return user;
     }
 
     public void SetConfirmationSent()

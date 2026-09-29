@@ -38,4 +38,25 @@ public class UserRepositoryTests : IAsyncLifetime
         Assert.NotNull(foundUser);
         Assert.Equal("Test User", foundUser.Name);
     }
+
+    [Fact]
+    public async Task PersistsTheDemoFlag()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+        .UseNpgsql(_postgres.GetConnectionString()).UseSnakeCaseNamingConvention().Options;
+
+        await using var context = new AppDbContext(options);
+        await context.Database.MigrateAsync();
+
+        var repo = new UserRepository(context);
+        var demo = User.CreateDemo("hash");
+        var regular = User.Create("Regular", "regular@example.com", "hash");
+        await repo.AddAsync(demo);
+        await repo.AddAsync(regular);
+
+        await using var fresh = new AppDbContext(options);
+        var freshRepo = new UserRepository(fresh);
+        Assert.True((await freshRepo.GetByIdAsync(demo.Id))!.IsDemo);
+        Assert.False((await freshRepo.GetByIdAsync(regular.Id))!.IsDemo);
+    }
 }

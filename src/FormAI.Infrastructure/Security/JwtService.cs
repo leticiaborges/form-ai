@@ -11,6 +11,8 @@ namespace FormAI.Infrastructure.Security;
 
 public class JwtService : IJwtService
 {
+    public const string DemoClaim = "is_demo";
+
     private readonly JwtSettings _settings;
 
     public JwtService(IOptions<JwtSettings> settings)
@@ -23,13 +25,16 @@ public class JwtService : IJwtService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Name, user.Name),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+
+        if (user.IsDemo)
+            claims.Add(new Claim(DemoClaim, "true"));
 
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
