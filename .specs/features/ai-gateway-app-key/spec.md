@@ -135,7 +135,7 @@ Remaining dimensions N/A for this slice: auth boundaries beyond the key itself (
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GWK-01 | P1: App key (AC 10, 11) | Tasks | Pending |
+| GWK-01 | P1: App key (AC 10, 11) | Tasks | Implementing |
 | GWK-02 | P1: App key (AC 1-3, 8) | Tasks | Pending |
 | GWK-03 | P1: App key (AC 4-7, 9) | Tasks | Pending |
 | GWK-04 | P1: Retries and timeouts (AC 1-6) | Tasks | Pending |

@@ -71,9 +71,9 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] `.env.example` lists both variables with no value
-- [ ] `.env` (untracked) has a generated `LITELLM_APP_KEY` starting with `sk-` and a budget value, and a non-empty `OPENAI_API_KEY`
-- [ ] Build gate passes: `docker compose config -q` and `git diff --check`
+- [x] `.env.example` lists both variables with no value
+- [x] `.env` (untracked) has a generated `LITELLM_APP_KEY` starting with `sk-` and a budget value, and a non-empty `OPENAI_API_KEY`
+- [x] Build gate passes: `docker compose config -q` and `git diff --check`
 
 **Tests**: none
 **Gate**: build
