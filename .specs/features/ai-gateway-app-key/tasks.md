@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-gateway-app-key/spec.md`
 **Design**: skipped. Configuration, one shell script and documentation; the choices are in the spec's assumptions.
-**Status**: In Progress (T1-T5 done)
+**Status**: Implemented, awaiting Verifier
 **Branch**: `feature/litellm-app-key-and-retries`
 **Blocker before T3 and T4**: `OPENAI_API_KEY` must be set in `.env`. Without it the failover and `gpt-5.2` PDF assertions print UNVERIFIED and the slice cannot be verified (same outcome as slice 1).
 
@@ -220,9 +220,9 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] The paragraph names the app key (`form-ai-app`, budgeted, two aliases only) and `provision-app-key.sh`, and still says the API does not call the gateway yet
-- [ ] The AI integration section is unchanged (it changes in slice 3)
-- [ ] Build gate passes: `git diff --check`
+- [x] The paragraph names the app key (`form-ai-app`, budgeted, two aliases only) and `provision-app-key.sh`, and still says the API does not call the gateway yet
+- [x] The AI integration section is unchanged (it changes in slice 3)
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none
 **Gate**: build
