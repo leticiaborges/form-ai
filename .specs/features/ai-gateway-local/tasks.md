@@ -158,12 +158,12 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] States the base URL from a container on the Compose network and from the host, and the OpenAI-compatible route
-- [ ] Lists both aliases, the real model each maps to, which input each accepts (text, PDF) and the fallback rule
-- [ ] States that `user` carries the user's guid only, never an email or a name
-- [ ] States which key is used by whom (master key now, app key in slice 2) and which environment variables must be set
-- [ ] Each `curl` example in the file was run against the T3 stack and returned a completion
-- [ ] Build gate passes: `docker compose config -q` and `git diff --check`
+- [x] States the base URL from a container on the Compose network and from the host, and the OpenAI-compatible route
+- [x] Lists both aliases, the real model each maps to, which input each accepts (text, PDF) and the fallback rule
+- [x] States that `user` carries the user's guid only, never an email or a name
+- [x] States which key is used by whom (master key now, app key in slice 2) and which environment variables must be set
+- [x] Each `curl` example in the file was run against the T3 stack and returned a completion
+- [x] Build gate passes: `docker compose config -q` and `git diff --check`
 
 **Tests**: none
 **Gate**: build
