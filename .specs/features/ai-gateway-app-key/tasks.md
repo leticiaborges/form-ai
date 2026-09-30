@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-gateway-app-key/spec.md`
 **Design**: skipped. Configuration, one shell script and documentation; the choices are in the spec's assumptions.
-**Status**: In Progress (T1-T3 done)
+**Status**: In Progress (T1-T4 done)
 **Branch**: `feature/litellm-app-key-and-retries`
 **Blocker before T3 and T4**: `OPENAI_API_KEY` must be set in `.env`. Without it the failover and `gpt-5.2` PDF assertions print UNVERIFIED and the slice cannot be verified (same outcome as slice 1).
 
@@ -161,14 +161,14 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] The fixture is a one-page text PDF under 20 KB with one distinctive marker word, and the marker is not a word the model would produce unprompted
-- [ ] `smoke.sh` sends it to `form-generator-vision` and asserts 200, the marker word in the answer and `anthropic/claude-sonnet-5-5` in the spend log (AC 1)
-- [ ] `smoke.sh` repeats it with the primary forced to fail and asserts 200, the marker word and `openai/gpt-5.2` in the spend log (AC 2)
-- [ ] Both calls have a spend-log row with cost > 0 (AC 3)
-- [ ] `smoke.sh` prints each call's latency, and both are below the 35 s attempt timeout (AC 4, 5)
-- [ ] If either provider rejects the PDF, the task stops and reports it instead of weakening the assertion: the synchronous decision needs revisiting
-- [ ] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`, with `unverified=0`
-- [ ] Test count: all earlier assertions still run plus the new ones; none deleted
+- [x] The fixture is a one-page text PDF under 20 KB with one distinctive marker word, and the marker is not a word the model would produce unprompted
+- [x] `smoke.sh` sends it to `form-generator-vision` and asserts 200, the marker word in the answer and `anthropic/claude-sonnet-5-5` in the spend log (AC 1)
+- [x] `smoke.sh` repeats it with the primary forced to fail and asserts 200, the marker word and `openai/gpt-5.2` in the spend log (AC 2)
+- [x] Both calls have a spend-log row with cost > 0 (AC 3)
+- [x] `smoke.sh` prints each call's latency, and both are below the 35 s attempt timeout (AC 4, 5)
+- [x] If either provider rejects the PDF, the task stops and reports it instead of weakening the assertion: the synchronous decision needs revisiting
+- [x] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`, with `unverified=0`
+- [x] Test count: all earlier assertions still run plus the new ones; none deleted
 
 **Tests**: integration
 **Gate**: full

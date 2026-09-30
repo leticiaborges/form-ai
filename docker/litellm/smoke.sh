@@ -154,5 +154,32 @@ timed_chat_tokens
 if [ "$CODE" -ge 400 ] && [ "$CODE" -lt 500 ]; then ok "provider-rejected request returns 4xx ($CODE)"; else bad "provider-rejected request expected 4xx, got $CODE"; fi
 if [ "$ELAPSED" -lt 75 ]; then ok "provider-rejected request answered in ${ELAPSED}s, under 75 s"; else bad "provider-rejected request took ${ELAPSED}s"; fi
 
+echo "PDF through the vision alias (app-key spec, PDF AC 1-5)"
+PDF=docker/litellm/fixtures/sample.pdf
+PDF_B64=$(base64 -w0 "$PDF")
+pdf_chat() { # prints nothing; sets CODE, ELAPSED, answer in /tmp/gw_body
+  t0=$(date +%s)
+  CODE=$(curl -s -m 90 -o /tmp/gw_body -w '%{http_code}' "$URL/v1/chat/completions" \
+    -H "Authorization: Bearer $LITELLM_APP_KEY" -H 'Content-Type: application/json' \
+    -d "{\"model\":\"form-generator-vision\",\"max_tokens\":60,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is the secret codeword in the document? Answer with the word only.\"},{\"type\":\"file\",\"file\":{\"filename\":\"sample.pdf\",\"file_data\":\"data:application/pdf;base64,$PDF_B64\"}}]}]}")
+  ELAPSED=$(( $(date +%s) - t0 ))
+}
+pdf_checks() { # $1 = provider label, $2 = expected spend-log model
+  check "$1 PDF call returns 200" "$CODE" 200
+  check "$1 answer contains the fixture marker" "$(grep -c ZEPHYRQUILL /tmp/gw_body)" 1
+  if [ "$ELAPSED" -lt 35 ]; then ok "$1 PDF latency ${ELAPSED}s, under the 35 s attempt timeout"; else bad "$1 PDF latency ${ELAPSED}s, not under 35 s: the synchronous decision needs revisiting"; fi
+  sleep 20
+  check "$1 spend-log row names the answering model" "$(sql "select model from \"LiteLLM_SpendLogs\" where model_group='form-generator-vision' order by \"startTime\" desc limit 1")" "$2"
+  check "$1 spend-log row has a cost > 0" "$(sql "select spend > 0 from \"LiteLLM_SpendLogs\" where model_group='form-generator-vision' order by \"startTime\" desc limit 1")" t
+}
+pdf_chat; pdf_checks "claude-sonnet-5-5" "anthropic/claude-sonnet-5-5"
+if [ -z "${OPENAI_API_KEY:-}" ]; then
+  unv "gpt-5.2 PDF: OPENAI_API_KEY is empty"
+else
+  ANTHROPIC_API_KEY=sk-ant-invalid docker compose up -d --force-recreate litellm >/dev/null 2>&1; wait_gw
+  pdf_chat; pdf_checks "gpt-5.2" "openai/gpt-5.2"
+  docker compose up -d --force-recreate litellm >/dev/null 2>&1; wait_gw
+fi
+
 echo; echo "passed=$PASS failed=$FAIL unverified=$UNVERIFIED"
 [ "$FAIL" -eq 0 ]
