@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-gateway-local/spec.md`
 **Design**: skipped. This slice is configuration and documentation, and the choices are recorded in the spec's assumptions.
-**Status**: Draft
+**Status**: Executed. Gateway ACs pass except P1 AC 6 and 7 (gpt-5.2 failover), which stay UNVERIFIED until `OPENAI_API_KEY` is set
 
 ---
 
@@ -70,7 +70,7 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 **Done when**:
 
 - [x] `.env.example` lists `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, each with no value
-- [ ] `.env` (untracked) has real values for all five before T3 runs (master, salt and DB password generated; provider keys pending from the user)
+- [x] `.env` (untracked) has real values for all five before T3 runs (`OPENAI_API_KEY` deliberately left empty by the user; see the T3 note)
 - [x] Build gate passes: `git diff --check`
 
 **Tests**: none

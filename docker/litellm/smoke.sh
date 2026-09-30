@@ -21,6 +21,8 @@ chat() { # model key [extra-content]
 }
 sql() { docker exec "$DB" psql -U litellm -d litellm -tA -c "$1"; }
 
+START=$(sql "select now()")
+
 echo "Completions (P1-4, P1-5)"
 check "form-generator returns 200" "$(chat form-generator "$LITELLM_MASTER_KEY")" 200
 check "form-generator answers from claude-haiku-4-5" "$(sleep 20; sql "select model from \"LiteLLM_SpendLogs\" where model_group='form-generator' order by \"startTime\" desc limit 1")" "anthropic/claude-haiku-4-5-20251001"
@@ -30,7 +32,7 @@ check "form-generator-vision answers from claude-sonnet-5-5" "$(sql "select mode
 
 echo "Spend log cost (P1-8)"
 for g in form-generator form-generator-vision; do
-  check "$g has a non-null cost > 0" "$(sql "select count(*) from \"LiteLLM_SpendLogs\" where model_group='$g' and spend is not null and spend > 0")" "$(sql "select count(*) from \"LiteLLM_SpendLogs\" where model_group='$g'")"
+  check "$g has a non-null cost > 0" "$(sql "select count(*) from \"LiteLLM_SpendLogs\" where model_group='$g' and \"startTime\" >= '$START' and spend is not null and spend > 0")" "$(sql "select count(*) from \"LiteLLM_SpendLogs\" where model_group='$g' and \"startTime\" >= '$START'")"
 done
 
 echo "Rejections (P1-9, P1-10)"
@@ -44,6 +46,8 @@ img=$(grep -E '^\s+image: ghcr.io/berriai/litellm:' docker-compose.yml | sed 's/
 if echo "$img" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then ok "image pinned to exact tag $img"; else bad "image tag '$img' is not exact"; fi
 
 echo "Markers (S-5, S-6)"
+check "message logging is off in config" "$(grep -cE '^\s*turn_off_message_logging:\s*true\s*$' docker/litellm/config.yaml)" 1
+check "prompts are not stored in the spend log in config" "$(grep -cE '^\s*store_prompts_in_spend_logs:\s*false\s*$' docker/litellm/config.yaml)" 1
 M="MARKER-$(date +%s)-$RANDOM"
 check "marker request returns 200" "$(chat form-generator "$LITELLM_MASTER_KEY" "$M")" 200
 sleep 20

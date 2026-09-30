@@ -55,7 +55,7 @@ Prompts and responses are not logged and not stored in the spend log (`turn_off_
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | The gateway | Provider keys. |
 | `LITELLM_DB_PASSWORD` | The gateway and `litellm-db` | Its own role and database, unrelated to `form_ai_app` and `form_ai_migrator`. |
 
-All live in the untracked `.env` (names in `.env.example`). `docker compose up` fails if any of the first four, or the password, is unset. `OPENAI_API_KEY` may be empty for now, in which case failover cannot answer.
+All live in the untracked `.env` (names in `.env.example`). `docker compose up` fails if `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD` or `ANTHROPIC_API_KEY` is unset. `OPENAI_API_KEY` may be empty for now, in which case failover cannot answer.
 
 ## Checking it
 
