@@ -95,12 +95,12 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Only `form-generator` and `form-generator-vision` appear as `model_name`
-- [ ] `form-generator-vision` maps to `claude-sonnet-5-5` and `form-generator` to `claude-haiku-4-5-20251001`; both fall back to `gpt-5.2`
-- [ ] Keys are referenced as `os.environ/...`, and the file contains no secret value
-- [ ] Message logging is off and prompts are not stored in the spend log, using the setting names documented for the pinned version
-- [ ] The file parses as YAML: `python3 -c "import yaml,sys; yaml.safe_load(open('docker/litellm/config.yaml'))"`
-- [ ] Build gate passes: `git diff --check`
+- [x] Only `form-generator` and `form-generator-vision` appear as `model_name`
+- [x] `form-generator-vision` maps to `claude-sonnet-5-5` and `form-generator` to `claude-haiku-4-5-20251001`; both fall back to `gpt-5.2`
+- [x] Keys are referenced as `os.environ/...`, and the file contains no secret value
+- [x] Message logging is off and prompts are not stored in the spend log, using the setting names documented for the pinned version
+- [x] The file parses as YAML: `python3 -c "import yaml,sys; yaml.safe_load(open('docker/litellm/config.yaml'))"`
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none (exercised by the T3 smoke script, since the config cannot run without the service)
 **Gate**: build

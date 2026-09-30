@@ -1,0 +1,40 @@
+# LiteLLM gateway config. No secrets here: keys come from the environment.
+# Each alias has two deployments; `order` makes the Anthropic one primary and
+# gpt-5.2 the failover, so only the two aliases exist as model names.
+model_list:
+  - model_name: form-generator
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+      order: 1
+  - model_name: form-generator
+    litellm_params:
+      model: openai/gpt-5.2
+      api_key: os.environ/OPENAI_API_KEY
+      order: 2
+
+  - model_name: form-generator-vision
+    litellm_params:
+      model: anthropic/claude-sonnet-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      order: 1
+  - model_name: form-generator-vision
+    litellm_params:
+      model: openai/gpt-5.2
+      api_key: os.environ/OPENAI_API_KEY
+      order: 2
+
+router_settings:
+  enable_pre_call_checks: true
+  # One retry moves to the next `order`. Retry policy proper is slice 2 (GW-7).
+  num_retries: 1
+
+litellm_settings:
+  # No prompt or response text goes to any logger.
+  turn_off_message_logging: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  # Spend rows keep cost and metadata but not the messages.
+  store_prompts_in_spend_logs: false
