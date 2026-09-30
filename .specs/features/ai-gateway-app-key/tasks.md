@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-gateway-app-key/spec.md`
 **Design**: skipped. Configuration, one shell script and documentation; the choices are in the spec's assumptions.
-**Status**: In Progress (T1-T4 done)
+**Status**: In Progress (T1-T5 done)
 **Branch**: `feature/litellm-app-key-and-retries`
 **Blocker before T3 and T4**: `OPENAI_API_KEY` must be set in `.env`. Without it the failover and `gpt-5.2` PDF assertions print UNVERIFIED and the slice cannot be verified (same outcome as slice 1).
 
@@ -192,11 +192,11 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] Describes the app key: alias, allowed models, budget and period, `provision-app-key.sh`, the two variables, and that the API uses this key (master key is for developers only)
-- [ ] States the timeout budget as gateway attempt × attempts < client timeout < 90 s < load balancer idle timeout, with the chosen numbers (35 s, 2, 70 s, 80 s), and the measured PDF latencies from T4
-- [ ] The "Status of what is verified" section is rewritten: failover and PDF through both providers are verified; client, Kestrel and load balancer timeouts are not, with the slice that will check each
-- [ ] The slice 1 statement that failover needs `OPENAI_API_KEY` is updated, and every command in the file was run against the T4 stack
-- [ ] Build gate passes: `docker compose config -q` and `git diff --check`
+- [x] Describes the app key: alias, allowed models, budget and period, `provision-app-key.sh`, the two variables, and that the API uses this key (master key is for developers only)
+- [x] States the timeout budget as gateway attempt × attempts < client timeout < 90 s < load balancer idle timeout, with the chosen numbers (35 s, 2, 70 s, 80 s), and the measured PDF latencies from T4
+- [x] The "Status of what is verified" section is rewritten: failover and PDF through both providers are verified; client, Kestrel and load balancer timeouts are not, with the slice that will check each
+- [x] The slice 1 statement that failover needs `OPENAI_API_KEY` is updated, and every command in the file was run against the T4 stack
+- [x] Build gate passes: `docker compose config -q` and `git diff --check`
 
 **Tests**: none
 **Gate**: build

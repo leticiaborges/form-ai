@@ -141,7 +141,7 @@ Remaining dimensions N/A for this slice: auth boundaries beyond the key itself (
 | GWK-04 | P1: Retries and timeouts (AC 1-6) | Tasks | Implementing |
 | GWK-05 | P1: PDF (AC 1-3) | Tasks | Implementing |
 | GWK-06 | P1: PDF (AC 4-5) | Tasks | Implementing |
-| GWK-07 | P2: Documented contract (AC 1-4) | Tasks | Pending |
+| GWK-07 | P2: Documented contract (AC 1-4) | Tasks | Implementing |
 
 **Coverage:** 7 total, 7 mapped to tasks, 0 unmapped
 
