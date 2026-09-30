@@ -151,3 +151,11 @@ _Avoid_: source content, upload.
 **Generation parameters**:
 What the owner asks Claude for: how many questions, which question types are allowed, the difficulty, and whether to fill in the answer key and suggested answers — which follows from whether the form being created is graded.
 _Code alias_: `GenerationParameters`.
+
+**Gateway**:
+The separate LiteLLM service every model call goes through. It holds the provider keys, reports the cost of each call and can cap spending. The app talks to it in the OpenAI-compatible format.
+_Avoid_: proxy, AI service.
+
+**Model alias**:
+A name the gateway exposes for a kind of job, mapped by its config to real models — `form-generator` for text and `form-generator-vision` for text and PDFs. The app uses aliases only and never a real model id.
+_Avoid_: model name, model id.

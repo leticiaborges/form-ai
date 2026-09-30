@@ -213,8 +213,8 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Both terms are defined in the file's existing style
-- [ ] Build gate passes: `git diff --check`
+- [x] Both terms are defined in the file's existing style
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none
 **Gate**: build
