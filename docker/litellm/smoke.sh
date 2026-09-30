@@ -111,5 +111,48 @@ else
   docker compose up -d litellm >/dev/null 2>&1
 fi
 
+echo "Retries and timeouts (retries spec P1 AC 1-6)"
+check "config sets a 35 s attempt timeout" "$(grep -cE '^\s*timeout:\s*35\s*$' docker/litellm/config.yaml)" 1
+check "provider SDK retries are off on all four deployments" "$(grep -cE '^\s*max_retries:\s*0\s*$' docker/litellm/config.yaml)" 4
+check "config sets num_retries 0 (failover is the only second attempt)" "$(grep -cE '^\s*num_retries:\s*0\s*$' docker/litellm/config.yaml)" 1
+check "no other file configures gateway retries" "$(git grep -lE 'num_retries|retry_policy' -- . ':!docker/litellm/config.yaml' ':!docker/litellm/README.md' ':!docker/litellm/smoke.sh' ':!.specs' ':!docs' | wc -l | tr -d ' ')" 0
+OVR=docker/litellm/.smoke-override.yml
+BH=form-ai-blackhole
+cleanup_gw() { docker rm -f $BH >/dev/null 2>&1; if [ -f $OVR ]; then rm -f $OVR; docker compose up -d --force-recreate litellm >/dev/null 2>&1; fi; }
+trap cleanup_gw EXIT
+wait_gw() { for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' form-ai-litellm)" = healthy ] && break; sleep 5; done; }
+hang_provider() { # starts a server that accepts connections and never answers; gateway env lines follow as args
+  docker rm -f $BH >/dev/null 2>&1
+  docker run -d --rm --name $BH --network form-ai_default --entrypoint python "$(docker inspect -f '{{.Config.Image}}' form-ai-litellm)" -u -c "
+import socket
+s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(('0.0.0.0',9)); s.listen(50)
+c=[]
+while True:
+    c.append(s.accept()[0]); print('conn', flush=True)
+" >/dev/null
+  { echo "services:"; echo "  litellm:"; echo "    environment:"; for e in "$@"; do echo "      $e: http://$BH:9"; done; } > $OVR
+  docker compose -f docker-compose.yml -f $OVR up -d --force-recreate litellm >/dev/null 2>&1; wait_gw
+}
+timed_chat() { t0=$(date +%s); CODE=$(chat "$1" "$LITELLM_MASTER_KEY"); ELAPSED=$(( $(date +%s) - t0 )); }
+
+hang_provider ANTHROPIC_API_BASE
+timed_chat form-generator
+check "stalled primary: fallback answers 200" "$CODE" 200
+if [ "$ELAPSED" -lt 75 ]; then ok "stalled primary: answered in ${ELAPSED}s, under 75 s"; else bad "stalled primary took ${ELAPSED}s, expected under 75 s"; fi
+sleep 20
+check "stalled primary: answered by gpt-5.2" "$(sql "select model from \"LiteLLM_SpendLogs\" where model_group='form-generator' order by \"startTime\" desc limit 1")" "openai/gpt-5.2"
+check "stalled primary: attempted once, not retried on itself" "$(docker logs $BH 2>&1 | grep -c conn)" 1
+
+hang_provider ANTHROPIC_API_BASE OPENAI_API_BASE
+timed_chat form-generator
+if [ "$CODE" != 200 ] && [ "$CODE" != 000 ]; then ok "both providers stalled: error $CODE returned"; else bad "both providers stalled: expected an error status, got $CODE"; fi
+if [ "$ELAPSED" -lt 75 ]; then ok "both providers stalled: error after ${ELAPSED}s, under 75 s"; else bad "both providers stalled: took ${ELAPSED}s, expected under 75 s"; fi
+cleanup_gw; wait_gw
+
+timed_chat_tokens() { t0=$(date +%s); CODE=$(curl -s -m 90 -o /tmp/gw_body -w '%{http_code}' "$URL/v1/chat/completions" -H "Authorization: Bearer $LITELLM_MASTER_KEY" -H 'Content-Type: application/json' -d '{"model":"form-generator","max_tokens":-5,"messages":[{"role":"user","content":"Say hi"}]}'); ELAPSED=$(( $(date +%s) - t0 )); }
+timed_chat_tokens
+if [ "$CODE" -ge 400 ] && [ "$CODE" -lt 500 ]; then ok "provider-rejected request returns 4xx ($CODE)"; else bad "provider-rejected request expected 4xx, got $CODE"; fi
+if [ "$ELAPSED" -lt 75 ]; then ok "provider-rejected request answered in ${ELAPSED}s, under 75 s"; else bad "provider-rejected request took ${ELAPSED}s"; fi
+
 echo; echo "passed=$PASS failed=$FAIL unverified=$UNVERIFIED"
 [ "$FAIL" -eq 0 ]

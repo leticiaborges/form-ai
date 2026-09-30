@@ -34,7 +34,7 @@ Slice 1 left the gateway callable only with the master key, with an unmeasured r
 | Idempotency | The script looks the key up by `key_alias` `form-ai-app`; if present it updates budget and models, otherwise it creates it | Safe to rerun after a config change | n |
 | Budget values | `LITELLM_APP_MAX_BUDGET_USD` in `.env`, default 10, `budget_duration` `1mo` | Plan UL-6: slightly above the app-side value, which does not exist yet. 10 is a placeholder to be set with slice 7 | n |
 | Allowed models on the app key | `form-generator` and `form-generator-vision` only | Least privilege, and matches GW-3 | n |
-| Retry policy | One retry, on the next `order` deployment (the fallback), for provider errors and timeouts. No retry on 4xx | Matches the existing `num_retries: 1` and the plan's "client does not retry" (AI-7) | n |
+| Retry policy | `num_retries: 0` and `max_retries: 0` on every deployment; the only second attempt is failover to the next `order` deployment (the fallback), for provider errors, timeouts and provider 4xx. With `num_retries: 1` a stalled pair of providers took 4 attempts (140 s), measured. A failed deployment cools down for 30 s (`allowed_fails: 0`), so the retry never lands on the deployment that just failed. Failover on 4xx cannot be turned off in the pinned version (tested: `num_retries`, `retry_policy` with `BadRequestErrorRetries: 0`, and both) | Matches the plan's "client does not retry" (AI-7). Without the cooldown the retry went to the same failed deployment (measured: two connections to a stalled primary 35 s apart, 72 s total) | y |
 | Timeout budget | Gateway per-attempt timeout 35 s; 2 attempts = 70 s worst case < client timeout 80 s < overall 90 s < load balancer idle timeout (to be set above 90 s at deploy) | Plan AI-7 ordering. Numbers are a first proposal, revised if the slow-PDF measurement (P1 PDF AC 4) contradicts them | n |
 | Forcing a provider failure in tests | Reuse slice 1's method (invalid `ANTHROPIC_API_KEY` for a failing primary); for timeouts, the mechanism documented for the pinned version, looked up at implementation time | Slice 1 already proved the first method works. Setting names are version-specific and must not be guessed | n |
 | PDF fixture | A tracked one-page text PDF, under 20 KB, containing one distinctive word, in `docker/litellm/fixtures/` | Deterministic assertion on the answer without a judge model. A scanned PDF is covered by the slice 17 evaluation set | n |
@@ -82,11 +82,11 @@ Remaining dimensions N/A for this slice: auth boundaries beyond the key itself (
 **Acceptance Criteria**:
 
 1. The gateway config SHALL set the retry count and per-attempt timeout, and no other file SHALL configure retries for gateway calls. <!-- ubiquitous -->
-2. The gateway SHALL allow at most two attempts per request (the primary, then the fallback). <!-- ubiquitous -->
+2. The gateway SHALL allow at most two attempts per request (the primary once, then the fallback). <!-- ubiquitous -->
 3. IF the primary deployment fails with a provider error THEN the gateway SHALL answer from `gpt-5.2`, for each alias. <!-- unwanted-behavior (closes slice 1 P1 AC 6, 7) -->
 4. IF an attempt receives no complete response within 35 seconds THEN the gateway SHALL abandon it and use the fallback. <!-- unwanted-behavior -->
 5. IF both attempts fail THEN the gateway SHALL return an error to the caller within 75 seconds of the request. <!-- unwanted-behavior -->
-6. IF the provider answers 4xx for a malformed request THEN the gateway SHALL NOT retry it. <!-- unwanted-behavior -->
+6. IF the provider rejects a request with a 4xx THEN the gateway SHALL make at most one further attempt, on the fallback, and SHALL return a 4xx to the caller when the fallback rejects it too, within 75 seconds. <!-- unwanted-behavior (observed behavior: failover on 4xx cannot be disabled in the pinned version) -->
 
 **Independent Test**: Break the primary key and see `gpt-5.2` answer for each alias. Delay the primary past the timeout and see the fallback answer; break both and see the error inside 75 s.
 
@@ -138,7 +138,7 @@ Remaining dimensions N/A for this slice: auth boundaries beyond the key itself (
 | GWK-01 | P1: App key (AC 10, 11) | Tasks | Implementing |
 | GWK-02 | P1: App key (AC 1-3, 8) | Tasks | Implementing |
 | GWK-03 | P1: App key (AC 4-7, 9) | Tasks | Implementing |
-| GWK-04 | P1: Retries and timeouts (AC 1-6) | Tasks | Pending |
+| GWK-04 | P1: Retries and timeouts (AC 1-6) | Tasks | Implementing |
 | GWK-05 | P1: PDF (AC 1-3) | Tasks | Pending |
 | GWK-06 | P1: PDF (AC 4-5) | Tasks | Pending |
 | GWK-07 | P2: Documented contract (AC 1-4) | Tasks | Pending |

@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-gateway-app-key/spec.md`
 **Design**: skipped. Configuration, one shell script and documentation; the choices are in the spec's assumptions.
-**Status**: Draft
+**Status**: In Progress (T1-T3 done)
 **Branch**: `feature/litellm-app-key-and-retries`
 **Blocker before T3 and T4**: `OPENAI_API_KEY` must be set in `.env`. Without it the failover and `gpt-5.2` PDF assertions print UNVERIFIED and the slice cannot be verified (same outcome as slice 1).
 
@@ -128,14 +128,15 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] `config.yaml` sets a 35 s per-attempt timeout and one retry, and no file outside it configures gateway retries (AC 1, 2)
-- [ ] `smoke.sh` no longer prints UNVERIFIED for the two failover assertions: each alias is answered by `gpt-5.2` with a failing primary (AC 3, closes slice 1 P1 AC 6, 7)
-- [ ] `smoke.sh` asserts that a primary delayed past 35 s is abandoned and the fallback answers, using the delay mechanism documented for the pinned version (AC 4)
-- [ ] `smoke.sh` asserts that with both providers failing the caller gets an error in under 75 s (AC 5)
-- [ ] `smoke.sh` asserts that a malformed request (provider 4xx) produces one upstream attempt and no fallback call (AC 6)
-- [ ] `smoke.sh` restores the normal stack when it finishes or fails (trap), so a failed run does not leave the gateway broken
-- [ ] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`, with `unverified=0`
-- [ ] Test count: all earlier assertions still run plus the new ones; none deleted
+- [x] `config.yaml` sets a 35 s per-attempt timeout, `num_retries: 0`, `max_retries: 0` on each deployment and an immediate cooldown (`allowed_fails: 0`, `cooldown_time: 30`) so the retry lands on the fallback, and no file outside it configures gateway retries (AC 1, 2)
+- [x] `smoke.sh` asserts the stalled primary receives exactly one connection (AC 2)
+- [x] `smoke.sh` no longer prints UNVERIFIED for the two failover assertions: each alias is answered by `gpt-5.2` with a failing primary (AC 3, closes slice 1 P1 AC 6, 7)
+- [x] `smoke.sh` asserts that a primary delayed past 35 s is abandoned and the fallback answers, using the delay mechanism documented for the pinned version (AC 4)
+- [x] `smoke.sh` asserts that with both providers failing the caller gets an error in under 75 s (AC 5)
+- [x] `smoke.sh` asserts that a request the provider rejects (`max_tokens: -5`) returns a 4xx in under 75 s (AC 6, reworded by the user: failover on 4xx cannot be disabled)
+- [x] `smoke.sh` restores the normal stack when it finishes or fails (trap), so a failed run does not leave the gateway broken
+- [x] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`, with `unverified=0`
+- [x] Test count: all earlier assertions still run plus the new ones; none deleted
 
 **Tests**: integration
 **Gate**: full
