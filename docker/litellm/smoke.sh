@@ -77,7 +77,7 @@ else
   for g in form-generator form-generator-vision; do
     check "$g answers 200 with a failing primary" "$(chat $g "$LITELLM_MASTER_KEY")" 200
     sleep 20
-    check "$g was answered by gpt-5.2" "$(sql "select model from \"LiteLLM_SpendLogs\" where model_group='$g' order by \"startTime\" desc limit 1")" "gpt-5.2"
+    check "$g was answered by gpt-5.2" "$(sql "select model from \"LiteLLM_SpendLogs\" where model_group='$g' order by \"startTime\" desc limit 1")" "openai/gpt-5.2"
   done
   docker compose up -d litellm >/dev/null 2>&1
 fi

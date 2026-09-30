@@ -1,6 +1,3 @@
-# LiteLLM gateway config. No secrets here: keys come from the environment.
-# Each alias has two deployments; `order` makes the Anthropic one primary and
-# gpt-5.2 the failover, so only the two aliases exist as model names.
 model_list:
   - model_name: form-generator
     litellm_params:
