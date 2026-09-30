@@ -238,9 +238,9 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] The paragraph names the LiteLLM gateway, its own Postgres, and the loopback-only binding
-- [ ] The AI integration section is unchanged (it changes in slice 3)
-- [ ] Build gate passes: `git diff --check`
+- [x] The paragraph names the LiteLLM gateway, its own Postgres, and the loopback-only binding
+- [x] The AI integration section is unchanged (it changes in slice 3)
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none
 **Gate**: build
