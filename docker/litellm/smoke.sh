@@ -21,6 +21,7 @@ chat() { # model key [extra-content]
 }
 sql() { docker exec "$DB" psql -U litellm -d litellm -tA -c "$1"; }
 
+for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' form-ai-litellm)" = healthy ] && break; sleep 5; done
 START=$(sql "select now()")
 
 echo "Completions (P1-4, P1-5)"
@@ -66,6 +67,34 @@ done
 check "gateway port bound to 127.0.0.1" "$(docker port form-ai-litellm 4000/tcp | tr -d '\r')" "127.0.0.1:4000"
 check "gateway database publishes no port" "$(docker port "$DB" | wc -l | tr -d ' ')" 0
 if docker exec -e PGPASSWORD="$APP_DB_PASSWORD" "$DB" psql -h 127.0.0.1 -U form_ai_app -d litellm -c 'select 1' >/dev/null 2>&1; then bad "form_ai_app can connect to the gateway database"; else ok "form_ai_app is refused by the gateway database"; fi
+
+echo "App key (app-key spec P1 AC 1-11)"
+APP_ALIAS=form-ai-app
+check "provision script refuses an unset LITELLM_APP_KEY without calling the gateway (exit 2)" "$(env -u LITELLM_APP_KEY ENV_FILE=/dev/null LITELLM_URL=http://127.0.0.1:1 bash docker/litellm/provision-app-key.sh >/dev/null 2>&1; echo $?)" 2
+bash docker/litellm/provision-app-key.sh >/dev/null && bash docker/litellm/provision-app-key.sh >/dev/null
+check "two provisioning runs leave exactly one $APP_ALIAS key" "$(sql "select count(*) from \"LiteLLM_VerificationToken\" where key_alias='$APP_ALIAS'")" 1
+INFO=$(curl -s "$URL/key/info" -G --data-urlencode "key=$LITELLM_APP_KEY" -H "Authorization: Bearer $LITELLM_MASTER_KEY")
+keyinfo() { echo "$INFO" | python3 -c "import json,sys; print(json.load(sys.stdin)['info']$1)"; }
+check "app key models are the two aliases only" "$(keyinfo "['models']")" "['form-generator', 'form-generator-vision']"
+check "app key max_budget is LITELLM_APP_MAX_BUDGET_USD" "$(keyinfo "['max_budget']")" "$(python3 -c "print(float('${LITELLM_APP_MAX_BUDGET_USD:-10}'))")"
+check "app key budget_duration is 1mo" "$(keyinfo "['budget_duration']")" 1mo
+check "app key form-generator returns 200" "$(chat form-generator "$LITELLM_APP_KEY")" 200
+check "app key form-generator-vision returns 200" "$(chat form-generator-vision "$LITELLM_APP_KEY")" 200
+c=$(chat some-other-model "$LITELLM_APP_KEY"); if [ "$c" -ge 400 ] && [ "$c" -lt 500 ]; then ok "app key with another model is 4xx ($c)"; else bad "app key with another model expected 4xx, got $c"; fi
+c=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/key/generate" -H "Authorization: Bearer $LITELLM_APP_KEY" -H 'Content-Type: application/json' -d '{}')
+if [ "$c" = 401 ] || [ "$c" = 403 ]; then ok "app key on /key/generate is $c"; else bad "app key on /key/generate expected 401 or 403, got $c"; fi
+sleep 20
+check "spend-log rows of app-key calls are attributed to $APP_ALIAS" "$(sql "select count(*) from \"LiteLLM_SpendLogs\" s join \"LiteLLM_VerificationToken\" v on s.api_key = v.token where v.key_alias='$APP_ALIAS' and s.model_group in ('form-generator','form-generator-vision') and s.\"startTime\" >= '$START'")" 2
+
+TKEY="sk-smoke-throwaway-$RANDOM$RANDOM"
+admin() { curl -s -m 30 -X POST "$URL$1" -H "Authorization: Bearer $LITELLM_MASTER_KEY" -H 'Content-Type: application/json' -d "$2"; }
+admin /key/delete '{"key_aliases":["smoke-throwaway"]}' >/dev/null
+admin /key/generate "{\"key\":\"$TKEY\",\"key_alias\":\"smoke-throwaway\",\"models\":[\"form-generator\"],\"max_budget\":0.000001}" >/dev/null
+check "throwaway key with a tiny budget answers its first call" "$(chat form-generator "$TKEY")" 200
+sleep 20
+code=$(chat form-generator "$TKEY")
+if [ "$code" -ge 400 ] && [ "$code" -lt 500 ] && grep -qi budget /tmp/gw_body; then ok "spent key is refused with a 4xx naming the budget ($code)"; else bad "spent key expected 4xx naming the budget, got $code"; fi
+admin /key/delete '{"key_aliases":["smoke-throwaway"]}' >/dev/null
 
 echo "Fallback to gpt-5.2 (P1-6, P1-7)"
 if [ -z "${OPENAI_API_KEY:-}" ]; then

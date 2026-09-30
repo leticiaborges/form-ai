@@ -98,12 +98,12 @@ T1 → T2 → T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] The script exits non-zero without calling the gateway when `LITELLM_APP_KEY` is unset (AC 10), and defaults the budget to 10 when `LITELLM_APP_MAX_BUDGET_USD` is unset
-- [ ] The script creates the key with alias `form-ai-app`, models limited to the two aliases, `max_budget` from `.env` and `budget_duration` `1mo`, and on a second run updates instead of duplicating (AC 1-3, 8)
-- [ ] `smoke.sh` asserts: 200 from each alias with the app key (AC 4); 4xx for another model (AC 5); 401 or 403 on `/key/generate` (AC 6); budget rejection for a throwaway key with a tiny `max_budget` after one call, with a body naming the budget (AC 7); exactly one `form-ai-app` key after two provisioning runs (AC 8); the spend-log row of an app-key call carries the key's alias or hash (AC 9); key info reports the configured budget and duration (AC 3)
-- [ ] `smoke.sh` deletes the throwaway key it creates
-- [ ] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`
-- [ ] Test count: slice 1's 24 assertions still run (none deleted) plus the new ones; new ones all pass
+- [x] The script exits non-zero without calling the gateway when `LITELLM_APP_KEY` is unset (AC 10), and defaults the budget to 10 when `LITELLM_APP_MAX_BUDGET_USD` is unset
+- [x] The script creates the key with alias `form-ai-app`, models limited to the two aliases, `max_budget` from `.env` and `budget_duration` `1mo`, and on a second run updates instead of duplicating (AC 1-3, 8)
+- [x] `smoke.sh` asserts: 200 from each alias with the app key (AC 4); 4xx for another model (AC 5); 401 or 403 on `/key/generate` (AC 6); budget rejection for a throwaway key with a tiny `max_budget` after one call, with a body naming the budget (AC 7); exactly one `form-ai-app` key after two provisioning runs (AC 8); the spend-log row of an app-key call carries the key's alias or hash (AC 9); key info reports the configured budget and duration (AC 3)
+- [x] `smoke.sh` deletes the throwaway key it creates
+- [x] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`
+- [x] Test count: slice 1's 24 assertions still run (none deleted) plus the new ones; new ones all pass
 
 **Tests**: integration
 **Gate**: full
