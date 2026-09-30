@@ -125,14 +125,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `litellm-db` is a separate Postgres service with its own database, role and password from `.env`, no published port, and a health check
-- [ ] `litellm` uses an exact image tag (no `latest`, `main` or floating minor), mounts `docker/litellm/config.yaml`, publishes its port on `127.0.0.1` only and waits for `litellm-db` to be healthy
-- [ ] Required variables use `${VAR:?message}` so an unset one fails `docker compose up`
-- [ ] `docker/litellm/smoke.sh` asserts, with the spec-defined outcome for each: a completion from each alias (AC P1-1 4, 5), a non-null cost in the spend log for both (AC 8), a 4xx for an unknown model (AC 9), 401 with no key and with a wrong key (AC 10), `gpt-5.2` answering for each alias when its primary is forced to fail (AC 6, 7, via the mechanism documented for the pinned version), a marker string absent from container logs and the spend-log row (AC S-5, S-6), the compose service failing to start with `LITELLM_MASTER_KEY` unset (AC S-4), the `form_ai_app` role refused on `litellm-db` (AC S-9), the gateway port bound to `127.0.0.1` and no host port on `litellm-db` (AC S-7, S-8)
-- [ ] `git grep` finds none of the real secret values in the tracked tree (AC S-3)
-- [ ] After `docker compose down -v` and a restart, the stack starts from empty with no manual steps (edge case)
-- [ ] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`
-- [ ] Test count: every assertion above is present in the script and the script exits 0 (record the count)
+- [x] `litellm-db` is a separate Postgres service with its own database, role and password from `.env`, no published port, and a health check
+- [x] `litellm` uses an exact image tag (no `latest`, `main` or floating minor), mounts `docker/litellm/config.yaml`, publishes its port on `127.0.0.1` only and waits for `litellm-db` to be healthy
+- [x] Required variables use `${VAR:?message}` so an unset one fails `docker compose up`
+- [x] `docker/litellm/smoke.sh` asserts, with the spec-defined outcome for each: a completion from each alias (AC P1-1 4, 5), a non-null cost in the spend log for both (AC 8), a 4xx for an unknown model (AC 9), 401 with no key and with a wrong key (AC 10), `gpt-5.2` answering for each alias when its primary is forced to fail (AC 6, 7, via the mechanism documented for the pinned version), a marker string absent from container logs and the spend-log row (AC S-5, S-6), the compose service failing to start with `LITELLM_MASTER_KEY` unset (AC S-4), the `form_ai_app` role refused on `litellm-db` (AC S-9), the gateway port bound to `127.0.0.1` and no host port on `litellm-db` (AC S-7, S-8)
+- [x] `git grep` finds none of the real secret values in the tracked tree (AC S-3)
+- [x] After `docker compose down -v` and a restart, the stack starts from empty with no manual steps (edge case)
+- [x] Full gate passes: `docker compose config -q && bash docker/litellm/smoke.sh`
+- [x] Test count: 24 assertions, 22 pass, 2 UNVERIFIED (see below), script exits 0
+
+> **Partial - fallback ACs unverified (spec P1-6, P1-7).** The user chose to proceed without `OPENAI_API_KEY`. The two `gpt-5.2` fallback assertions in `smoke.sh` print `UNVERIFIED` until the key is set, and the `order`-based failover is untested. Re-run `bash docker/litellm/smoke.sh` with the key before the Verifier can PASS those ACs.
 
 **Tests**: integration
 **Gate**: full
