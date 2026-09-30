@@ -69,9 +69,9 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `.env.example` lists `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, each with no value
-- [ ] `.env` (untracked) has real values for all five before T3 runs
-- [ ] Build gate passes: `git diff --check`
+- [x] `.env.example` lists `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, each with no value
+- [ ] `.env` (untracked) has real values for all five before T3 runs (master, salt and DB password generated; provider keys pending from the user)
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none
 **Gate**: build
