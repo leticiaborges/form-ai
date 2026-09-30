@@ -187,9 +187,9 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Names the decision, the alternative not chosen (keep `ClaudeFormGenerationService` and add a ledger and ceiling), and why
-- [ ] States the consequences: a new container and database, model aliases, provider swap without code changes
-- [ ] Build gate passes: `git diff --check`
+- [x] Names the decision, the alternative not chosen (keep `ClaudeFormGenerationService` and add a ledger and ceiling), and why
+- [x] States the consequences: a new container and database, model aliases, provider swap without code changes
+- [x] Build gate passes: `git diff --check`
 
 **Tests**: none
 **Gate**: build
