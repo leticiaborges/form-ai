@@ -4,3 +4,6 @@ export const API_URL = `http://localhost:${API_PORT}`;
 export const WEB_URL = `http://localhost:${WEB_PORT}`;
 export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8025";
 export const PASSWORD_FORTESTS = "Secret123!";
+export const GATEWAY_PORT = Number(process.env.E2E_GATEWAY_PORT ?? 4055);
+export const GATEWAY_URL = `http://127.0.0.1:${GATEWAY_PORT}`;
+export const GATEWAY_FAKEKEY = "sk-fake-gateway-key";

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
-import { API_URL, WEB_PORT, WEB_URL } from "./e2e/env";
+import { API_URL, GATEWAY_FAKEKEY, GATEWAY_PORT, GATEWAY_URL, WEB_PORT, WEB_URL } from "./e2e/env";
 
 // Locally the database password lives in the repo-root .env (read by Docker Compose, not by Node).
 // Resolved relative to this file, not process.cwd() — the Playwright VS Code extension runs with a
@@ -38,6 +38,12 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
+      command: "node e2e/support/fake-gateway.mjs",
+      url: `${GATEWAY_URL}/health`,
+      reuseExistingServer: false,
+      env: { FAKE_GATEWAY_PORT: String(GATEWAY_PORT), FAKE_GATEWAY_KEY: GATEWAY_FAKEKEY },
+    },
+    {
       command: "dotnet run --project ../src/FormAI.API --no-launch-profile",
       url: `${API_URL}/health`,
       reuseExistingServer: false,
@@ -50,6 +56,8 @@ export default defineConfig({
         Jwt__Secret: process.env.JWT_SECRET!,
         Jwt__Issuer: "formai-e2e",
         Jwt__Audience: "formai-e2e",
+        Ai__GatewayUrl: GATEWAY_URL,
+        Ai__ApiKey: GATEWAY_FAKEKEY,
         Claude__ApiKey: "unused-in-e2e",
         Email__SmtpHost: "localhost",
         Email__SmtpPort: "1025",
