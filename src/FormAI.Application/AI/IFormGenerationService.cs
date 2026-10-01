@@ -24,5 +24,6 @@ public interface IFormGenerationService
     Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
         string sourceText,
         GenerationParameters parameters,
+        Guid userId,
         CancellationToken cancellationToken = default);
 }

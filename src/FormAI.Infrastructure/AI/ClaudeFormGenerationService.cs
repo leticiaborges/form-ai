@@ -23,6 +23,7 @@ public class ClaudeFormGenerationService : IFormGenerationService
     public async Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
         string sourceText,
         GenerationParameters parameters,
+        Guid userId,
         CancellationToken cancellationToken = default)
     {
         var request = new

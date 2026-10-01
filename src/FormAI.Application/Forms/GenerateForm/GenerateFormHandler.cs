@@ -84,7 +84,7 @@ public class GenerateFormHandler
         request.AllowedTypes, request.DifficultyLevel,
         request.IsGraded);
 
-        var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, cancellationToken);
+        var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, requestingUserId, cancellationToken);
 
         var form = Form.Create(
             title: title,
