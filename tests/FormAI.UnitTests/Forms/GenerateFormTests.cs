@@ -236,4 +236,16 @@ public class GenerateFormTests
             Arg.Any<CancellationToken>());
         await _forms.DidNotReceive().AddAsync(Arg.Any<Form>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task AnUnusableDraft_ThrowsGenerationOutputInvalid_AndSavesNothing()
+    {
+        SetGenerationServiceQuestions([new GeneratedQuestion("", QuestionType.Text, true, null, [])]);
+
+        var ex = await Assert.ThrowsAsync<GenerationException>(() =>
+            _handler.HandleAsync(CreateRequest(), Guid.NewGuid()));
+
+        Assert.Equal(ValidationErrorCode.GenerationOutputInvalid, ex.Code);
+        await _forms.DidNotReceive().AddAsync(Arg.Any<Form>(), Arg.Any<CancellationToken>());
+    }
 }

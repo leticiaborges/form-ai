@@ -1,13 +1,5 @@
 namespace FormAI.Application.Common.Exceptions;
 
-public enum ValidationErrorCode
-{
-    GenericError,
-    FormExpired,
-    AlreadySubmitted,
-    EmailNotVerified
-}
-
 public class ValidationException : Exception
 {
 

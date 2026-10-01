@@ -1,5 +1,6 @@
 using FormAI.Application.AI;
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
 using FormAI.Domain.Enums;
@@ -85,6 +86,8 @@ public class GenerateFormHandler
         request.IsGraded);
 
         var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, requestingUserId, cancellationToken);
+
+        GeneratedQuestionsValidator.Validate(generatedQuestions);
 
         var form = Form.Create(
             title: title,

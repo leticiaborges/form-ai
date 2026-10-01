@@ -7,21 +7,6 @@ Allowed question types: {allowedTypes}.
 Difficulty: {difficultyLevel}.
 Should mark correct answers: {markCorrect}
 
-Return ONLY a valid JSON object with this exact structure. No markdown, no explanation, just the JSON:
-{{
-    "questions": [
-    {{
-        "text": "question text here",
-        "type": "Single",
-        "correctAnswer": null,
-        "options": [
-        {{ "text": "option A", "isCorrect": true }},
-        {{ "text": "option B", "isCorrect": false }}
-        ]
-    }}
-    ]
-}}
-
 Rules:
 - "Single" and "Multiple" questions MUST have at least 2 options.
 - "Text" and "Numeric" questions MUST have an empty options array: [].
@@ -31,3 +16,6 @@ Rules:
 - Max characters of the question is 1024
 - Max characters for each option is 1024
 - Max characters for text answer is 1024
+- If there is a correctAnswer informed the Max characters is 1024
+- In case the user content is not sufficient to generate all the amount of questions requested don't include invalid questions, just return less questions.
+- In case the user content is not sufficient to generate at least one question, then, return the list of questions as empty.
