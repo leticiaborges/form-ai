@@ -1,10 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using FormAI.Application.AI;
+using FormAI.Application.Common.Exceptions;
 using FormAI.Domain.Enums;
-using Humanizer;
 using Microsoft.Extensions.Options;
 
 namespace FormAI.Infrastructure.AI;
@@ -34,6 +33,7 @@ public class GatewayFormGenerationService : IFormGenerationService
             max_tokens = _settings.MaxTokens,
             // The user's guid only, never an email or a name (docker/litellm/README.md, Metadata).
             user = userId.ToString(),
+            response_format = FormAISchema.ResponseFormat(parameters),
             messages = new object[]
             {
                 new { role = "system", content = await BuildSystemPrompt(parameters, cancellationToken) },
@@ -47,12 +47,31 @@ public class GatewayFormGenerationService : IFormGenerationService
         };
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
-        using var response = await _client.SendAsync(message, cancellationToken);
-        response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-        return ParseResponse(responseJson);
+        string responseJson;
+        try
+        {
+            using var response = await _client.SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw Unavailable(new HttpRequestException($"The gateway answered {(int)response.StatusCode}."));
+
+            responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw Unavailable(ex);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw Unavailable(ex);
+        }
+
+        return GeneratedFormAIJSONParser.Parse(responseJson);
     }
+
+    private static GenerationException Unavailable(Exception inner) =>
+       new(ValidationErrorCode.GenerationUnavailable,
+           "Form generation is unavailable right now. Please try again later.", inner);
 
     private static async Task<string> BuildSystemPrompt(GenerationParameters parameters, CancellationToken cancellationToken)
     {
@@ -74,44 +93,5 @@ public class GatewayFormGenerationService : IFormGenerationService
     private static string BuildUserPrompt(string sourceText, GenerationParameters parameters)
     {
         return $"User text:\n\n{sourceText}";
-    }
-
-    private static IReadOnlyList<GeneratedQuestion> ParseResponse(string responseJSON)
-    {
-        // OpenAI-compatible envelope: choices[0].message.content (Anthropic's was content[0].text).
-        using var apiDoc = JsonDocument.Parse(responseJSON);
-        var aiReplyText = apiDoc.RootElement.GetProperty("choices")[0]
-            .GetProperty("message").GetProperty("content").GetString()
-         ?? throw new InvalidOperationException("The gateway returned empty content.");
-
-        string cleaned = Regex.Replace(
-            aiReplyText,
-            @"\A```json\s*|\s*```\z",
-            ""
-        , RegexOptions.None, TimeSpan.FromMilliseconds(1000)).Trim();
-
-        using var questionsDoc = JsonDocument.Parse(cleaned);
-        var questionsArray = questionsDoc.RootElement.GetProperty("questions");
-
-        var results = new List<GeneratedQuestion>();
-        foreach (var question in questionsArray.EnumerateArray())
-        {
-            var questionType = Enum.Parse<QuestionType>(question.GetProperty("type").GetString() ?? "");
-
-            var options = question.GetProperty("options").EnumerateArray().Select(q =>
-            new GeneratedOption(q.GetProperty("text").GetString()!.Truncate(1024),
-             q.GetProperty("isCorrect").ValueKind == JsonValueKind.Null ? null : q.GetProperty("isCorrect").GetBoolean())).ToList();
-
-            results.Add(new GeneratedQuestion(
-                Text: question.GetProperty("text").GetString()!.Truncate(1024),
-                Type: questionType,
-                IsRequired: true,
-                CorrectAnswer: question.TryGetProperty("correctAnswer", out var correctAnswer) && correctAnswer.ValueKind
-                != JsonValueKind.Null ? correctAnswer.GetString().Truncate(1024) : null,
-                Options: options
-            ));
-        }
-
-        return results;
     }
 }

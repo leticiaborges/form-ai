@@ -32,21 +32,30 @@ const server = http.createServer((req, res) => {
       return send(res, 401, { error: "Unauthorized" });
     }
 
-    req.resume();
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
 
     req.on("end", () => {
-      send(res, 200, {
-        id: "chatcmpl-fake",
-        object: "chat.completion",
-        choices: [
-          {
-            index: 0,
-            finish_reason: "stop",
-            message: { role: "assistant", content: JSON.stringify(draft) },
-          },
-        ],
-        usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
-      });
+      const body = Buffer.concat(chunks).toString("utf8");
+
+      // Scenarios are picked by a marker in the pasted source text.
+      if (body.includes("[fake:down]"))
+        return send(res, 503, { error: { message: "Gateway down" } });
+      if (body.includes("[fake:slow]")) return; // never answers; the client timeout fires
+
+      const reply = (finish_reason, content) =>
+        send(res, 200, {
+          id: "chatcmpl-fake",
+          object: "chat.completion",
+          choices: [{ index: 0, finish_reason, message: { role: "assistant", content } }],
+          usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+        });
+
+      if (body.includes("[fake:truncated]"))
+        return reply("length", JSON.stringify(draft).slice(0, 60));
+      if (body.includes("[fake:invalid]")) return reply("stop", JSON.stringify({ questions: [] }));
+
+      reply("stop", JSON.stringify(draft));
     });
 
     return;

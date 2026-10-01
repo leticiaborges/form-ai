@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FormAI.Application.AI;
+using FormAI.Application.Common.Exceptions;
 using FormAI.Domain.Enums;
 using FormAI.Infrastructure.AI;
 using Microsoft.Extensions.Options;
@@ -36,9 +37,10 @@ public class GatewayFormGenerationServiceTests
     private static HttpResponseMessage Json(HttpStatusCode status, string content) =>
         new(status) { Content = new StringContent(content, Encoding.UTF8, "application/json") };
 
-    // The OpenAI-compatible envelope: the model's text is at choices[0].message.content.
-    private static string Envelope(string content) =>
-        JsonSerializer.Serialize(new { choices = new[] { new { message = new { content } } } });
+    private static string Envelope(string content, string finishReason = "stop") =>
+       JsonSerializer.Serialize(new { choices = new[] { new { finish_reason = finishReason, message = new { content } } } });
+
+    private static string DraftOf(string question) => $$"""{"questions":[{{question}}]}""";
 
     private static GatewayFormGenerationService CreateService(StubHandler handler,
         string apiKey = "sk-test")
@@ -111,5 +113,115 @@ public class GatewayFormGenerationServiceTests
              .GenerateAsync("text", Parameters, Guid.NewGuid()));
 
         Assert.Equal(0, handler.Calls);
+    }
+
+    public static TheoryData<string> UnreadableDrafts => new()
+    {
+        "not json at all",
+        """{}""",
+        DraftOf("""{"text":"Q","type":"Bogus","correctAnswer":null,"options":[]}"""),
+    };
+
+    private async Task<GenerationException> Fails(StubHandler handler) =>
+            await Assert.ThrowsAsync<GenerationException>(() =>
+                CreateService(handler).GenerateAsync("text", Parameters, Guid.NewGuid()));
+
+    [Fact]
+    public async Task SendsAStrictJsonSchemaLimitedToTheAllowedTypes()
+    {
+        var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft))));
+        var parameters = new GenerationParameters(2, [QuestionType.Single, QuestionType.Text]);
+
+        await CreateService(handler).GenerateAsync("text", parameters, Guid.NewGuid());
+
+        var format = handler.Body!.RootElement.GetProperty("response_format");
+        Assert.Equal("json_schema", format.GetProperty("type").GetString());
+
+        var jsonSchema = format.GetProperty("json_schema");
+        Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
+
+        var type = jsonSchema.GetProperty("schema").GetProperty("properties").GetProperty("questions")
+            .GetProperty("items").GetProperty("properties").GetProperty("type");
+        Assert.Equal(["Single", "Text"], type.GetProperty("enum").EnumerateArray().Select(e => e.GetString()));
+    }
+
+    [Theory]
+    [MemberData(nameof(UnreadableDrafts))]
+    public async Task AnUnreadableDraft_ThrowsGenerationOutputInvalid(string draft)
+    {
+        var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(draft))));
+
+        var ex = await Fails(handler);
+
+        Assert.Equal(ValidationErrorCode.GenerationOutputInvalid, ex.Code);
+        Assert.Equal(1, handler.Calls); // never retried
+    }
+
+    [Fact]
+    public async Task ARefusalWithNoContent_ThrowsGenerationOutputInvalid()
+    {
+        var refusal = JsonSerializer.Serialize(new
+        {
+            choices = new[] { new { finish_reason = "stop", message = new { content = (string?)null, refusal = "No." } } }
+        });
+        var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, refusal)));
+
+        Assert.Equal(ValidationErrorCode.GenerationOutputInvalid, (await Fails(handler)).Code);
+    }
+
+    [Theory]
+    [InlineData("length")]
+    [InlineData("content_filter")]
+    public async Task ACutOffReply_ThrowsGenerationOutputInvalid_AndIsNotRetried(string finishReason)
+    {
+        var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft, finishReason))));
+
+        var ex = await Fails(handler);
+
+        Assert.Equal(ValidationErrorCode.GenerationOutputInvalid, ex.Code);
+        Assert.Equal(1, handler.Calls);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.BadRequest)]
+    public async Task ANonSuccessGatewayReply_ThrowsGenerationUnavailable(HttpStatusCode status)
+    {
+        var handler = new StubHandler(() => Task.FromResult(Json(status, """{"error":"x"}""")));
+
+        var ex = await Fails(handler);
+
+        Assert.Equal(ValidationErrorCode.GenerationUnavailable, ex.Code);
+        Assert.Equal(1, handler.Calls);
+    }
+
+    [Fact]
+    public async Task AConnectionFailure_ThrowsGenerationUnavailable()
+    {
+        var handler = new StubHandler(() => Task.FromException<HttpResponseMessage>(new HttpRequestException("refused")));
+
+        Assert.Equal(ValidationErrorCode.GenerationUnavailable, (await Fails(handler)).Code);
+    }
+
+    [Fact]
+    public async Task AnHttpClientTimeout_ThrowsGenerationUnavailable()
+    {
+        // HttpClient surfaces its own timeout as a TaskCanceledException while the caller's token is untouched.
+        var handler = new StubHandler(() => Task.FromException<HttpResponseMessage>(new TaskCanceledException("timeout")));
+
+        Assert.Equal(ValidationErrorCode.GenerationUnavailable, (await Fails(handler)).Code);
+    }
+
+    [Fact]
+    public async Task ACallerCancellation_StillPropagatesAsCancellation()
+    {
+        var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft))));
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            CreateService(handler).GenerateAsync("text", Parameters, Guid.NewGuid(), cts.Token));
     }
 }

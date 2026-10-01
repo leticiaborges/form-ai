@@ -37,12 +37,16 @@ exception)
             NotFoundException ex => (HttpStatusCode.NotFound, ex.Message, (object?)null, (ValidationErrorCode?)null),
             ForbiddenException ex => (HttpStatusCode.Forbidden, ex.Message, (object?)null, (ValidationErrorCode?)null),
             ValidationException ex => (HttpStatusCode.BadRequest, ex.Message, (object?)ex.Errors, ex.Code),
+            GenerationException ex => (ex.Code == ValidationErrorCode.GenerationOutputInvalid ? HttpStatusCode.BadGateway : HttpStatusCode.ServiceUnavailable,
+                ex.Message, (object?)null, (ValidationErrorCode?)ex.Code),
             UnauthorizedAccessException ex => (HttpStatusCode.Unauthorized, ex.Message, (object?)null, (ValidationErrorCode?)null),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", (object?)null, (ValidationErrorCode?)null)
         };
 
         if (statusCode == HttpStatusCode.InternalServerError)
             _logger.LogError(exception, "Unhandled exception");
+        else if (exception is GenerationException)
+            _logger.LogWarning(exception, "Generation failed with {Code}", code);
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
