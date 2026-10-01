@@ -3,28 +3,40 @@ model_list:
     litellm_params:
       model: anthropic/claude-haiku-4-5-20251001
       api_key: os.environ/ANTHROPIC_API_KEY
+      max_retries: 0
       order: 1
   - model_name: form-generator
     litellm_params:
       model: openai/gpt-5.2
       api_key: os.environ/OPENAI_API_KEY
+      max_retries: 0
       order: 2
 
   - model_name: form-generator-vision
     litellm_params:
       model: anthropic/claude-sonnet-5-5
       api_key: os.environ/ANTHROPIC_API_KEY
+      max_retries: 0
       order: 1
   - model_name: form-generator-vision
     litellm_params:
       model: openai/gpt-5.2
       api_key: os.environ/OPENAI_API_KEY
+      max_retries: 0
       order: 2
 
 router_settings:
   enable_pre_call_checks: true
-  # One retry moves to the next `order`. Retry policy proper is slice 2 (GW-7).
-  num_retries: 1
+  # Retry and timeout policy lives here and nowhere else (GW-7). Two attempts at most: the primary,
+  # then the next `order` (gpt-5.2). Failover works with num_retries 0; with 1 a stalled pair of
+  # providers took 4 attempts (140 s), measured. Provider SDK retries are off (max_retries: 0 on each
+  # deployment). Worst case 2 x 35 s = 70 s, below the client timeout (80 s) and the 90 s limit.
+  num_retries: 0
+  timeout: 35
+  # A failed deployment cools down at once, so the retry lands on the next `order` and not on the
+  # deployment that just failed.
+  allowed_fails: 0
+  cooldown_time: 30
 
 litellm_settings:
   # No prompt or response text goes to any logger.
