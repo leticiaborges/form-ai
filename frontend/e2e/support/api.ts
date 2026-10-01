@@ -56,6 +56,16 @@ export async function registerVerifiedUser(
   return { email, password: PASSWORD_FORTESTS };
 }
 
+export async function signIn(
+  request: APIRequestContext,
+  { email, password }: { email: string; password: string },
+): Promise<{ Authorization: string }> {
+  const login = await request.post(`${API_URL}/api/auth/login`, { data: { email, password } });
+  await expectOk(login, "login");
+  const { accessToken } = await login.json();
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
 export async function seedPublishedGradedForm(
   request: APIRequestContext,
   { isGraded = true, showResultsAfterSubmit = false }: SeedOptions = {},

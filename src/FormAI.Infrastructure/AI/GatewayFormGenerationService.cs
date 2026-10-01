@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -8,43 +9,45 @@ using Microsoft.Extensions.Options;
 
 namespace FormAI.Infrastructure.AI;
 
-public class ClaudeFormGenerationService : IFormGenerationService
+public class GatewayFormGenerationService : IFormGenerationService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ClaudeSettings _settings;
+    public const int PromptVersion = 1;
 
-    public ClaudeFormGenerationService(IHttpClientFactory httpClientFactory,
-    IOptions<ClaudeSettings> settings)
+    private readonly HttpClient _client;
+    private readonly AiSettings _settings;
+
+    public GatewayFormGenerationService(HttpClient client, IOptions<AiSettings> settings)
     {
-        _httpClientFactory = httpClientFactory;
+        _client = client;
         _settings = settings.Value;
     }
 
-    public async Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
-        string sourceText,
-        GenerationParameters parameters,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(string sourceText, GenerationParameters parameters,
+     Guid userId, CancellationToken cancellationToken = default)
     {
+        if (_client.BaseAddress is null || string.IsNullOrWhiteSpace(_settings.ApiKey))
+            throw new InvalidOperationException("Ai:GatewayUrl and Ai:ApiKey must be set to generate a form.");
+
         var request = new
         {
-            model = _settings.Model,
+            model = _settings.TextAlias,
             max_tokens = _settings.MaxTokens,
-            system = new[] { new { text = await BuildSystemPrompt(parameters, cancellationToken), type = "text" } },
-            messages = new[]
+            // The user's guid only, never an email or a name (docker/litellm/README.md, Metadata).
+            user = userId.ToString(),
+            messages = new object[]
             {
+                new { role = "system", content = await BuildSystemPrompt(parameters, cancellationToken) },
                 new { role = "user", content = BuildUserPrompt(sourceText, parameters) }
             }
         };
 
+        using var message = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
+        };
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
-        var client = _httpClientFactory.CreateClient("claude");
-        client.DefaultRequestHeaders.Add("x-api-key", _settings.ApiKey);
-
-
-        var json = JsonSerializer.Serialize(request);
-        var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var response = await client.PostAsync("v1/messages", httpContent, cancellationToken);
+        using var response = await _client.SendAsync(message, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -60,7 +63,6 @@ public class ClaudeFormGenerationService : IFormGenerationService
         "AI", "Prompt", "PromptGenerateForm.txt");
         var prompt = await File.ReadAllTextAsync(path, cancellationToken);
 
-
         prompt = prompt.Replace("{questionCount}", parameters.QuestionCount.ToString());
         prompt = prompt.Replace("{allowedTypes}", allowedTypes);
         prompt = prompt.Replace("{difficultyLevel}", parameters.DifficultyLevel.ToString());
@@ -71,14 +73,16 @@ public class ClaudeFormGenerationService : IFormGenerationService
 
     private static string BuildUserPrompt(string sourceText, GenerationParameters parameters)
     {
-        return $"Generate {parameters.QuestionCount} questions based on this content:\n\n{sourceText}";
+        return $"User text:\n\n{sourceText}";
     }
 
     private static IReadOnlyList<GeneratedQuestion> ParseResponse(string responseJSON)
     {
+        // OpenAI-compatible envelope: choices[0].message.content (Anthropic's was content[0].text).
         using var apiDoc = JsonDocument.Parse(responseJSON);
-        var aiReplyText = apiDoc.RootElement.GetProperty("content")[0].GetProperty("text").GetString()
-         ?? throw new InvalidOperationException("Claude returned empty content.");
+        var aiReplyText = apiDoc.RootElement.GetProperty("choices")[0]
+            .GetProperty("message").GetProperty("content").GetString()
+         ?? throw new InvalidOperationException("The gateway returned empty content.");
 
         string cleaned = Regex.Replace(
             aiReplyText,

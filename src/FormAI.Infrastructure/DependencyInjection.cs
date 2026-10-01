@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FormAI.Infrastructure;
@@ -43,13 +44,14 @@ public static class DependencyInjection
         services.AddScoped<IUserTokenConfirmationRepository, UserTokenConfirmationRepository>();
         services.AddScoped<ISubmissionRepository, SubmissionRepository>();
 
-        services.Configure<ClaudeSettings>(configuration.GetSection("Claude"));
-        services.AddHttpClient("claude", (client) =>
+        services.Configure<AiSettings>(configuration.GetSection(AiSettings.SectionName));
+        services.AddHttpClient<IFormGenerationService, GatewayFormGenerationService>((sp, client) =>
         {
-            client.BaseAddress = new Uri("https://api.anthropic.com/");
-            client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+            var settings = sp.GetRequiredService<IOptions<AiSettings>>().Value;
+            if (Uri.TryCreate(settings.GatewayUrl.TrimEnd('/') + "/", UriKind.Absolute, out var baseAddress))
+                client.BaseAddress = baseAddress;
+            client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
         });
-        services.AddScoped<IFormGenerationService, ClaudeFormGenerationService>();
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.Configure<EmailSettings>(configuration.GetSection("Email"));

@@ -29,7 +29,10 @@ public class GenerateFormTests
     private void SetGenerationServiceQuestions(List<GeneratedQuestion> questions)
     {
         _listQuestions = questions;
-        _generationService.GenerateAsync(Arg.Any<string>(), Arg.Any<GenerationParameters>(), Arg.Any<CancellationToken>()).Returns(questions);
+        _generationService.GenerateAsync(Arg.Any<string>(),
+        Arg.Any<GenerationParameters>(),
+        Arg.Any<Guid>(),
+        Arg.Any<CancellationToken>()).Returns(questions);
     }
 
     private static List<GeneratedQuestion> CreateGeneratedQuestions()
@@ -148,7 +151,7 @@ public class GenerateFormTests
     [Fact]
     public async Task GradedRequest_AsksTheGeneratorForTheRequestedQuestions()
     {
-        var (request, _, _) = await GenerateFormAsync();
+        var (request, userId, _) = await GenerateFormAsync();
 
         await _generationService.Received(1).GenerateAsync(
             "SourceTextTest",
@@ -157,6 +160,7 @@ public class GenerateFormTests
                 p.AllowedTypes != null && p.AllowedTypes.SequenceEqual(request.AllowedTypes) &&
                 p.DifficultyLevel == DifficultyLevel.Medium &&
                 p.IncludeCorrectAnswers),
+            userId,
             Arg.Any<CancellationToken>());
     }
 
@@ -188,7 +192,7 @@ public class GenerateFormTests
     [Fact]
     public async Task UngradedRequest_KeepsScoreAsNullAndIgnoreAnswerKey()
     {
-        var (_, _, form) = await GenerateFormAsync(isGraded: false);
+        var (_, userId, form) = await GenerateFormAsync(isGraded: false);
 
         Assert.False(form.IsGraded);
         Assert.Equal([null, null, null, null], form.Questions.Select(q => q.Points));
@@ -205,6 +209,7 @@ public class GenerateFormTests
         await _generationService.Received(1).GenerateAsync(
           "SourceTextTest",
           Arg.Is<GenerationParameters>(p => p.IncludeCorrectAnswers == false),
+          userId,
           Arg.Any<CancellationToken>());
     }
 
@@ -226,7 +231,9 @@ public class GenerateFormTests
         Assert.Equal([expectedErrorKey], exception.Errors.Keys);
 
         await _generationService.DidNotReceive().GenerateAsync(
-            Arg.Any<string>(), Arg.Any<GenerationParameters>(), Arg.Any<CancellationToken>());
+            Arg.Any<string>(), Arg.Any<GenerationParameters>(),
+            Arg.Any<Guid>(),
+            Arg.Any<CancellationToken>());
         await _forms.DidNotReceive().AddAsync(Arg.Any<Form>(), Arg.Any<CancellationToken>());
     }
 }
