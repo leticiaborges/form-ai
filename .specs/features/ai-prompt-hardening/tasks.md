@@ -102,15 +102,15 @@ T1 → T2 → T3
 
 **Done when**:
 
-- [ ] The captured user message equals `UntrustedSource.Wrap(source, marker)` for the marker found in it, and the source appears once in the body, not in the system message (spec P1 story AC 1, 2, 5)
-- [ ] Two calls produce two different markers in the captured bodies (P1 story AC 4)
-- [ ] A source containing `{marker}` and `{questionCount}` arrives unchanged in the user message, and the system message still holds the real marker and `exactly 2 questions` (P1 story AC 6)
-- [ ] The system message contains the request's marker, the word `untrusted`, and states that only delimiters carrying that marker are real (system-prompt story AC 1, 2)
-- [ ] The system message states that count, types, difficulty, answer-key rule and output format come only from text outside the delimiters (system-prompt story AC 3)
-- [ ] The system message matches no `\{[A-Za-z]+\}` placeholder (AC 4)
-- [ ] The system message still contains each existing rule: `exactly 2 questions`, the allowed types, the difficulty, `Should mark correct answers: True`, the option minimum, the empty-options rule and the 1024 limit (AC 5)
-- [ ] Quick gate passes: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~GatewayFormGenerationService\|FullyQualifiedName~UntrustedSource"`
-- [ ] Test count: all earlier cases, including the 14 error-mapping, schema and cancellation cases, still run and pass; none deleted or weakened
+- [x] The captured user message equals `UntrustedSource.Wrap(source, marker)` for the marker found in it, and the source appears once in the body, not in the system message (spec P1 story AC 1, 2, 5)
+- [x] Two calls produce two different markers in the captured bodies (P1 story AC 4)
+- [x] A source containing `{marker}` and `{questionCount}` arrives unchanged in the user message, and the system message still holds the real marker and `exactly 2 questions` (P1 story AC 6)
+- [x] The system message contains the request's marker, the word `untrusted`, and states that only delimiters carrying that marker are real (system-prompt story AC 1, 2)
+- [x] The system message states that count, types, difficulty, answer-key rule and output format come only from text outside the delimiters (system-prompt story AC 3)
+- [x] The system message matches no `\{[A-Za-z]+\}` placeholder (AC 4)
+- [x] The system message still contains each existing rule: `exactly 2 questions`, the allowed types, the difficulty, `Should mark correct answers: True`, the option minimum, the empty-options rule and the 1024 limit (AC 5)
+- [x] Quick gate passes: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~GatewayFormGenerationService\|FullyQualifiedName~UntrustedSource"`
+- [x] Test count: all earlier cases, including the 14 error-mapping, schema and cancellation cases, still run and pass; none deleted or weakened
 
 **Tests**: unit
 **Gate**: quick

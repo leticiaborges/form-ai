@@ -27,6 +27,9 @@ public class GatewayFormGenerationService : IFormGenerationService
         if (_client.BaseAddress is null || string.IsNullOrWhiteSpace(_settings.ApiKey))
             throw new InvalidOperationException("Ai:GatewayUrl and Ai:ApiKey must be set to generate a form.");
 
+        // One marker per call: the document cannot know it, so it cannot forge the closing delimiter.
+        var marker = UntrustedSource.NewMarker();
+
         var request = new
         {
             model = _settings.TextAlias,
@@ -36,8 +39,8 @@ public class GatewayFormGenerationService : IFormGenerationService
             response_format = FormAISchema.ResponseFormat(parameters),
             messages = new object[]
             {
-                new { role = "system", content = await BuildSystemPrompt(parameters, cancellationToken) },
-                new { role = "user", content = BuildUserPrompt(sourceText, parameters) }
+                new { role = "system", content = await BuildSystemPrompt(parameters, marker, cancellationToken) },
+                new { role = "user", content = UntrustedSource.Wrap(sourceText, marker) }
             }
         };
 
@@ -73,7 +76,7 @@ public class GatewayFormGenerationService : IFormGenerationService
        new(ValidationErrorCode.GenerationUnavailable,
            "Form generation is unavailable right now. Please try again later.", inner);
 
-    private static async Task<string> BuildSystemPrompt(GenerationParameters parameters, CancellationToken cancellationToken)
+    private static async Task<string> BuildSystemPrompt(GenerationParameters parameters, string marker, CancellationToken cancellationToken)
     {
         var allowedTypes = parameters.AllowedTypes is { Length: > 0 } ?
         string.Join(",", parameters.AllowedTypes) : string.Join(",", Enum.GetValues<QuestionType>());
@@ -86,12 +89,8 @@ public class GatewayFormGenerationService : IFormGenerationService
         prompt = prompt.Replace("{allowedTypes}", allowedTypes);
         prompt = prompt.Replace("{difficultyLevel}", parameters.DifficultyLevel.ToString());
         prompt = prompt.Replace("{markCorrect}", parameters.IncludeCorrectAnswers.ToString());
+        prompt = prompt.Replace("{marker}", marker);
 
         return prompt;
-    }
-
-    private static string BuildUserPrompt(string sourceText, GenerationParameters parameters)
-    {
-        return $"User text:\n\n{sourceText}";
     }
 }
