@@ -14,7 +14,6 @@ public class GenerateFormHandler
 
     public const string PrefixTitle = "Generated Form –";
 
-    public const int MaxSourceTextLength = 30_000;
 
     public GenerateFormHandler(IFormGenerationService formGenerationService,
         IFormRepository formRepository)
@@ -41,11 +40,11 @@ public class GenerateFormHandler
             });
         }
 
-        if (request.SourceText.Length > MaxSourceTextLength)
+        if (request.SourceText.Length > FormSourceContent.MaxSourceTextLength)
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                ["sourceText"] = [$"Source text must be at most {MaxSourceTextLength} characters."]
+                ["sourceText"] = [$"Source text must be at most {FormSourceContent.MaxSourceTextLength} characters."]
             });
         }
 
@@ -111,6 +110,7 @@ public class GenerateFormHandler
         }).ToList();
 
         form.ReplaceQuestions(questions);
+        form.AddSourceContent(sourceContents);
 
         // Discards anything the AI marked when the owner asked for an ungraded form.
         form.ClearGradingIfUngraded();

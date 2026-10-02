@@ -75,6 +75,11 @@ public class Form
         Questions.AddRange(questions);
     }
 
+    public void AddSourceContent(List<FormSourceContent> sourceContents)
+    {
+        SourceContents.AddRange(sourceContents);
+    }
+
     public void AddQuestion(FormQuestion question) => Questions.Add(question);
 
     public void RemoveQuestion(FormQuestion question) => Questions.Remove(question);

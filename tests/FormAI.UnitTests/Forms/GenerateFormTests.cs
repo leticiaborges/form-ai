@@ -100,6 +100,16 @@ public class GenerateFormTests
     }
 
     [Fact]
+    public async Task GradedRequest_PersistsSourceContent()
+    {
+        var (request, userId, form) = await GenerateFormAsync();
+
+        Assert.Single(form.SourceContents);
+        Assert.Equal(SourceType.Text, form.SourceContents[0].SourceType);
+        Assert.Equal(request.SourceText, form.SourceContents[0].Content);
+    }
+
+    [Fact]
     public async Task GradedRequestWithScoreFlag_CreatesFormThatShowsScore()
     {
         var (_, _, form) = await GenerateFormAsync(isGraded: true, showResultsAfterSubmit: true);
