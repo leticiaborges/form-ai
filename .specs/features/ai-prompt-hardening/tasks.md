@@ -11,6 +11,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Spec**: `.specs/features/ai-prompt-hardening/spec.md`
 **Design**: skipped. One pure helper and one prompt change inside an existing class; the choices are in the spec's assumptions.
 **Status**: Implemented, awaiting Verifier
+**Note**: At the user's request the tests written for T1 and T2 (`UntrustedSourceTests.cs` and the seven added `GatewayFormGenerationServiceTests` cases) were removed after implementation. The "Done when" test items above describe what was verified before removal; the existing 27 cases remain.
 **Branch**: `feature/generation-service-improvements`
 
 ---
