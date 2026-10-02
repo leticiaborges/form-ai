@@ -55,7 +55,13 @@ public class GatewayFormGenerationService : IFormGenerationService
         {
             using var response = await _client.SendAsync(message, cancellationToken);
             if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (IsBudgetExceeded(errorBody))
+                    throw BudgetReached(new HttpRequestException($"The gateway answered {(int)response.StatusCode}: budget exceeded."));
+
                 throw Unavailable(new HttpRequestException($"The gateway answered {(int)response.StatusCode}."));
+            }
 
             responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
         }
@@ -70,6 +76,10 @@ public class GatewayFormGenerationService : IFormGenerationService
 
         return GeneratedFormAIJSONParser.Parse(responseJson);
     }
+
+    private static GenerationException BudgetReached(HttpRequestException inner) =>
+        new(ValidationErrorCode.GenerationBudgetReached,
+            "Form generation is unavailable right now. Please try again later.", inner);
 
     private static GenerationException Unavailable(Exception inner) =>
        new(ValidationErrorCode.GenerationUnavailable,
@@ -91,5 +101,21 @@ public class GatewayFormGenerationService : IFormGenerationService
         prompt = prompt.Replace("{marker}", marker);
 
         return prompt;
+    }
+
+    private static bool IsBudgetExceeded(string errorBody)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            return doc.RootElement.TryGetProperty("error", out var error)
+                && error.ValueKind == JsonValueKind.Object
+                && error.TryGetProperty("type", out var type)
+                && type.GetString() == "budget_exceeded";
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
