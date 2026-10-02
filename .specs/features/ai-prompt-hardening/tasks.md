@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-prompt-hardening/spec.md`
 **Design**: skipped. One pure helper and one prompt change inside an existing class; the choices are in the spec's assumptions.
-**Status**: In Progress
+**Status**: Implemented, awaiting Verifier
 **Branch**: `feature/generation-service-improvements`
 
 ---
@@ -135,11 +135,11 @@ T1 → T2 → T3
 
 **Done when**:
 
-- [ ] The AI integration section says the source reaches the model only between `<<<SOURCE {marker}>>>` delimiters with a 128-bit per-request marker, that the system prompt declares it untrusted data (P2 AC 1)
-- [ ] The section still states that the client never retries and that Claude is never asked for points (unchanged text kept)
-- [ ] `docs/known-gaps.md` has an entry saying the defense is delimiting plus an instruction, not proven against a model, and that the slice 17 injection documents are the check (P2 AC 2)
-- [ ] `docs/known-gaps.md` does not claim more than the code does (no mention of output filtering)
-- [ ] Build gate passes: `dotnet build FormAI.sln`, `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj` and `git diff --check`
+- [x] The AI integration section says the source reaches the model only between `<<<SOURCE {marker}>>>` delimiters with a 128-bit per-request marker, that the system prompt declares it untrusted data (P2 AC 1)
+- [x] The section still states that the client never retries and that Claude is never asked for points (unchanged text kept)
+- [x] `docs/known-gaps.md` has an entry saying the defense is delimiting plus an instruction, not proven against a model, and that the slice 17 injection documents are the check (P2 AC 2)
+- [x] `docs/known-gaps.md` does not claim more than the code does (no mention of output filtering)
+- [x] Build gate passes: `dotnet build FormAI.sln`, `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj` and `git diff --check`
 
 **Tests**: none
 **Gate**: build
