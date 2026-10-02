@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/ai-prompt-hardening/spec.md`
 **Design**: skipped. One pure helper and one prompt change inside an existing class; the choices are in the spec's assumptions.
-**Status**: Draft
+**Status**: In Progress
 **Branch**: `feature/generation-service-improvements`
 
 ---
@@ -72,12 +72,12 @@ T1 → T2 → T3
 
 **Done when**:
 
-- [ ] `NewMarker()` returns 32 lowercase hex characters, and 1,000 calls return 1,000 distinct values (spec P1 AC 3, 4)
-- [ ] `Wrap(sourceText, marker)` returns `Source document`, a newline, `<<<SOURCE {marker}>>>`, a newline, the text, a newline, `<<<END SOURCE {marker}>>>` (AC 1, 2)
-- [ ] The text is returned byte-for-byte: multi-line text, `<` and `>`, `{marker}`, `{questionCount}` and `<<<END SOURCE>>>` without a marker all survive unchanged (AC 5, 6, edge case)
-- [ ] Empty and whitespace text still produce both delimiters with nothing between them (edge case)
-- [ ] Quick gate passes: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~GatewayFormGenerationService\|FullyQualifiedName~UntrustedSource"`
-- [ ] Test count: every existing `GatewayFormGenerationServiceTests` case still runs, plus the new ones; none deleted
+- [x] `NewMarker()` returns 32 lowercase hex characters, and 1,000 calls return 1,000 distinct values (spec P1 AC 3, 4)
+- [x] `Wrap(sourceText, marker)` returns `Source document`, a newline, `<<<SOURCE {marker}>>>`, a newline, the text, a newline, `<<<END SOURCE {marker}>>>` (AC 1, 2)
+- [x] The text is returned byte-for-byte: multi-line text, `<` and `>`, `{marker}`, `{questionCount}` and `<<<END SOURCE>>>` without a marker all survive unchanged (AC 5, 6, edge case)
+- [x] Empty and whitespace text still produce both delimiters with nothing between them (edge case)
+- [x] Quick gate passes: `dotnet test tests/FormAI.IntegrationTests/FormAI.IntegrationTests.csproj --filter "FullyQualifiedName~GatewayFormGenerationService\|FullyQualifiedName~UntrustedSource"`
+- [x] Test count: every existing `GatewayFormGenerationServiceTests` case still runs, plus the new ones; none deleted
 
 **Tests**: unit
 **Gate**: quick
