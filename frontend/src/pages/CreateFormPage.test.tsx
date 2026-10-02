@@ -6,7 +6,7 @@ import { CreateFormPage } from "./CreateFormPage";
 import { server } from "../test/server";
 import { renderWithProviders } from "../test/renderWithProviders";
 
-const GENERATE_URL = "*/api/forms/generate/text";
+const GENERATE_URL = "*/api/forms/generate";
 const SCORE_LABEL = "Show score after submit";
 const SOURCE_TEXT = "The quick brown fox jumps over the lazy dog, again and again and again.";
 
@@ -55,10 +55,10 @@ describe("CreateFormPage", () => {
   ])(
     "sends showResultsAfterSubmit only when graded and score are both ticked ($name)",
     async ({ graded, score, ungradeAfter, expected }) => {
-      let requestBody: Record<string, unknown> | undefined;
+      let requestBody: FormData | undefined;
       server.use(
         http.post(GENERATE_URL, async ({ request }) => {
-          requestBody = (await request.json()) as Record<string, unknown>;
+          requestBody = await request.formData();
           return HttpResponse.json({ formId: "form-1", title: "Generated" }, { status: 201 });
         }),
       );
@@ -74,8 +74,8 @@ describe("CreateFormPage", () => {
       await user.click(screen.getByRole("button", { name: "Generate form" }));
 
       await waitFor(() => expect(requestBody).toBeDefined());
-      expect(requestBody?.showResultsAfterSubmit).toBe(expected);
-      expect(requestBody?.isGraded).toBe(graded && !ungradeAfter);
+      expect(requestBody?.get("showResultsAfterSubmit")).toBe(String(expected));
+      expect(requestBody?.get("isGraded")).toBe(String(graded && !ungradeAfter));
     },
   );
 });

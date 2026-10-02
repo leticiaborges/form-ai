@@ -8,6 +8,7 @@ using FormAI.Application.Forms.GetSubmissionAnswers;
 using FormAI.Application.Forms.GetSubmissionCount;
 using FormAI.Application.Forms.GetSubmissions;
 using FormAI.Application.Forms.SaveFormEditor;
+using FormAI.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -32,6 +33,10 @@ public class FormsController : ControllerBase
 
     private readonly GetSubmissionAnswersHandler _getSubmissionAnswersHandler;
     private readonly GetFormResultsHandler _getFormResults;
+
+    // Room for the 10 MB file the later slices accept, plus the form fields and multipart framing.
+    private const long GenerateMaxRequestBytes = 11 * 1024 * 1024;
+
 
     public FormsController(CreateFormHandler create,
     GetFormHandler getById, GetFormsByUserHandler getByUser,
@@ -106,12 +111,27 @@ public class FormsController : ControllerBase
     }
 
 
-    // POST /api/forms/generate/text
-    [HttpPost("generate/text")]
+    // POST /api/forms/generate
+    [HttpPost("generate")]
     [EnableRateLimiting(RateLimitPolicies.Generate)]
-    public async Task<IActionResult> GenerateFromText([FromBody] GenerateFormRequest request,
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(GenerateMaxRequestBytes)]
+    public async Task<IActionResult> Generate([FromForm] GenerateFormDataRequest form,
         CancellationToken cancellationToken)
     {
+        var request = new GenerateFormRequest(
+        form.Title,
+        form.Description,
+        form.SourceText,
+        SourceType.Text,
+        null,
+        form.QuestionCount,
+        form.AllowedTypes,
+        form.DifficultyLevel,
+        form.IsGraded,
+        form.ShowResultsAfterSubmit,
+        form.ExpiresAt.UtcDateTime);
+
         var response = await _generateForm.HandleAsync(request, CurrentUserId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = response.FormId }, response);
     }
@@ -161,10 +181,4 @@ public class FormsController : ControllerBase
 
         return Ok(response);
     }
-
-
-    // POST   /api/forms/generate/file
-    // POST   /api/forms/generate/url
-    // POST   /api/forms/generate/image
-    // POST   /api/forms/{id}/analyze
 }
