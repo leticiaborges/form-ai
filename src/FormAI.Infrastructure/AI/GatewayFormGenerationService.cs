@@ -27,7 +27,6 @@ public class GatewayFormGenerationService : IFormGenerationService
         if (_client.BaseAddress is null || string.IsNullOrWhiteSpace(_settings.ApiKey))
             throw new InvalidOperationException("Ai:GatewayUrl and Ai:ApiKey must be set to generate a form.");
 
-        // One marker per call: the document cannot know it, so it cannot forge the closing delimiter.
         var marker = UntrustedSource.NewMarker();
 
         var request = new
