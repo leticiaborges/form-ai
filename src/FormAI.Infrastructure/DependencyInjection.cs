@@ -18,6 +18,7 @@ using FormAI.Application.Users.Auth;
 using FormAI.Infrastructure.AI;
 using FormAI.Infrastructure.Data;
 using FormAI.Infrastructure.Email;
+using FormAI.Infrastructure.Files;
 using FormAI.Infrastructure.Repositories;
 using FormAI.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -82,6 +83,8 @@ public static class DependencyInjection
         services.AddScoped<GetFormResultsHandler>();
         services.AddScoped<GetSubmissionsHandler>();
         services.AddScoped<GetSubmissionAnswersHandler>();
+
+        services.AddSingleton<ISourceTextExtractor, SourceTextExtractor>();
 
         services.AddScoped<IJwtService, JwtService>();
 

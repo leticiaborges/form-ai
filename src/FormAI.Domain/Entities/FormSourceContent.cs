@@ -19,6 +19,7 @@ public class FormSourceContent
 
     public const int MaxSourceTextLength = 30_000;
 
+    public const int MaxFileBytes = 10 * 1024 * 1024;
 
     public static FormSourceContent Create(Guid formId,
     SourceType sourceType, string content, int order, string? fileName = null)

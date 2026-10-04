@@ -8,5 +8,8 @@ public enum ValidationErrorCode
     EmailNotVerified,
     GenerationOutputInvalid,
     GenerationBudgetReached,
-    GenerationUnavailable
+    GenerationUnavailable,
+    SourceFileUnsupported,
+    SourceFileUnreadable,
+    SourceFileTooLarge,
 }
