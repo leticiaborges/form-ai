@@ -21,7 +21,6 @@ public class SourceTextExtractorTests
     }
 
     [Theory]
-    [InlineData("notes.docx")]
     [InlineData("notes.pdf")]
     [InlineData("notes")]
     public void Extract_Throws_SourceFileUnsupported_ForAnyOtherExtension(string fileName)

@@ -20,7 +20,9 @@ public class SourceTextExtractor : ISourceTextExtractor
 
     public string Extract(string fileName, byte[] content)
     {
-        if (!string.Equals(Path.GetExtension(fileName), ".txt", StringComparison.OrdinalIgnoreCase))
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+        if (extension is not (".txt" or ".docx"))
         {
             throw new Application.Common.Exceptions.ValidationException(ValidationErrorCode.SourceFileUnsupported,
                 "This file type is not supported. Use a .pdf, .docx, .pptx or .txt file.");
@@ -32,7 +34,7 @@ public class SourceTextExtractor : ISourceTextExtractor
                 "The file is too large. The maximum size is 10 MB.");
         }
 
-        return ExtractTxt(content);
+        return extension == ".txt" ? ExtractTxt(content) : DocxTextExtractor.Extract(content);
     }
 
     private static string ExtractTxt(byte[] content)
@@ -72,7 +74,7 @@ public class SourceTextExtractor : ISourceTextExtractor
         return reader.ReadToEnd();
     }
 
-    private static Application.Common.Exceptions.ValidationException Unreadable() =>
+    internal static Application.Common.Exceptions.ValidationException Unreadable() =>
         new(ValidationErrorCode.SourceFileUnreadable,
             "The file could not be read or has no text in it.");
 }
