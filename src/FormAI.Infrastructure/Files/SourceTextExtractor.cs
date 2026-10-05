@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Interfaces;
@@ -21,11 +20,11 @@ public class SourceTextExtractor : ISourceTextExtractor
     public string Extract(string fileName, byte[] content)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        var valid = new string[] { ".txt", ".docx", ".pptx", ".doc", ".ppt" };
+        var valid = new string[] { ".txt", ".docx", ".pptx" };
         if (!valid.Contains(extension))
         {
             throw new Application.Common.Exceptions.ValidationException(ValidationErrorCode.SourceFileUnsupported,
-                "This file type is not supported. Use a .pdf, .docx, .doc, .pptx, .ppt or .txt file.");
+                "This file type is not supported. Use a .pdf, .docx, .pptx or .txt file.");
         }
 
         if (content.Length > FormSourceContent.MaxFileBytes)
