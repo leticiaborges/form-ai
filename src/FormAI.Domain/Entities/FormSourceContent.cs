@@ -17,7 +17,7 @@ public class FormSourceContent
         Content = string.Empty;
     }
 
-    public const int MaxSourceTextLength = 30_000;
+    public const int MaxSourceTextLength = 100_000;
 
     public const int MaxFileBytes = 10 * 1024 * 1024;
 

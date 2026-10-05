@@ -12,4 +12,6 @@ public enum ValidationErrorCode
     SourceFileUnsupported,
     SourceFileUnreadable,
     SourceFileTooLarge,
+    SourceTextTooShort,
+    SourceTextTooLong
 }

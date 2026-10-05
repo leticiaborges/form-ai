@@ -12,7 +12,7 @@ test("generating a form goes through the gateway and saves the draft it returns"
     headers: auth,
     multipart: {
       title: "Generated through the fake gateway",
-      sourceText: "Paris is the capital of France. The why: is just because.",
+      sourceText: "Paris is the capital of France. The why: is just because. ".repeat(3),
       questionCount: 2,
       difficultyLevel: "Medium",
       isGraded: true,

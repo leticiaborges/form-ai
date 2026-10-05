@@ -1,4 +1,5 @@
 using FormAI.API.RateLimiting;
+using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Forms.CreateForm;
 using FormAI.Application.Forms.DeleteForm;
 using FormAI.Application.Forms.GenerateForm;
@@ -119,6 +120,24 @@ public class FormsController : ControllerBase
     public async Task<IActionResult> Generate([FromForm] GenerateFormDataRequest form,
         CancellationToken cancellationToken)
     {
+        if (Request.Form.Files.Count > 1)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["file"] = ["Upload one file at most."]
+            });
+        }
+
+        SourceFile? file = null;
+        if (form.File != null)
+        {
+            var upload = form.File;
+            await using var stream = upload.OpenReadStream();
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer, cancellationToken);
+            file = new SourceFile(upload.FileName, buffer.ToArray());
+        }
+
         var request = new GenerateFormRequest(
         form.Title,
         form.Description,
@@ -130,7 +149,8 @@ public class FormsController : ControllerBase
         form.DifficultyLevel,
         form.IsGraded,
         form.ShowResultsAfterSubmit,
-        form.ExpiresAt.UtcDateTime);
+        form.ExpiresAt.UtcDateTime,
+        file);
 
         var response = await _generateForm.HandleAsync(request, CurrentUserId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = response.FormId }, response);
