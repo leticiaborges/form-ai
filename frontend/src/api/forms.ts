@@ -60,19 +60,23 @@ export async function saveFormEditor(
 }
 
 export async function generateForm(payload: GenerateFormPayload): Promise<GenerateFormResult> {
-  const response = await api.post<GenerateFormResult>("/forms/generate/text", {
-    title: payload.title?.trim() || null,
-    description: payload.description?.trim(),
-    sourceText: payload.sourceText,
-    sourceType: "Text",
-    sourceUrl: null,
-    questionCount: payload.questionCount,
-    allowedTypes: null,
-    difficultyLevel: payload.difficultyLevel,
-    isGraded: payload.isGraded,
-    showResultsAfterSubmit: payload.showResultsAfterSubmit,
-    expiresAt: payload.expiresAt.toISOString(),
+  const body = new FormData();
+
+  body.append("title", payload.title?.trim() || "");
+  body.append("description", payload.description?.trim() || "");
+  body.append("sourceText", payload.sourceText);
+  body.append("questionCount", String(payload.questionCount));
+  body.append("difficultyLevel", payload.difficultyLevel);
+  body.append("isGraded", String(payload.isGraded));
+  body.append("showResultsAfterSubmit", String(payload.showResultsAfterSubmit));
+  body.append("expiresAt", payload.expiresAt.toISOString());
+
+  const response = await api.post<GenerateFormResult>("/forms/generate", body, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
+
   return response.data;
 }
 

@@ -17,6 +17,10 @@ public class FormSourceContent
         Content = string.Empty;
     }
 
+    public const int MaxSourceTextLength = 100_000;
+
+    public const int MaxFileBytes = 10 * 1024 * 1024;
+
     public static FormSourceContent Create(Guid formId,
     SourceType sourceType, string content, int order, string? fileName = null)
     {
@@ -25,7 +29,7 @@ public class FormSourceContent
             Id = Guid.NewGuid(),
             FormId = formId,
             SourceType = sourceType,
-            Content = content,
+            Content = content.Length > MaxSourceTextLength ? content.Substring(0, MaxSourceTextLength) : content,
             Order = order,
             FileName = fileName
         };

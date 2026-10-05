@@ -23,6 +23,15 @@ ILogger<ExceptionHandlingMiddleware> logger)
         {
             await _next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // The client went away (closed the tab, cancelled). Nobody is listening, and it isn't a fault.
+            _logger.LogInformation("Request cancelled by the client: {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
+            if (!context.Response.HasStarted)
+                context.Response.StatusCode = 499;
+        }
         catch (Exception ex)
         {
             await HandleExceptionAsync(context, ex);

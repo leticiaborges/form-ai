@@ -13,5 +13,6 @@ public record GenerateFormRequest(
     DifficultyLevel DifficultyLevel,
     bool IsGraded,
     bool ShowResultsAfterSubmit,
-    DateTime ExpiresAt
+    DateTime ExpiresAt,
+    SourceFile? File = null
 );

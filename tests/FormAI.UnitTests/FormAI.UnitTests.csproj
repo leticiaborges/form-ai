@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormAI.Application\FormAI.Application.csproj" />
     <ProjectReference Include="..\..\src\FormAI.Domain\FormAI.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FormAI.Infrastructure\FormAI.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -12,14 +12,19 @@ public class GenerateFormTests
 {
     private readonly IFormGenerationService _generationService = Substitute.For<IFormGenerationService>();
     private readonly IFormRepository _forms = Substitute.For<IFormRepository>();
+    private readonly ISourceTextExtractor _extractor = Substitute.For<ISourceTextExtractor>();
 
     private readonly GenerateFormHandler _handler;
 
     private List<GeneratedQuestion> _listQuestions;
 
+    private const string DefaultSource =
+    "Paris is the capital of France. Rome is the capital of Italy. Madrid is the capital of Spain. Lisbon is the capital of Portugal.";
+
+
     public GenerateFormTests()
     {
-        _handler = new GenerateFormHandler(_generationService, _forms);
+        _handler = new GenerateFormHandler(_generationService, _forms, _extractor);
 
         var questions = CreateGeneratedQuestions();
         _listQuestions = questions;
@@ -58,7 +63,7 @@ public class GenerateFormTests
     }
 
 
-    private static GenerateFormRequest CreateRequest(string title = "My form 1", string sourceText = "SourceTextTest",
+    private static GenerateFormRequest CreateRequest(string title = "My form 1", string sourceText = DefaultSource,
         bool isGraded = true, int expiresInDays = 7, bool showResultsAfterSubmit = false)
     {
         return new GenerateFormRequest(title, "Description test form", sourceText, SourceType.Text,
@@ -97,6 +102,16 @@ public class GenerateFormTests
         Assert.False(form.ShowResultsAfterSubmit);
         Assert.True(form.IsGraded);
         Assert.Equal(request.ExpiresAt, form.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task GradedRequest_PersistsSourceContent()
+    {
+        var (request, userId, form) = await GenerateFormAsync();
+
+        Assert.Single(form.SourceContents);
+        Assert.Equal(SourceType.Text, form.SourceContents[0].SourceType);
+        Assert.Equal(request.SourceText, form.SourceContents[0].Content);
     }
 
     [Fact]
@@ -154,7 +169,7 @@ public class GenerateFormTests
         var (request, userId, _) = await GenerateFormAsync();
 
         await _generationService.Received(1).GenerateAsync(
-            "SourceTextTest",
+            DefaultSource,
             Arg.Is<GenerationParameters>(p =>
                 p.QuestionCount == 4 &&
                 p.AllowedTypes != null && p.AllowedTypes.SequenceEqual(request.AllowedTypes) &&
@@ -207,7 +222,7 @@ public class GenerateFormTests
         Assert.Null(form.Questions.Single(q => q.Type == QuestionType.Numeric).CorrectAnswer);
 
         await _generationService.Received(1).GenerateAsync(
-          "SourceTextTest",
+          DefaultSource,
           Arg.Is<GenerationParameters>(p => p.IncludeCorrectAnswers == false),
           userId,
           Arg.Any<CancellationToken>());
@@ -215,9 +230,9 @@ public class GenerateFormTests
 
     public static TheoryData<string, string, int, string> InvalidRequests => new()
     {
-        { new string('a', 256), "SourceTextTest", 7, "title" },
+        { new string('a', 256), DefaultSource, 7, "title" },
         { "My form 1", string.Empty, 7, "sourceText" },
-        { "My form 1", "SourceTextTest", -1, "expiresAt" },
+        { "My form 1", DefaultSource, -1, "expiresAt" },
     };
 
     [Theory]

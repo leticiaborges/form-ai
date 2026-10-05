@@ -7,20 +7,17 @@ test("generating a form goes through the gateway and saves the draft it returns"
 }) => {
   const auth = await signIn(request, await registerVerifiedUser(request));
 
-  const res = await request.post(`${API_URL}/api/forms/generate/text`, {
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const res = await request.post(`${API_URL}/api/forms/generate`, {
     headers: auth,
-    data: {
+    multipart: {
       title: "Generated through the fake gateway",
-      description: "",
-      sourceText: "Paris is the capital of France. The why: is just because.",
-      sourceType: "Text",
-      sourceUrl: "",
+      sourceText: "Paris is the capital of France. The why: is just because. ".repeat(3),
       questionCount: 2,
-      allowedTypes: ["Single", "Text"],
       difficultyLevel: "Medium",
       isGraded: true,
       showResultsAfterSubmit: false,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      expiresAt: expiresAt.toISOString(),
     },
   });
 
@@ -38,4 +35,8 @@ test("generating a form goes through the gateway and saves the draft it returns"
     false,
   ]);
   expect(form.questions[1].correctAnswer).toBe("Because");
+
+  const stored = await request.get(`${API_URL}/api/forms/${form.formId}`, { headers: auth });
+  expect(stored.status()).toBe(200);
+  expect(new Date((await stored.json()).expiresAt).getTime()).toBe(expiresAt.getTime());
 });

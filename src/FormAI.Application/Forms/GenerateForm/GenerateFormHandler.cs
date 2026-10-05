@@ -1,5 +1,6 @@
 using FormAI.Application.AI;
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Common.Files;
 using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
 using FormAI.Domain.Entities;
@@ -11,16 +12,20 @@ public class GenerateFormHandler
 {
     public readonly IFormGenerationService _generationService;
     public readonly IFormRepository _repository;
+    private readonly ISourceTextExtractor _extractor;
 
     public const string PrefixTitle = "Generated Form –";
 
-    public const int MaxSourceTextLength = 30_000;
+    public const int MinSourceTextLength = 100;
+    public const int MaxFileNameLength = 255;
 
     public GenerateFormHandler(IFormGenerationService formGenerationService,
-        IFormRepository formRepository)
+        IFormRepository formRepository,
+        ISourceTextExtractor extractor)
     {
         _generationService = formGenerationService;
         _repository = formRepository;
+        _extractor = extractor;
     }
 
     private static void ValidateForm(string title, string? description, GenerateFormRequest request)
@@ -33,19 +38,11 @@ public class GenerateFormHandler
             });
         }
 
-        if (string.IsNullOrWhiteSpace(request.SourceText))
+        if (request.SourceText.Length > FormSourceContent.MaxSourceTextLength)
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                ["sourceText"] = ["Source text is required to generate a form."]
-            });
-        }
-
-        if (request.SourceText.Length > MaxSourceTextLength)
-        {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                ["sourceText"] = [$"Source text must be at most {MaxSourceTextLength} characters."]
+                ["sourceText"] = [$"Source text must be at most {FormSourceContent.MaxSourceTextLength} characters."]
             });
         }
 
@@ -62,6 +59,57 @@ public class GenerateFormHandler
             });
     }
 
+    private List<SourceItem> BuildSourceItems(GenerateFormRequest request)
+    {
+        var pasted = request.SourceText.Trim();
+
+        if (pasted.Length == 0 && request.File is null)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["sourceText"] = ["Paste some text or upload a file to generate a form."]
+            });
+        }
+
+        var items = new List<SourceItem>();
+        if (pasted.Length > 0)
+            items.Add(new SourceItem(pasted, SourceType.Text));
+
+        if (request.File != null)
+        {
+            var file = request.File;
+            var fileName = FileHelper.SanitizeFileName(file.FileName);
+            var extracted = _extractor.Extract(fileName, file.Content);
+            items.Add(new SourceItem(extracted, SourceTypeOf(fileName), fileName));
+        }
+
+        var total = items.Sum(i => i.SourceText.Length);
+        if (total > FormSourceContent.MaxSourceTextLength)
+            throw TextTooLong();
+
+        if (total < MinSourceTextLength)
+        {
+            throw new ValidationException(ValidationErrorCode.SourceTextTooShort,
+             $"The text is too short to make questions from. Use at least {MinSourceTextLength} characters.");
+        }
+
+        return items;
+    }
+
+    private static ValidationException TextTooLong() =>
+        new(ValidationErrorCode.SourceTextTooLong,
+            $"The text is too long. The maximum is {FormSourceContent.MaxSourceTextLength} characters, pasted text and file together.");
+
+    private static SourceType SourceTypeOf(string fileName) =>
+            Path.GetExtension(fileName).ToLowerInvariant() switch
+            {
+                ".docx" => SourceType.Word,
+                ".doc" => SourceType.Word,
+                ".ppt" => SourceType.Presentation,
+                ".pptx" => SourceType.Presentation,
+                _ => SourceType.Text
+            };
+
     public async Task<GenerateFormResponse> HandleAsync(GenerateFormRequest request,
     Guid requestingUserId,
     CancellationToken cancellationToken = default)
@@ -76,16 +124,14 @@ public class GenerateFormHandler
 
         ValidateForm(title, description, request);
 
-        var sourceItems = new List<SourceItem>()
-        {
-            new SourceItem(request.SourceText, SourceType.Text)
-        };
+        var sourceItems = BuildSourceItems(request);
+        var sourceText = string.Join("\n\n", sourceItems.Select(s => s.SourceText));
 
         var parameters = new GenerationParameters(request.QuestionCount,
         request.AllowedTypes, request.DifficultyLevel,
         request.IsGraded);
 
-        var generatedQuestions = await _generationService.GenerateAsync(request.SourceText, parameters, requestingUserId, cancellationToken);
+        var generatedQuestions = await _generationService.GenerateAsync(sourceText, parameters, requestingUserId, cancellationToken);
 
         GeneratedQuestionsValidator.Validate(generatedQuestions);
 
@@ -111,6 +157,7 @@ public class GenerateFormHandler
         }).ToList();
 
         form.ReplaceQuestions(questions);
+        form.AddSourceContent(sourceContents);
 
         // Discards anything the AI marked when the owner asked for an ungraded form.
         form.ClearGradingIfUngraded();
@@ -171,21 +218,5 @@ public class GenerateFormHandler
 
         question.SetOptions(options);
         return question;
-    }
-
-    public string CombineItems(List<SourceItem> items)
-    {
-        var parts = items.Select((item, i) =>
-        {
-            var label = $"Source {i + 1}, Type :{item.SourceType} ";
-            if (!string.IsNullOrWhiteSpace(item.FileName))
-                label += $" FileName: {item.FileName}";
-
-            label += $", Content: {item.SourceText} ";
-
-            return label;
-        });
-
-        return string.Join(Environment.NewLine, parts);
     }
 }

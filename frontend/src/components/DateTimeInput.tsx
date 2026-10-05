@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DateInput } from "./DateInput";
 import { TimeInput } from "./TimeInput";
 
@@ -29,9 +30,16 @@ export function DateTimeInput({
   minDate,
   timeFormat = "HH:mm",
 }: Readonly<DateTimeInputProps>) {
-  const parts = splitValue(value);
+  const [draft, setDraft] = useState(() => splitValue(value));
+  const [prevVal, setPrevVal] = useState(value);
+
+  if (value !== prevVal) {
+    setPrevVal(value);
+    if (value) setDraft(splitValue(value));
+  }
 
   function update(newValue: { date: string; time: string }) {
+    setDraft(newValue);
     onChange(newValue.date && newValue.time ? `${newValue.date}T${newValue.time}` : "");
   }
 
@@ -43,11 +51,11 @@ export function DateTimeInput({
           <DateInput
             id={`di-${id}`}
             aria-label="Date"
-            value={parts.date}
+            value={draft.date}
             min={minDate}
             error={error}
             showError={false}
-            onChange={(e) => update({ date: e.target.value, time: parts.time })}
+            onChange={(e) => update({ date: e.target.value, time: draft.time })}
             onBlur={onBlur}
           ></DateInput>
         </div>
@@ -55,10 +63,10 @@ export function DateTimeInput({
           <TimeInput
             id={`ti-${id}`}
             aria-label="Time"
-            value={parts.time}
+            value={draft.time}
             error={error}
             showError={false}
-            onChange={(e) => update({ date: parts.date, time: e.target.value })}
+            onChange={(e) => update({ date: draft.date, time: e.target.value })}
             onBlur={onBlur}
             format={timeFormat}
           ></TimeInput>

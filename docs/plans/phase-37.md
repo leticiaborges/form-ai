@@ -10,10 +10,10 @@
 | PDF | Sent to the model as a file (vision). **Not stored anywhere and not validated locally** (extension and size only; no magic bytes, page count or encryption check). Only metadata (name, size) is saved. |
 | Generation | **Synchronous**, in one multipart request. |
 | Models | `form-generator-vision` (`claude-sonnet-5-5`, fallback `gpt-5.2`, PDFs) and `form-generator` (`claude-haiku-4-5-20251001`, fallback `gpt-5.2`, text). The app uses aliases only. |
-| Prompt | Stays in a text file. No table. `PromptVersion = 1` is stored on each usage row. |
+| Prompt | Stays in a text file. No table. `PromptVersion = 1` is a constant in code that identifies the revision. |
 | Demo accounts | Same rules as regular users. **Known risk:** a demo account can consume the global ceiling; accepted for now. |
 | Regeneration | Doesn't exist. |
-| Cost | Own ledger table, a global spending ceiling, no per-user budget. |
+| Cost | **Owned by the gateway.** The app stores no cost or usage data. The global ceiling is the app key's `max_budget` in LiteLLM; spend is read in LiteLLM only; alerts use LiteLLM's budget alerts. No per-user budget. |
 
 **Limits**
 
@@ -33,10 +33,10 @@ Without local PDF validation there is **no enforceable page cap**. The 10 MB lim
 
 ## Docs and ADRs (written with the slice that needs them, not upfront)
 
-- **D-1** ADR: adopt an AI gateway (LiteLLM) instead of calling Anthropic directly. Written in the first gateway slice; it records the alternative of keeping the direct client and adding only a ledger and ceiling.
+- **D-1** ADR: adopt an AI gateway (LiteLLM) instead of calling Anthropic directly. Written in the first gateway slice; it records the alternative of keeping the direct client and adding only a ledger and ceiling. It also records that cost tracking and the ceiling stay in the gateway, with no usage table in the app, to avoid a second ledger that can disagree with LiteLLM's.
 - **D-2** ADR: source content policy. Text is saved for docx/pptx/txt/pasted; PDFs are processed in memory and not stored. Written in the persistence slice.
-- **D-3** `CONTEXT.md` terms (source, extracted text, model alias, usage record), added in the slice that introduces each term.
-- **D-4** `known-gaps.md`: added when the ceiling ships. Global ceiling only, no per-user budget, demo accounts can consume it, no idempotency beyond the disabled button, storage not disclosed to the user (FE-8), the ceiling check is not atomic.
+- **D-3** `CONTEXT.md` terms (source, extracted text, model alias), added in the slice that introduces each term.
+- **D-4** `known-gaps.md`: added when the budget mapping ships. Global ceiling only, no per-user budget, demo accounts can consume it, no idempotency beyond the disabled button, storage not disclosed to the user (FE-8), no spend visible in the app (LiteLLM only), and the gateway budget resets on a `budget_duration` interval, not on the calendar month.
 - `CLAUDE.md` describes the system as built: update it in the same slice that changes the behavior, never before.
 
 ---
@@ -67,7 +67,7 @@ Without local PDF validation there is **no enforceable page cap**. The 10 MB lim
 - **AI-5** The response SHALL be validated against a strict schema (unknown fields rejected; limits on question count, option count and string lengths; allowed question types only). Anything else is an error.
 - **AI-6** WHEN the stop reason is a length cut-off, the system SHALL fail with its own error and SHALL NOT retry.
 - **AI-7** The client SHALL NOT retry. It passes the request's `CancellationToken`. Timeout budget, written down in Stage 1: gateway timeout × attempts < client timeout < 90 s < load balancer idle timeout. The slow-PDF timeout check (T-6) runs in Stage 1, since it can invalidate the synchronous decision.
-- **AI-8** The result SHALL include the **model that actually answered**, token counts and cost, for the ledger.
+- **AI-8** *Removed.* The app records no model, token or cost data; LiteLLM's spend log is the only record.
 - **AI-9** Error mapping. A closed set of codes, added to `ValidationErrorCode`:
 
 | Situation | Code | HTTP |
@@ -78,7 +78,7 @@ Without local PDF validation there is **no enforceable page cap**. The 10 MB lim
 | Combined text under 100 chars | `SourceTextTooShort` | 400 |
 | Combined text over 30,000 | `SourceTextTooLong` | 400 |
 | Output truncated or invalid (a model fault, not the user's) | `GenerationOutputInvalid` | 502 |
-| Ceiling reached | `GenerationBudgetReached` | 503 |
+| Gateway reports the key's budget is exhausted | `GenerationBudgetReached` | 503 |
 | Gateway down or timeout | `GenerationUnavailable` ("try again later") | 503 |
 
 The 502 and 503 cases need a new exception type mapped in `ExceptionHandlingMiddleware`, since `ValidationException` maps to 400. A provider 5xx maps to `GenerationUnavailable`, never to `SourceFileUnreadable`.
@@ -87,15 +87,14 @@ The 502 and 503 cases need a new exception type mapped in `ExceptionHandlingMidd
 
 ---
 
-## Stage 3: Usage ledger and spending ceiling
+## Stage 3: Spending ceiling (owned by the gateway)
 
-- **UL-1** New table `ai_generation_usage` (migration, snake_case): `Id`, `UserId`, `FormId` (nullable), `CreatedAt`, `Operation`, `ModelAlias`, `ModelUsed`, `PromptVersion` (int), `InputTokens`, `OutputTokens`, `CostUsd` (decimal), `Status` (Succeeded / Failed / Rejected), `ErrorCode` (nullable), `LatencyMs`, `SourceKind` (Text / Pdf / TextAndPdf).
-- **UL-2** Cost SHALL be stored at call time, from the cost the gateway reports (LiteLLM usually returns it in a response header, not the body: confirm), never recomputed later. `CostUsd` is nullable: a failed or timed-out call may have been charged with unknown cost. Reconcile against LiteLLM's spend log.
-- **UL-3** `IUsageRecorder` (Application) SHALL record **every** call, including failures and provider rejections. It records in its own step and transaction, separate from saving the form, and with `CancellationToken.None`, so a failed save or a client disconnect never loses a row. `FormId` is linked afterwards. `Rejected` = stopped before the gateway was called (ceiling); `Failed` = the gateway was called and did not produce a usable draft.
-- **UL-4** The month aggregation and the ceiling decision SHALL live in Domain as pure functions, per the `Scoring/` pattern. Cost itself is never calculated by the app.
-- **UL-5** BEFORE calling the gateway, the handler SHALL sum the month's (UTC) `CostUsd`, ignoring nulls. IF it reaches `Ai:MonthlyBudgetUsd`, it SHALL fail with `GenerationBudgetReached` and call nothing. The check is not atomic; concurrent requests can overshoot, and the LiteLLM `max_budget` is the backstop. `created_at` is indexed. The app ledger decides the error the user sees; LiteLLM's log is for reconciliation.
-- **UL-6** The LiteLLM `max_budget` SHALL be slightly above the app-side value, and provider-side limits above that. Alerts at 50% and 80% are sent by email.
-- **UL-7** A query or view for cost per user per day.
+The app keeps **no** usage table, cost column or `IUsageRecorder`. Cost is calculated, stored, enforced and read in LiteLLM.
+
+- **BG-1** The global ceiling SHALL be the app key's `max_budget` with a `budget_duration` (set in slice 2, GW-5). Provider-side limits SHALL sit above it.
+- **BG-2** WHEN the gateway rejects a call because the key's budget is exhausted, the client SHALL throw `GenerationException` with `GenerationBudgetReached` (503) and SHALL NOT retry. The exact status and error type LiteLLM returns for an exhausted key SHALL be confirmed against a real key with a tiny budget before the mapping is written, and the fake gateway SHALL get a `[fake:budget]` marker that returns the same shape.
+- **BG-3** Spend alerts SHALL use LiteLLM's budget alerts, delivered by email. The thresholds are whatever the gateway supports (confirm whether 50% and 80% are configurable or only a soft budget).
+- **BG-4** The only place to see spend is LiteLLM (UI or spend log). Per-user attribution comes from the `user` field (the user's guid), which is already sent. The app sends no other metadata (no form id, prompt version or source kind).
 
 ---
 
@@ -119,11 +118,11 @@ The 502 and 503 cases need a new exception type mapped in `ExceptionHandlingMidd
 
 - **EP-1** The generate endpoint SHALL be `POST /api/forms/generate` (replacing `POST /api/forms/generate/text`) and accept `multipart/form-data`: text (optional), file (optional, at most 1), plus the existing options (expiry, graded, `ShowResultsAfterSubmit`). At least one of text or file is required. The frontend, e2e calls, rate-limit wiring and the `CLAUDE.md` route reference SHALL be updated in the same stage.
 - **EP-2** The request size limit is set on this endpoint only.
-- **EP-3** Order in the handler: rate limit (existing 10/hour, per user) → validate the file → extract text → validate the combined text (100 to 30,000) → check the ceiling → call the gateway → save form and `FormSourceContent` → record usage.
+- **EP-3** Order in the handler: rate limit (existing 10/hour, per user) → validate the file → extract text → validate the combined text (100 to 30,000) → call the gateway (a budget rejection comes back from it, BG-2) → save form and `FormSourceContent`.
 - **EP-4** WHEN a PDF is present, the combined-text minimum SHALL NOT apply. Pasted text is sent as additional context.
 - **EP-5** The PDF SHALL be held in memory only, for the duration of the request.
 - **EP-6** Forms are created private as today, with grading and `ShowResultsAfterSubmit` rules unchanged.
-- **EP-7** The generation SHALL be cancelled when the client disconnects, and usage SHALL still be recorded.
+- **EP-7** The generation SHALL be cancelled when the client disconnects.
 - **EP-8** Generated content SHALL be treated as untrusted text and never rendered as HTML.
 
 ---
@@ -145,7 +144,7 @@ The 502 and 503 cases need a new exception type mapped in `ExceptionHandlingMidd
 ## Stage 7: Tests and hardening
 
 - **T-1** A **fake gateway** (a small stub server) for CI and e2e. Canned draft, plus one case per error code. CI SHALL never call a real model. Built with the first client slice and grown as codes are added, not left to the end.
-- **T-2** Unit tests: limits, extractor per format, schema validation, ceiling check, cost recording on failure, alias choice.
+- **T-2** Unit tests: limits, extractor per format, schema validation, budget-exhausted mapping, alias choice.
 - **T-3** An evaluation set of sample documents you own (txt, docx, pptx, text PDF, scanned PDF), with a few **prompt-injection** documents ("ignore previous instructions..."). Used for model choice (compare Opus 5.5 with a cheaper model before committing) and after prompt changes.
 - **T-4** Playwright: upload a file, generate, land on the draft; error paths.
 - **T-5** Gateway hardening checklist: private network, master key rotation, separate app key, LiteLLM DB credentials out of the repo, logging off.
@@ -156,21 +155,21 @@ The 502 and 503 cases need a new exception type mapped in `ExceptionHandlingMidd
 ## Suggested order and why
 
 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7.
-The gateway comes first because the PDF/provider questions (does each model accept the file, what does it cost, how slow is it) affect everything after. The ledger goes before integration so the first real generation is already recorded. Frontend comes last because it only needs the finished contract.
+The gateway comes first because the PDF/provider questions (does each model accept the file, what does it cost, how slow is it) affect everything after. The budget mapping goes before integration so the first real generation already hits a known ceiling. Frontend comes last because it only needs the finished contract.
 
 Stages 3 and 4 are independent and can be built in either order.
 
 ## Resolved items
 
 1. **Minimum 100 chars scope**: applies to the combined pasted plus extracted text, and not when a PDF is present.
-2. **Failed-call ledger rows (UL-3)**: included.
+2. **Usage ledger**: dropped. The app stores no cost or usage data; the gateway owns it (see Cost in Global decisions and Stage 3).
 3. **Idempotency**: only the disabled button (FE-5). Ignored on purpose; no server-side guard.
 4. **Provider rejections count against the 10/hour limit**, as the limiter runs before the handler.
 5. **Route name**: renamed to `POST /api/forms/generate` (see EP-1).
 
 6. **Fallback model**: `gpt-5.2`, for both aliases (replaces GPT 5.5). Stage 1 still checks a PDF through LiteLLM with each provider.
-7. **Migrations** always run as `form_ai_migrator`, so grants for the new table need no extra work.
-8. **Alerts** go to email.
+7. **Migrations** always run as `form_ai_migrator`, so grants for any new table need no extra work.
+8. **Alerts** go to email, through LiteLLM's budget alerts.
 
 ## Slices (each one a small spec, task list and PR)
 
@@ -183,17 +182,16 @@ Stage numbers above stay as requirement groups. Build order:
 | 3 | Swap the client behind `IFormGenerationService`, text only, plus the first fake gateway | AI-1, 3, 7, 10, T-1 |
 | 4 | Strict response schema, truncation, error codes and the 502/503 exception | AI-5, 6, 9 (generation codes) |
 | 5 | Prompt hardening: untrusted-content delimiters, random marker, labels | AI-4 |
-| 6 | Ledger table and `IUsageRecorder`, recording every call | UL-1..3, AI-8 |
-| 7 | Monthly ceiling and cost-per-user-per-day query | UL-4, 5, 7, D-4 |
-| 8 | Email alerts and `deploy-litellm.yml` | UL-6, GW-10 |
-| 9 | `FormSourceContent` persisted with the form, cascade delete | SC-1, 2, D-2, D-3 |
-| 10 | `POST /api/forms/generate` multipart, text only, route rename in frontend, e2e and `CLAUDE.md` | EP-1, 2 |
-| 11 | Extractor: txt | SC-3 (txt), 4, 6, 7 |
-| 12 | Extractor: docx, with zip protections | SC-3 (docx), 5 |
-| 13 | Extractor: pptx | SC-3 (pptx) |
-| 14 | Endpoint flow for text files: combined limits, order, disconnect handling | EP-3, 6, 7, 8 |
-| 15 | PDF path: vision alias, in-memory only, metadata row | AI-2, EP-4, 5 |
-| 16 | Frontend: picker, checks, multipart with progress, error messages, disclosure | FE-1..7, 9 |
-| 17 | Evaluation set with injection documents, Playwright, hardening checklist | T-2..5 |
+| 6 | Map the gateway's budget-exhausted error to `GenerationBudgetReached`, `[fake:budget]` in the fake gateway, `known-gaps.md` and `CLAUDE.md` | BG-1, 2, 4, D-4 |
+| 7 | LiteLLM budget alerts by email and `deploy-litellm.yml` | BG-3, GW-10 |
+| 8 | `FormSourceContent` persisted with the form, cascade delete | SC-1, 2, D-2, D-3 |
+| 9 | `POST /api/forms/generate` multipart, text only, route rename in frontend, e2e and `CLAUDE.md` | EP-1, 2 |
+| 10 | Extractor: txt | SC-3 (txt), 4, 6, 7 |
+| 11 | Extractor: docx, with zip protections | SC-3 (docx), 5 |
+| 12 | Extractor: pptx | SC-3 (pptx) |
+| 13 | Endpoint flow for text files: combined limits, order, disconnect handling | EP-3, 6, 7, 8 |
+| 14 | PDF path: vision alias, in-memory only, metadata row | AI-2, EP-4, 5 |
+| 15 | Frontend: picker, checks, multipart with progress, error messages, disclosure | FE-1..7, 9 |
+| 16 | Evaluation set with injection documents, Playwright, hardening checklist | T-2..5 |
 
-Slices 9 and 11–13 are independent of 1–8 and can move earlier. T-3 (model comparison) runs before slice 3 commits to the cheaper text model. Unit tests for each requirement ship in the slice that introduces it.
+Slices 1–5 are done. Slices 8 and 10–12 are independent of 1–7 and can move earlier. T-3 (model comparison) runs before slice 3 commits to the cheaper text model. Unit tests for each requirement ship in the slice that introduces it.
