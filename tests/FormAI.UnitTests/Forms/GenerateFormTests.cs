@@ -34,11 +34,15 @@ public class GenerateFormTests
     private void SetGenerationServiceQuestions(List<GeneratedQuestion> questions)
     {
         _listQuestions = questions;
-        _generationService.GenerateAsync(Arg.Any<string>(),
+        _generationService.GenerateAsync(Arg.Any<IReadOnlyList<GenerationSource>>(),
         Arg.Any<GenerationParameters>(),
         Arg.Any<Guid>(),
         Arg.Any<CancellationToken>()).Returns(questions);
     }
+
+    private static IReadOnlyList<GenerationSource> OnlyText(string text) =>
+       Arg.Is<IReadOnlyList<GenerationSource>>(s =>
+           s.Count == 1 && s[0] is TextSource && ((TextSource)s[0]).Content == text);
 
     private static List<GeneratedQuestion> CreateGeneratedQuestions()
     {
@@ -169,7 +173,7 @@ public class GenerateFormTests
         var (request, userId, _) = await GenerateFormAsync();
 
         await _generationService.Received(1).GenerateAsync(
-            DefaultSource,
+            OnlyText(DefaultSource),
             Arg.Is<GenerationParameters>(p =>
                 p.QuestionCount == 4 &&
                 p.AllowedTypes != null && p.AllowedTypes.SequenceEqual(request.AllowedTypes) &&
@@ -222,7 +226,7 @@ public class GenerateFormTests
         Assert.Null(form.Questions.Single(q => q.Type == QuestionType.Numeric).CorrectAnswer);
 
         await _generationService.Received(1).GenerateAsync(
-          DefaultSource,
+          OnlyText(DefaultSource),
           Arg.Is<GenerationParameters>(p => p.IncludeCorrectAnswers == false),
           userId,
           Arg.Any<CancellationToken>());
@@ -246,7 +250,7 @@ public class GenerateFormTests
         Assert.Equal([expectedErrorKey], exception.Errors.Keys);
 
         await _generationService.DidNotReceive().GenerateAsync(
-            Arg.Any<string>(), Arg.Any<GenerationParameters>(),
+            Arg.Any<IReadOnlyList<GenerationSource>>(), Arg.Any<GenerationParameters>(),
             Arg.Any<Guid>(),
             Arg.Any<CancellationToken>());
         await _forms.DidNotReceive().AddAsync(Arg.Any<Form>(), Arg.Any<CancellationToken>());

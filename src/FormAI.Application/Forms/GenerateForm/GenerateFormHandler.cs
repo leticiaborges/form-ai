@@ -38,7 +38,7 @@ public class GenerateFormHandler
             });
         }
 
-        if (request.SourceText.Length > FormSourceContent.MaxSourceTextLength)
+        if (request.SourceText?.Length > FormSourceContent.MaxSourceTextLength)
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
@@ -59,9 +59,9 @@ public class GenerateFormHandler
             });
     }
 
-    private List<SourceItem> BuildSourceItems(GenerateFormRequest request)
+    private (List<SourceItem> Items, List<GenerationSource> Sources) BuildSources(GenerateFormRequest request)
     {
-        var pasted = request.SourceText.Trim();
+        var pasted = request.SourceText?.Trim() ?? string.Empty;
 
         if (pasted.Length == 0 && request.File is null)
         {
@@ -72,28 +72,47 @@ public class GenerateFormHandler
         }
 
         var items = new List<SourceItem>();
-        if (pasted.Length > 0)
-            items.Add(new SourceItem(pasted, SourceType.Text));
+        var sources = new List<GenerationSource>();
 
+        if (pasted.Length > 0)
+        {
+            items.Add(new SourceItem(pasted, SourceType.Text));
+            sources.Add(new TextSource(pasted));
+        }
+
+        var hasPdf = false;
         if (request.File != null)
         {
             var file = request.File;
             var fileName = FileHelper.SanitizeFileName(file.FileName);
-            var extracted = _extractor.Extract(fileName, file.Content);
-            items.Add(new SourceItem(extracted, SourceTypeOf(fileName), fileName));
+
+            if (FileHelper.IsPdf(fileName))
+            {
+                FileHelper.EnsurePdfIsAcceptable(file.Content);
+                hasPdf = true;
+
+                items.Add(new SourceItem(string.Empty, SourceType.Pdf, fileName));
+                sources.Add(new PdfSource(file.Content));
+            }
+            else
+            {
+                var extracted = _extractor.Extract(fileName, file.Content);
+                items.Add(new SourceItem(extracted, SourceTypeOf(fileName), fileName));
+                sources.Add(new TextSource(extracted));
+            }
         }
 
         var total = items.Sum(i => i.SourceText.Length);
         if (total > FormSourceContent.MaxSourceTextLength)
             throw TextTooLong();
 
-        if (total < MinSourceTextLength)
+        if (!hasPdf && total < MinSourceTextLength)
         {
             throw new ValidationException(ValidationErrorCode.SourceTextTooShort,
              $"The text is too short to make questions from. Use at least {MinSourceTextLength} characters.");
         }
 
-        return items;
+        return (items, sources);
     }
 
     private static ValidationException TextTooLong() =>
@@ -104,8 +123,6 @@ public class GenerateFormHandler
             Path.GetExtension(fileName).ToLowerInvariant() switch
             {
                 ".docx" => SourceType.Word,
-                ".doc" => SourceType.Word,
-                ".ppt" => SourceType.Presentation,
                 ".pptx" => SourceType.Presentation,
                 _ => SourceType.Text
             };
@@ -124,14 +141,14 @@ public class GenerateFormHandler
 
         ValidateForm(title, description, request);
 
-        var sourceItems = BuildSourceItems(request);
+        var (sourceItems, generationSources) = BuildSources(request);
         var sourceText = string.Join("\n\n", sourceItems.Select(s => s.SourceText));
 
         var parameters = new GenerationParameters(request.QuestionCount,
         request.AllowedTypes, request.DifficultyLevel,
         request.IsGraded);
 
-        var generatedQuestions = await _generationService.GenerateAsync(sourceText, parameters, requestingUserId, cancellationToken);
+        var generatedQuestions = await _generationService.GenerateAsync(generationSources, parameters, requestingUserId, cancellationToken);
 
         GeneratedQuestionsValidator.Validate(generatedQuestions);
 
@@ -139,7 +156,7 @@ public class GenerateFormHandler
             title: title,
             description: description ?? string.Empty,
             createdBy: requestingUserId,
-            sourceType: SourceType.Text,
+            sourceType: request.File is null ? SourceType.Text : sourceItems[sourceItems.Count - 1].SourceType,
             isPublic: false,
             expiresAt: request.ExpiresAt,
             showResultsAfterSubmit: request.ShowResultsAfterSubmit,
