@@ -12,6 +12,7 @@ import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
 import { QuestionAnswerCard } from "../components/respond/QuestionAnswerCard";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { isNumericInRange, NUMERIC_RANGE_MESSAGE } from "../utils/numericRange";
 import { showError } from "../utils/toast";
 import type { CustomResponse } from "../types/CustomResponse";
 
@@ -124,9 +125,16 @@ export function FormAnswerPage() {
     if (!id || !form) return;
 
     const missing = form.questions.filter((q) => q.isRequired && !isAnswered(q, answers[q.id]));
+    const outOfRange = form.questions.filter((q) => {
+      const value = answers[q.id]?.numericValue;
+      return q.type === "Numeric" && value !== undefined && !isNumericInRange(value);
+    });
 
-    if (missing.length > 0) {
-      setFieldErrors(Object.fromEntries(missing.map((q) => [q.id, "This question is required."])));
+    if (missing.length > 0 || outOfRange.length > 0) {
+      setFieldErrors({
+        ...Object.fromEntries(missing.map((q) => [q.id, "This question is required."])),
+        ...Object.fromEntries(outOfRange.map((q) => [q.id, NUMERIC_RANGE_MESSAGE])),
+      });
       return;
     }
 

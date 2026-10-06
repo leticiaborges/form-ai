@@ -209,6 +209,24 @@ public class SubmitFormTests
     }
 
     [Fact]
+    public async Task TextAnswerOver1024Characters_ThrowsValidationException()
+    {
+        var form = CreateGradedFormTwoQuestions(out FormQuestion questionSingle,
+        out FormQuestion questionText);
+
+        _formRepository.GetByIdAsync(form.Id, Arg.Any<CancellationToken>()).Returns(form);
+
+        var request = SubmitFormTestsHelper.Request(form, Guid.NewGuid(),
+            SubmitFormTestsHelper.Picks(questionSingle.Id, questionSingle.Options[0].Id),
+            SubmitFormTestsHelper.Writes(questionText.Id, new string('a', 1025)));
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
+        Assert.NotEmpty(exception.Errors[questionText.Id.ToString()]);
+
+        await _submissionRepository.DidNotReceive().AddAsync(Arg.Any<Submission>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task UnansweredRequiredQuestion_ThrowsValidationException()
     {
         var form = NewForm(isGraded: true);

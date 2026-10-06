@@ -5,6 +5,7 @@ import { getForm, saveFormEditor, deleteForm, getSubmissionCount } from "../api/
 import { Button } from "../components/Button";
 import { BasePage } from "../components/BasePage";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { isNumericInRange, NUMERIC_RANGE_MESSAGE } from "../utils/numericRange";
 import { showSuccess, showError } from "../utils/toast";
 import { DeleteFormModal } from "../components/editors/DeleteFormModal";
 import { DEFAULT_POINTS } from "../components/editors/PointsInput";
@@ -150,6 +151,21 @@ export function FormEditorPage() {
     const trimmedDescription = description.trim();
     if (trimmedDescription.length > 1024) {
       setDescriptionError("Description must be at most 1024 characters.");
+      return;
+    }
+
+    const badSuggestion = isGraded
+      ? questions.findIndex(
+          (q) =>
+            q.type === "Numeric" &&
+            q.correctAnswer?.trim() &&
+            !isNumericInRange(Number(q.correctAnswer)),
+        )
+      : -1;
+    if (badSuggestion >= 0) {
+      showError(
+        `Question ${badSuggestion + 1}: the suggested answer is invalid. ${NUMERIC_RANGE_MESSAGE}`,
+      );
       return;
     }
 

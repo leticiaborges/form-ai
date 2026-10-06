@@ -1,3 +1,4 @@
+using System.Globalization;
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Forms.Validation;
 using FormAI.Application.Interfaces;
@@ -59,6 +60,14 @@ public class SaveFormEditorHandler
             // discarded a few lines below, so there is nothing to validate.
             if (request.IsGraded)
                 QuestionPointsValidator.Validate(i, q.Points, errors);
+
+            // The suggested answer is stored as text and parsed when scoring; a value that isn't a
+            // number, or is beyond what a double compares exactly, could never match an answer.
+            if (request.IsGraded && q.Type == QuestionType.Numeric && !string.IsNullOrWhiteSpace(q.CorrectAnswer)
+                && !(double.TryParse(q.CorrectAnswer.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var suggested)
+                    && Math.Abs(suggested) <= 1_000_000_000_000d))
+                errors[$"questions[{i}].correctAnswer"] =
+                    new[] { "The suggested answer must be a number between -1000000000000 and 1000000000000." };
         }
 
         if (errors.Count > 0)

@@ -86,6 +86,12 @@ public class SubmitFormHandler
             throw new ValidationException(ValidationErrorCode.AlreadySubmitted,
                 "You have already submitted this form.");
 
+        if (request.Answers.GroupBy(a => a.QuestionId).Any(g => g.Count() > 1))
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["answers"] = ["A question can only be answered once."]
+            });
+
         var answersByQuestion = request.Answers.ToDictionary(a => a.QuestionId);
         var knowQuestionsIds = form.Questions.Select(q => q.Id).ToHashSet();
 
@@ -105,6 +111,20 @@ public class SubmitFormHandler
         foreach (var question in form.Questions)
         {
             answersByQuestion.TryGetValue(question.Id, out var answer);
+
+            if (answer?.TextValue?.Length > 1024)
+            {
+                errors[question.Id.ToString()] =
+                    new[] { "Answer must be at most 1024 characters." };
+                continue;
+            }
+
+            if (answer?.NumericValue is { } numeric && Math.Abs(numeric) > 1_000_000_000_000m)
+            {
+                errors[question.Id.ToString()] =
+                    new[] { "The number must be between -1000000000000 and 1000000000000." };
+                continue;
+            }
 
             var isAnswered = IsAnswered(question.Type, answer);
 
