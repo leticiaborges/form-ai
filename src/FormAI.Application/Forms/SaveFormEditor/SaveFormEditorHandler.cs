@@ -24,13 +24,22 @@ public class SaveFormEditorHandler
         FormAccessValidator.CheckOwnerAccess(form, request.RequestingUserId);
 
         if (string.IsNullOrWhiteSpace(request.Title))
-            throw new ArgumentException("Title is required.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["title"] = ["Title is required."]
+            });
 
         if (request.Title.Length > 255)
-            throw new ArgumentException("Title must be at most 255 characters.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["title"] = ["Title must be at most 255 characters."]
+            });
 
         if (request.Description?.Length > 1024)
-            throw new ArgumentException("Description must be at most 1024 characters.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["description"] = ["Description must be at most 1024 characters."]
+            });
 
         if (request.ExpiresAt <= DateTime.UtcNow)
             throw new ValidationException(new Dictionary<string, string[]>
