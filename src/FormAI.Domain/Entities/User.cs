@@ -23,6 +23,8 @@ public class User
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
+    public const int MinutesExpirationToken = 15;
+
     public static User Create(string name, string email, string passwordHash)
     {
         return new User
@@ -47,7 +49,7 @@ public class User
     public void SetConfirmationSent()
     {
         ConfirmationSentAt = DateTime.UtcNow;
-        PendingRegistrationExpiresAt = ConfirmationSentAt.GetValueOrDefault().AddMinutes(15);
+        PendingRegistrationExpiresAt = ConfirmationSentAt.GetValueOrDefault().AddMinutes(MinutesExpirationToken);
     }
 
     public void MarkAsVerified()
