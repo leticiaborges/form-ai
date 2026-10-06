@@ -2,14 +2,6 @@
 
 Everything here is a place where the code and the intent disagree: features described but not built, code that exists but is unused, and behaviour that is wrong on purpose for now. It exists so that neither the next reader nor an agent builds on something that isn't there.
 
-## Not built
-
-| Feature                             | What actually exists                                                                                                                                                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Result analysis by AI**           | `IAnalysisService` and `AnalysisResult` are declared in `Application/AI/`. There is no implementation, no registration and no endpoint. The README used to promise this.                                                                               |
-| **Generation from an image or URL** | `POST /api/forms/generate` accepts pasted text and one `.pdf`, `.docx`, `.pptx` or `.txt` file. Images are deliberately not supported, and a URL source is not built: `GenerateFormRequest` accepts `SourceUrl`, but `GenerateFormHandler` ignores it. |
-| **Multiple files per form**         | `FormSourceContent` is a list and a form can hold pasted text plus one file, but the endpoint takes a single `file`.                                                                                                                                   |
-
 ## Wrong or incomplete on purpose
 
 | Behaviour                                             | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |

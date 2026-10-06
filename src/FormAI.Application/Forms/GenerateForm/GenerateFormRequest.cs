@@ -7,7 +7,6 @@ public record GenerateFormRequest(
     string? Description,
     string SourceText,
     SourceType SourceType,
-    string? SourceUrl,
     int QuestionCount,
     QuestionType[]? AllowedTypes,
     DifficultyLevel DifficultyLevel,
