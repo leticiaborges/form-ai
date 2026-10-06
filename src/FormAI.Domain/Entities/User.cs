@@ -8,26 +8,30 @@ public class User
     public string PasswordHash { get; private set; } = string.Empty;
     public DateTime CreatedAt { get; private set; }
 
-    public DateTime? ConfirmationSentAt { get; private set;}
-    public DateTime? PendingRegistrationExpiresAt { get; private set;}
+    public DateTime? ConfirmationSentAt { get; private set; }
+    public DateTime? PendingRegistrationExpiresAt { get; private set; }
     public bool IsEmailVerified { get; private set; }
     public DateTime? VerifiedAt { get; private set; }
     public bool IsDemo { get; private set; }
-    
-    public List<Form> Forms { get; private set; } = new();
-    public List<RefreshToken> RefreshTokens { get; private set; } = new ();
 
-    public List<UserConfirmationToken> ConfirmationTokens {get; private set;} = new ();
+    public List<Form> Forms { get; private set; } = new();
+    public List<RefreshToken> RefreshTokens { get; private set; } = new();
+
+    public List<UserConfirmationToken> ConfirmationTokens { get; private set; } = new();
 
     private User() { }
+
+    public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+
+    public const int MinutesExpirationToken = 15;
 
     public static User Create(string name, string email, string passwordHash)
     {
         return new User
         {
             Id = Guid.NewGuid(),
-            Name = name,
-            Email = email,
+            Name = name.Trim(),
+            Email = NormalizeEmail(email),
             PasswordHash = passwordHash,
             CreatedAt = DateTime.UtcNow,
             IsEmailVerified = false
@@ -45,7 +49,7 @@ public class User
     public void SetConfirmationSent()
     {
         ConfirmationSentAt = DateTime.UtcNow;
-        PendingRegistrationExpiresAt = ConfirmationSentAt.GetValueOrDefault().AddMinutes(15);
+        PendingRegistrationExpiresAt = ConfirmationSentAt.GetValueOrDefault().AddMinutes(MinutesExpirationToken);
     }
 
     public void MarkAsVerified()

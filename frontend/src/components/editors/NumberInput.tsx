@@ -1,3 +1,5 @@
+import { MAX_NUMERIC_VALUE } from "../../utils/numericRange";
+
 interface NumberInputProps {
   correctAnswer: string | null;
   /** Only a graded form has a suggested answer to compare against. */
@@ -27,6 +29,8 @@ export function NumberInput({
           </p>
           <input
             type="number"
+            min={-MAX_NUMERIC_VALUE}
+            max={MAX_NUMERIC_VALUE}
             value={correctAnswer ?? ""}
             onChange={(e) => onCorrectAnswerChange(e.target.value || null)}
             placeholder="Enter the expected numeric answer…"

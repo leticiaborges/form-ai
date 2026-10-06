@@ -1,4 +1,5 @@
 import type { AnswerPayload, AnswerQuestion, QuestionGradingInfo } from "../../types/submission";
+import { MAX_NUMERIC_VALUE } from "../../utils/numericRange";
 import { normalizeOptionText } from "../../utils/textMatch";
 
 interface AnswerQuestionCardProps {
@@ -173,6 +174,7 @@ export function QuestionAnswerCard({
         {question.type === "Text" && (
           <textarea
             rows={3}
+            maxLength={1024}
             value={answer?.textValue ?? ""}
             disabled={readOnly}
             onChange={(e) => onTextChange?.(e.target.value)}
@@ -184,6 +186,8 @@ export function QuestionAnswerCard({
         {question.type === "Numeric" && (
           <input
             type="number"
+            min={-MAX_NUMERIC_VALUE}
+            max={MAX_NUMERIC_VALUE}
             value={answer?.numericValue ?? ""}
             disabled={readOnly}
             onChange={(e) => onNumericChange?.(e.target.value)}

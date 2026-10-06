@@ -25,9 +25,9 @@ public class LoginHandler
     public async Task<AuthTokens> HandleAsync(LoginRequest request,
         CancellationToken cancellationToken = default)
     {
-        var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
+        var user = await _users.GetByEmailAsync(User.NormalizeEmail(request.Email ?? string.Empty), cancellationToken);
 
-        if (user == null || !_hasher.Verify(request.Password, user.PasswordHash))
+        if (user == null || !_hasher.Verify(request.Password ?? string.Empty, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid user or password.");
 
         if (!user.IsEmailVerified)

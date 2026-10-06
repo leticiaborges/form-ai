@@ -29,14 +29,18 @@ public class RegisterHandler
     public async Task<RegisterUserResponse> HandleAsync(RegisterUserRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (await _users.EmailExistsAsync(request.Email, cancellationToken))
+        RegisterRequestValidator.Validate(request);
+
+        var email = User.NormalizeEmail(request.Email);
+
+        if (await _users.EmailExistsAsync(email, cancellationToken))
             throw new ValidationException(new Dictionary<string, string[]>
             {
                 ["email"] = ["This email is already registered."]
             });
 
         var hash = _hasher.Hash(request.Password);
-        var user = User.Create(request.Name, request.Email, hash);
+        var user = User.Create(request.Name, email, hash);
         user.SetConfirmationSent();
 
         await _users.AddAsync(user, cancellationToken);

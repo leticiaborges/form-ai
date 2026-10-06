@@ -252,6 +252,26 @@ public class SaveFormTests
         await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
     }
 
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("1000000000001")]
+    [InlineData("-1e13")]
+    public async Task NumericSuggestedAnswerNotANumberOrOutOfRange_ThrowsValidationException(string suggested)
+    {
+        var numeric = SaveFormTestsHelper.QuestionInput(_questionText) with
+        {
+            Type = QuestionType.Numeric,
+            CorrectAnswer = suggested,
+        };
+
+        var request = new SaveFormEditorRequest(_defaultForm.Id, _defaultForm.CreatedBy, "New title", "New description",
+        true, IsGraded: true, ShowResultsAfterSubmit: false, _defaultForm.ExpiresAt.GetValueOrDefault(),
+        [SaveFormTestsHelper.QuestionInput(_questionSingle), numeric]);
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(request));
+        Assert.Contains("questions[1].correctAnswer", exception.Errors.Keys);
+    }
+
     [Fact]
     public async Task AddedQuestion_DoesNotTriggerRescore()
     {

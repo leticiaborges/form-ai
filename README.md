@@ -1,17 +1,18 @@
 # FormAI
 
-FormAI turns text into a question form. Paste your source material, tell Claude how many questions you want and how hard they should be, and it generates a structured quiz you can edit, reorder and share by link. Respondents answer through that link — signed in or anonymously — and you see the responses come in.
+FormAI turns text or a file (.pdf, .docx, .pptx, .txt) into a question form. Paste and/or upload your source material, tell Claude how many questions you want and how hard they should be, and it generates a structured quiz you can edit, reorder and share by link. Respondents answer through that link — signed in or anonymously — and you see the responses come in.
 
 **Core flow:** paste source text → set the generation parameters → Claude generates the questions → review, edit and reorder them → publish and share the link → respondents answer.
+After, the owner of the form can check the answers through charts.
 
 This is a work in progress. See [what works](#what-works-today) and [what doesn't yet](#roadmap) before trying it.
 
 ## What works today
 
 - **Accounts** — register with email confirmation, log in, JWT with refresh tokens
-- **Generation from pasted text** — question count, allowed question types, difficulty, and whether Claude should fill in the answer key
+- **Generation from pasted text or uploaded file** — question count, allowed question types, difficulty, and whether Claude should fill in the answer key
 - **Four question types** — single choice, multiple choice, free text, numeric
-- **Form editor** — edit question text and type, add and delete questions and options, drag to reorder both. Saves are diffed, so editing a form that already has responses doesn't invalidate them
+- **Form editor** — edit question text, add and delete questions and options, drag to reorder both. Saves are diffed, so editing a form that already has responses doesn't invalidate them
 - **Publishing** — forms start private and are answerable only once you publish them; forms expire on a date
 - **Responding** — anonymous or signed in, one submission per respondent, required-question and option validation
 - **Dashboard** — your forms and how many submissions each has
@@ -21,17 +22,11 @@ This is a work in progress. See [what works](#what-works-today) and [what doesn'
 
 Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md):
 
-- AI analysis of results
-- Generation from PDF, Word, images and URLs (only pasted text works today)
-- Showing a respondent their own score
-- Realtime submission and generation updates
-- Rate limiting on generation
-
 ## Tech stack
 
 - **Backend** — .NET 10, Clean Architecture (`Domain` → `Application` → `Infrastructure`/`API`), EF Core + PostgreSQL, JWT auth
 - **Frontend** — React 19, TypeScript, Vite, Tailwind CSS
-- **AI** — Anthropic Claude API
+- **AI** — LiteLLM
 - **Local dev infra** — Docker Compose (PostgreSQL, Mailpit for email testing)
 
 ## Prerequisites
@@ -125,18 +120,18 @@ Run the suite from `frontend/` with `npm run test:e2e`. It needs `JWT_SECRET` an
 
 ## Configuration reference
 
-| Variable | Purpose |
-|---|---|
-| `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
-| `Jwt__Secret` | JWT signing key |
-| `Jwt__Issuer` / `Jwt__Audience` | JWT validation params |
-| `Jwt__ExpiresInMinutes` | Access token lifetime in minutes (default 60) |
-| `Jwt__RefreshTokenExpiryDays` | Refresh token lifetime in days (default 7); the refresh token itself lives only in an `HttpOnly` cookie |
-| `Claude__ApiKey` | Anthropic API key for form generation |
-| `Claude__Model` / `Claude__MaxTokens` | Optional; defaults in `appsettings.json` |
-| `Email__SmtpHost` / `Email__SmtpPort` | SMTP server for confirmation emails (Mailpit locally) |
-| `Email__FromAddress` / `Email__FromName` | Sender identity |
-| `Email__FrontendBaseUrl` | Base URL used to build confirmation links |
+| Variable                                 | Purpose                                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `ConnectionStrings__DefaultConnection`   | PostgreSQL connection string                                                                            |
+| `Jwt__Secret`                            | JWT signing key                                                                                         |
+| `Jwt__Issuer` / `Jwt__Audience`          | JWT validation params                                                                                   |
+| `Jwt__ExpiresInMinutes`                  | Access token lifetime in minutes (default 60)                                                           |
+| `Jwt__RefreshTokenExpiryDays`            | Refresh token lifetime in days (default 7); the refresh token itself lives only in an `HttpOnly` cookie |
+| `Claude__ApiKey`                         | Anthropic API key for form generation                                                                   |
+| `Claude__Model` / `Claude__MaxTokens`    | Optional; defaults in `appsettings.json`                                                                |
+| `Email__SmtpHost` / `Email__SmtpPort`    | SMTP server for confirmation emails (Mailpit locally)                                                   |
+| `Email__FromAddress` / `Email__FromName` | Sender identity                                                                                         |
+| `Email__FrontendBaseUrl`                 | Base URL used to build confirmation links                                                               |
 
 Docker Compose also reads `POSTGRES_PASSWORD`, `APP_DB_PASSWORD` and `MIGRATOR_DB_PASSWORD` from `.env` (see `.env.example`) — these only apply to the local PostgreSQL container, not the backend app itself.
 
@@ -170,12 +165,12 @@ frontend/              React + TypeScript + Vite app
 
 ## Documentation
 
-| File | What it holds |
-|---|---|
-| [`CONTEXT.md`](./CONTEXT.md) | The glossary — what each domain term means |
-| [`CLAUDE.md`](./CLAUDE.md) | Architecture, business rules as implemented, conventions |
-| [`docs/adr/`](./docs/adr/) | Why the non-obvious decisions were made |
-| [`docs/known-gaps.md`](./docs/known-gaps.md) | What isn't built, what's provisional, what's dead code |
+| File                                         | What it holds                                            |
+| -------------------------------------------- | -------------------------------------------------------- |
+| [`CONTEXT.md`](./CONTEXT.md)                 | The glossary — what each domain term means               |
+| [`CLAUDE.md`](./CLAUDE.md)                   | Architecture, business rules as implemented, conventions |
+| [`docs/adr/`](./docs/adr/)                   | Why the non-obvious decisions were made                  |
+| [`docs/known-gaps.md`](./docs/known-gaps.md) | What isn't built, what's provisional, what's dead code   |
 
 `docs/plans/` holds historical phase plans written before the code existed. They are not maintained and don't describe current behaviour.
 

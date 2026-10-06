@@ -88,4 +88,45 @@ public class RegisterTests
         await _userTokens.DidNotReceive().AddAsync(Arg.Any<UserConfirmationToken>(), Arg.Any<CancellationToken>());
         await _emailService.DidNotReceive().SendVerificationEmailAsync(Email, Name, Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task MixedCaseEmail_IsStoredAndCheckedLowercase()
+    {
+        User? createdUser = null;
+        _ = _users.AddAsync(Arg.Do<User>(u => createdUser = u), Arg.Any<CancellationToken>());
+
+        await _handler.HandleAsync(new RegisterUserRequest(Name, "  TestUser@Example.COM ", Password));
+
+        await _users.Received(1).EmailExistsAsync(Email, Arg.Any<CancellationToken>());
+        Assert.Equal(Email, createdUser!.Email);
+    }
+
+    [Theory]
+    [InlineData("name", "A", "testuser@example.com", Password)]
+    [InlineData("name", "   ", "testuser@example.com", Password)]
+    [InlineData("email", Name, "not-an-email", Password)]
+    [InlineData("email", Name, "user@localhost", Password)]
+    [InlineData("password", Name, "testuser@example.com", "short1A")]
+    [InlineData("password", Name, "testuser@example.com", "nouppercase1")]
+    [InlineData("password", Name, "testuser@example.com", "NoNumberHere")]
+    public async Task InvalidInput_IsRejectedBeforeAnythingIsSaved(string field, string name, string email, string password)
+    {
+        var ex = await Assert.ThrowsAsync<ValidationException>(
+            () => _handler.HandleAsync(new RegisterUserRequest(name, email, password)));
+
+        Assert.Contains(field, ex.Errors.Keys);
+        await _users.DidNotReceive().AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+        await _emailService.DidNotReceive().SendVerificationEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task OverlongNameOrPassword_IsRejected()
+    {
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => _handler.HandleAsync(
+            new RegisterUserRequest(new string('a', 101), Email, "A1" + new string('b', 71))));
+
+        Assert.Contains("name", ex.Errors.Keys);
+        Assert.Contains("password", ex.Errors.Keys);
+    }
 }
