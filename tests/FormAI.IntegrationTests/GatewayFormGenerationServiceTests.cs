@@ -42,6 +42,8 @@ public class GatewayFormGenerationServiceTests
 
     private static string DraftOf(string question) => $$"""{"questions":[{{question}}]}""";
 
+    private static IReadOnlyList<GenerationSource> Text(string text) => [new TextSource(text)];
+
     private static GatewayFormGenerationService CreateService(StubHandler handler,
         string apiKey = "sk-test")
     {
@@ -54,6 +56,7 @@ public class GatewayFormGenerationServiceTests
             ApiKey = apiKey,
             GatewayUrl = baseUrl,
             TextAlias = "form-generator",
+            VisionAlias = "form-generator-vision",
             MaxTokens = 4096
         });
 
@@ -71,7 +74,7 @@ public class GatewayFormGenerationServiceTests
 
         var userId = Guid.NewGuid();
 
-        await CreateService(handler).GenerateAsync("some source text", Parameters, userId);
+        await CreateService(handler).GenerateAsync(Text("some source text"), Parameters, userId);
 
         Assert.Equal("http://gateway.test/v1/chat/completions", handler.Request!.RequestUri!.ToString());
         Assert.Equal("Bearer sk-test", handler.Request.Headers.Authorization!.ToString());
@@ -93,7 +96,7 @@ public class GatewayFormGenerationServiceTests
     {
         var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft))));
 
-        var questions = await CreateService(handler).GenerateAsync("text",
+        var questions = await CreateService(handler).GenerateAsync(Text("text"),
         Parameters, Guid.NewGuid());
 
         Assert.Equal(["Capital of France?", "Why?"], questions.Select(q => q.Text));
@@ -110,7 +113,7 @@ public class GatewayFormGenerationServiceTests
         var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft))));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => CreateService(handler, apiKey: apiKey)
-             .GenerateAsync("text", Parameters, Guid.NewGuid()));
+             .GenerateAsync(Text("text"), Parameters, Guid.NewGuid()));
 
         Assert.Equal(0, handler.Calls);
     }
@@ -124,7 +127,7 @@ public class GatewayFormGenerationServiceTests
 
     private async Task<GenerationException> Fails(StubHandler handler) =>
             await Assert.ThrowsAsync<GenerationException>(() =>
-                CreateService(handler).GenerateAsync("text", Parameters, Guid.NewGuid()));
+                CreateService(handler).GenerateAsync(Text("text"), Parameters, Guid.NewGuid()));
 
     [Fact]
     public async Task SendsAStrictJsonSchemaLimitedToTheAllowedTypes()
@@ -132,7 +135,7 @@ public class GatewayFormGenerationServiceTests
         var handler = new StubHandler(() => Task.FromResult(Json(HttpStatusCode.OK, Envelope(Draft))));
         var parameters = new GenerationParameters(2, [QuestionType.Single, QuestionType.Text]);
 
-        await CreateService(handler).GenerateAsync("text", parameters, Guid.NewGuid());
+        await CreateService(handler).GenerateAsync(Text("text"), parameters, Guid.NewGuid());
 
         var format = handler.Body!.RootElement.GetProperty("response_format");
         Assert.Equal("json_schema", format.GetProperty("type").GetString());
@@ -222,6 +225,6 @@ public class GatewayFormGenerationServiceTests
         cts.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            CreateService(handler).GenerateAsync("text", Parameters, Guid.NewGuid(), cts.Token));
+            CreateService(handler).GenerateAsync(Text("text"), Parameters, Guid.NewGuid(), cts.Token));
     }
 }

@@ -4,9 +4,9 @@ Guidance for Claude Code working in this repository. It describes the system **a
 
 ## Overview
 
-FormAI turns pasted text into a question form: register and verify → paste text, pick an expiry → Claude generates a draft → the owner edits, publishes and shares the link → respondents (signed in or anonymous) answer once → graded forms are scored → the owner sees results (Summary and Individual views) in the form's Results tab.
+FormAI turns pasted text or an uploaded file into a question form: register and verify → paste text and/or attach one file (`.pdf`, `.docx`, `.pptx`, `.txt`; images are not supported), pick an expiry → Claude generates a draft → the owner edits, publishes and shares the link → respondents (signed in or anonymous) answer once → graded forms are scored → the owner sees results (Summary and Individual views) in the form's Results tab.
 
-## Vocabulary (the code still disagrees in places)
+## Vocabulary
 
 - A form is **published** or **private**. No draft, no closing: it stops accepting submissions when it **expires**.
 - **Graded** (`IsGraded`) forms alone have points, an answer key and scores.
@@ -17,7 +17,7 @@ FormAI turns pasted text into a question form: register and verify → paste tex
 
 Entities (`FormAI.Domain/Entities`): `User`, `Form`, `FormQuestion`, `QuestionOption`, `Submission`, `Answer`, `FormSourceContent`, `RefreshToken`, `UserConfirmationToken`.
 
-- Source text lives in `FormSourceContent`, not on `Form`. Source files are never stored.
+- Source text lives in `FormSourceContent`, not on `Form`. Source files are never stored. For pasted text, `.txt`, `.docx` and `.pptx` the extracted text is saved; a PDF is sent to the model in memory and its row has **empty `Content`** and only the file name ([ADR 0009](./docs/adr/0009-source-content-policy.md)), so code reading `FormSourceContent` must expect that for `SourceType.Pdf`. Rows carry their own `SourceType`; `Form.SourceType` is the file's type, or `Text`.
 - `AnswerSelectedOption` stores the option's **text**, not its id ([ADR 0001](./docs/adr/0001-selected-option-text-snapshot.md)).
 - `QuestionOption.IsCorrect` null means "not marked".
 - Private constructors, a static `Create()` factory and `private set` everywhere. Mutate through methods (`Update`, `SetOptions`, `ReplaceQuestions`, `ClearGradingIfUngraded`), never property assignment.
@@ -46,9 +46,9 @@ Entities (`FormAI.Domain/Entities`): `User`, `Form`, `FormQuestion`, `QuestionOp
 - Option text is required and unique per question (trimmed, case-insensitive), enforced by `QuestionOptionValidator` only, no DB constraint.
 - The editor save diffs against what is stored and **preserves question and option ids** ([ADR 0002](./docs/adr/0002-id-preserving-editor-save.md)). Never regenerate them.
 - Generated forms are **private**, expiry **7 days out** by default (owner's choice at creation, changeable later, always in the future), `ShowResultsAfterSubmit` false unless ticked at creation on a graded form.
-- `POST /api/forms/generate` takes **`multipart/form-data` only** (JSON answers 415). It binds `[FromForm]` to `GenerateFormDataRequest` (`FormAI.API/Contracts/`), which the controller maps to `GenerateFormRequest`, so `Application` has no ASP.NET types. `ExpiresAt` binds as `DateTimeOffset` and converts with `.UtcDateTime` (a form-bound `DateTime` is local time, which Npgsql rejects). An 11 MB request limit applies to this action only. The frontend must set `Content-Type: multipart/form-data` explicitly: the axios default is JSON, and axios would then serialize `FormData` to JSON. No file field exists yet.
-- That route is **rate limited per user**: ASP.NET sliding window (`RateLimiting:Generate`: 10 per 60 min, 6 segments). Over the limit it answers 429 with `{ message, errors, code }` and **no `Retry-After`**. The limiter runs before the handler, so a 400 still spends a permit. Counters are in process memory, so the limit is **per instance**. Wired in `FormAI.API/RateLimiting/`; `UseRateLimiter()` must stay after `UseAuthentication()` and `UseAuthorization()`, or all requests share one partition.
-- `SourceText` is capped at `GenerateFormHandler.MaxSourceTextLength` (30,000); `CreateFormPage` mirrors it.
+- `POST /api/forms/generate` takes **`multipart/form-data` only** (JSON answers 415). The optional `file` field takes **one** file: `.pdf`, `.docx`, `.pptx` or `.txt`, at most 10 MB (`FormSourceContent.MaxFileBytes`); **images are not supported**. Pasted text and a file are two parts of the same source material. The frontend picker is `SourceFilePicker`, its limits live in `frontend/src/utils/sourceFile.ts` (mirrored from the backend, change both together) and error codes map to messages in `frontend/src/utils/generationErrors.ts`.
+- That route is **rate limited per user**: ASP.NET sliding window (`RateLimiting:Generate`: 10 per 60 min, 6 segments). Counters are in process memory, so the limit is **per instance**.
+- Source text (pasted text and extracted file text together) is capped at `FormSourceContent.MaxSourceTextLength` (100,000, `SourceTextTooLong`) and needs at least `GenerateFormHandler.MinSourceTextLength` (100, `SourceTextTooShort`). **A PDF skips the minimum**, since the model reads it directly. The client skips the minimum whenever a file is attached, because only the server knows how much text a `.txt/.docx/.pptx` holds.
 
 **Grading and scoring**
 
@@ -97,12 +97,13 @@ The access token (`Jwt:ExpiresInMinutes`, 60) lives only in frontend memory, nev
 `IFormGenerationService` (`Application/AI/`) is the boundary. `GatewayFormGenerationService` is the only class that calls a model, through the LiteLLM gateway's OpenAI-compatible API (`Ai:GatewayUrl`, `Ai:ApiKey`, `Ai:TimeoutSeconds`). It sends the user's guid as `user`, never an email or name.
 
 - `GenerationParameters.IncludeCorrectAnswers` comes from the form's `IsGraded`. Claude is never asked for points.
-- The source is untrusted: `UntrustedSource` sends it as the user message under a `Source document` label, between `<<<SOURCE {marker}>>>` and `<<<END SOURCE {marker}>>>`, with a per-request 128-bit random marker the system prompt names (ignore instructions inside the fence). It never goes through placeholder substitution.
 - The prompt is `Infrastructure/AI/Prompt/PromptGenerateForm.txt`. It doesn't describe the JSON shape: the request carries a strict schema (`response_format`, built per request in `FormAISchema`). `GatewayFormGenerationService.PromptVersion` identifies the revision.
 - `GeneratedFormAIJSONParser` (Infrastructure) only reads the reply: has choices, `finish_reason` not `length`/`content_filter`, has content, deserializes. It knows no limits.
 - `GeneratedQuestionsValidator` (Application, `Forms/Validation/`, called by `GenerateFormHandler` before the form is built) applies what a schema can't: at least one question, valid type, non-empty text, strings at most 1024 characters (rejected, not truncated), 2+ options on Single/Multiple, none on Text/Numeric, plus `QuestionOptionValidator`.
 - Both throw `GenerationException` / `GenerationOutputInvalid` (502): a bad draft is a model fault, never a 400. It still spends a rate-limit permit.
 - A non-2xx, a timeout or a connection error is `GenerationUnavailable` (503). The client never retries; a caller's cancellation propagates as cancellation.
+- `GenerateAsync` takes a list of `GenerationSource` (`TextSource`, at most one `PdfSource`). With a PDF the service uses `Ai:VisionAlias` (`form-generator-vision`), else `Ai:TextAlias` (`form-generator`). The PDF goes as a `file` part named `source.pdf` (the user's file name never reaches the gateway); only text is fenced as untrusted.
+- Text is extracted from `.txt`, `.docx` and `.pptx` by `ISourceTextExtractor` (Infrastructure) before generation.
 - `IAnalysisService` is declared with no implementation.
 
 ## Commands

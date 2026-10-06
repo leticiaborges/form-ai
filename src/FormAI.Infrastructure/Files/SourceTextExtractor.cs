@@ -1,7 +1,7 @@
 using System.Text;
 using FormAI.Application.Common.Exceptions;
+using FormAI.Application.Common.Files;
 using FormAI.Application.Interfaces;
-using FormAI.Domain.Entities;
 
 namespace FormAI.Infrastructure.Files;
 
@@ -27,11 +27,7 @@ public class SourceTextExtractor : ISourceTextExtractor
                 "This file type is not supported. Use a .pdf, .docx, .pptx or .txt file.");
         }
 
-        if (content.Length > FormSourceContent.MaxFileBytes)
-        {
-            throw new Application.Common.Exceptions.ValidationException(ValidationErrorCode.SourceFileTooLarge,
-                "The file is too large. The maximum size is 10 MB.");
-        }
+        FileHelper.EnsureWithinSizeLimit(content);
 
         return extension switch
         {
