@@ -9,35 +9,56 @@ import { getErrorMessage } from "../utils/getErrorMessage";
 import { showSuccess, showError } from "../utils/toast";
 import { DateTimeInput } from "../components/DateTimeInput";
 import { addDays, DATETIME_FORMATS, getDefaultFormatStringDateTime } from "../utils/dateUtils";
+import { MAX_SOURCE_TEXT_LENGTH, MIN_SOURCE_TEXT_LENGTH } from "../utils/sourceFile";
+import { SourceFilePicker } from "../components/SourceFilePicker";
 
-const MAX_SOURCE_TEXT_LENGTH = 100_000;
-
-const createFormSchema = z.object({
-  title: z.string().max(255, "Title must be at most 255 characters").optional(),
-  description: z.string().max(1024, "Description must be at most 1024 characters").optional(),
-  sourceText: z
-    .string()
-    .max(
-      MAX_SOURCE_TEXT_LENGTH,
-      `Source text must be at most ${MAX_SOURCE_TEXT_LENGTH} characters long`,
+const createFormSchema = z
+  .object({
+    title: z.string().max(255, "Title must be at most 255 characters").optional(),
+    description: z.string().max(1024, "Description must be at most 1024 characters").optional(),
+    sourceText: z
+      .string()
+      .max(
+        MAX_SOURCE_TEXT_LENGTH,
+        `Source text must be at most ${MAX_SOURCE_TEXT_LENGTH} characters long`,
+      ),
+    file: z.instanceof(File).nullable(),
+    questionCount: z.coerce
+      .number()
+      .int()
+      .min(1, "At least 1 question.")
+      .max(20, "At most 20 questions."),
+    difficultyLevel: z.enum(
+      ["Easy", "Medium", "Hard"],
+      "Difficulty level must be one of Easy, Medium, or Hard.",
     ),
-  questionCount: z.coerce
-    .number()
-    .int()
-    .min(1, "At least 1 question.")
-    .max(20, "At most 20 questions."),
-  difficultyLevel: z.enum(
-    ["Easy", "Medium", "Hard"],
-    "Difficulty level must be one of Easy, Medium, or Hard.",
-  ),
-  isGraded: z.boolean(),
-  showResultsAfterSubmit: z.boolean(),
-  expiresAt: z
-    .string()
-    .min(1, "Pick an expiry date and time")
-    .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid date and time.")
-    .refine((v) => new Date(v) > new Date(), "The expiry must be in the future."),
-});
+    isGraded: z.boolean(),
+    showResultsAfterSubmit: z.boolean(),
+    expiresAt: z
+      .string()
+      .min(1, "Pick an expiry date and time")
+      .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid date and time.")
+      .refine((v) => new Date(v) > new Date(), "The expiry must be in the future."),
+  })
+  .superRefine((data, ctx) => {
+    if (data.file) return;
+
+    const pasted = data.sourceText.trim();
+
+    if (pasted.length == 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sourceText"],
+        message: "Paste some text or attach a file to generate a form.",
+      });
+    } else if (pasted.length < MIN_SOURCE_TEXT_LENGTH) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sourceText"],
+        message: `Use at least ${MIN_SOURCE_TEXT_LENGTH} characters, or attach a file.`,
+      });
+    }
+  });
 
 type CreateFormInput = z.input<typeof createFormSchema>;
 type CreateFormData = z.output<typeof createFormSchema>;
@@ -56,6 +77,8 @@ export function CreateFormPage() {
   } = useForm<CreateFormInput, unknown, CreateFormData>({
     resolver: zodResolver(createFormSchema),
     defaultValues: {
+      sourceText: "",
+      file: null,
       questionCount: 5,
       difficultyLevel: "Medium",
       isGraded: false,
@@ -65,6 +88,7 @@ export function CreateFormPage() {
   });
 
   const { field, fieldState } = useController({ name: "expiresAt", control });
+  const { field: fileField, fieldState: fileState } = useController({ name: "file", control });
   const isGraded = useWatch({ control, name: "isGraded" });
 
   async function onSubmit(data: CreateFormData) {
@@ -149,10 +173,19 @@ export function CreateFormPage() {
                 placeholder="Paste an article, study notes, or any text you want questions generated from…"
                 {...register("sourceText")}
               />
+
               {errors.sourceText && (
                 <span className="text-xs text-red-500">{errors.sourceText.message}</span>
               )}
             </div>
+
+            <SourceFilePicker
+              id="sourceFile"
+              file={fileField.value ?? null}
+              onChange={fileField.onChange}
+              disabled={isSubmitting}
+              error={fileState.error?.message}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
@@ -236,6 +269,14 @@ export function CreateFormPage() {
                 Generate form
               </Button>
             </div>
+
+            <p role="status" aria-live="polite" className="min-h-5 text-sm text-gray-600">
+              {isSubmitting ? "Generating your form…" : ""}
+            </p>
+
+            <p className="text-xs text-gray-400">
+              The text and files you add are sent to an AI provider to generate the form.
+            </p>
           </form>
         </div>
       </div>

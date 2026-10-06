@@ -8,7 +8,8 @@ import { renderWithProviders } from "../test/renderWithProviders";
 
 const GENERATE_URL = "*/api/forms/generate";
 const SCORE_LABEL = "Show score after submit";
-const SOURCE_TEXT = "The quick brown fox jumps over the lazy dog, again and again and again.";
+const SOURCE_TEXT =
+  "The quick brown fox jumps over the lazy dog, again and again and again. It never gets tired, and the dog never wakes up, no matter how many times it happens.";
 
 function renderCreate() {
   return renderWithProviders(<CreateFormPage />, { route: "/forms/new", path: "/forms/new" });

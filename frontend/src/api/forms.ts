@@ -7,6 +7,7 @@ export interface GenerateFormPayload {
   title?: string;
   description?: string;
   sourceText: string;
+  file?: File | null;
   questionCount: number;
   difficultyLevel: string;
   isGraded: boolean;
@@ -64,7 +65,11 @@ export async function generateForm(payload: GenerateFormPayload): Promise<Genera
 
   body.append("title", payload.title?.trim() || "");
   body.append("description", payload.description?.trim() || "");
-  body.append("sourceText", payload.sourceText);
+
+  if (payload.sourceText.trim()) body.append("sourceText", payload.sourceText);
+
+  if (payload.file) body.append("file", payload.file);
+
   body.append("questionCount", String(payload.questionCount));
   body.append("difficultyLevel", payload.difficultyLevel);
   body.append("isGraded", String(payload.isGraded));
