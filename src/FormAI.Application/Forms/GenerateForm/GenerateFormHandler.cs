@@ -57,6 +57,12 @@ public class GenerateFormHandler
             {
                 ["expiresAt"] = ["The expiry must be in the future."]
             });
+
+        if (request.QuestionCount is < 1 or > 20)
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["questionCount"] = ["The number of questions must be between 1 and 20."]
+            });
     }
 
     private (List<SourceItem> Items, List<GenerationSource> Sources) BuildSources(GenerateFormRequest request)
