@@ -31,7 +31,7 @@ public class ResendVerificationEmailHandler
                 ["email"] = ["Email is required."]
             });
 
-        var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
+        var user = await _users.GetByEmailAsync(User.NormalizeEmail(request.Email), cancellationToken);
         if (user is null || user.IsEmailVerified)
             return;
 
