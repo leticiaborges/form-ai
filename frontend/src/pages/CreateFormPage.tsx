@@ -11,6 +11,7 @@ import { DateTimeInput } from "../components/DateTimeInput";
 import { addDays, DATETIME_FORMATS, getDefaultFormatStringDateTime } from "../utils/dateUtils";
 import { MAX_SOURCE_TEXT_LENGTH, MIN_SOURCE_TEXT_LENGTH } from "../utils/sourceFile";
 import { SourceFilePicker } from "../components/SourceFilePicker";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 
 const createFormSchema = z
   .object({
@@ -110,7 +111,12 @@ export function CreateFormPage() {
   return (
     <BasePage>
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8">
+        <LoadingOverlay
+          isLoading={isSubmitting}
+          message="Generating your form…"
+          hint="This can take a little while."
+          className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8"
+        >
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-gray-900">Create a new form</h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -270,15 +276,11 @@ export function CreateFormPage() {
               </Button>
             </div>
 
-            <p role="status" aria-live="polite" className="min-h-5 text-sm text-gray-600">
-              {isSubmitting ? "Generating your form…" : ""}
-            </p>
-
             <p className="text-xs text-gray-400">
               The text and files you add are sent to an AI provider to generate the form.
             </p>
           </form>
-        </div>
+        </LoadingOverlay>
       </div>
     </BasePage>
   );
