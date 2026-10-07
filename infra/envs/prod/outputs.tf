@@ -33,6 +33,11 @@ output "frontend_bucket_name" {
   value       = module.frontend.bucket_name
 }
 
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution to invalidate after a frontend deploy."
+  value       = module.frontend.cloudfront_distribution_id
+}
+
 output "api_url" {
   description = "Public URL of the API."
   value       = "https://${var.api_domain_name}"
