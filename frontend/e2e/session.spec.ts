@@ -64,7 +64,9 @@ test("a rejected access token is refreshed and the request replayed without sign
     if (req.url().endsWith("/api/auth/refresh")) refreshCalls.push(req.url());
   });
 
+  const refreshed = page.waitForResponse((res) => res.url().endsWith("/api/auth/refresh"));
   await signIn(page, user);
+  await refreshed;
 
   expect(rejected).toBe(true);
   expect(refreshCalls).toHaveLength(1);
