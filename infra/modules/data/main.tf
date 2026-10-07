@@ -12,7 +12,7 @@ resource "aws_db_instance" "postgres" {
   identifier                  = "${var.name}-db"
   engine                      = "postgres"
   engine_version              = "18"
-  instance_class              = "db.t4g.micro"
+  instance_class              = "db.t3.micro"
   allocated_storage           = 20
   db_name                     = "form_ai"
   username                    = "form_ai_admin" # master: only the one-off db-bootstrap task uses it; the app connects as form_ai_app
@@ -59,7 +59,6 @@ resource "aws_secretsmanager_secret_version" "app_secrets" {
   secret_string = jsonencode({
     ConnectionString = "Host=${aws_db_instance.postgres.address};Database=form_ai;Username=form_ai_app;Password=${random_password.app_db.result}"
     JwtSecret        = var.jwt_secret # generate once with `openssl rand -base64 64`, pass as a TF_VAR, never commit it
-    ClaudeApiKey     = var.claude_api_key
     SesSmtpUsername  = var.ses_smtp_username
     SesSmtpPassword  = var.ses_smtp_password
   })

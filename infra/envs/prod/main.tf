@@ -19,7 +19,6 @@ module "data" {
   data_security_group_id = module.networking.data_security_group_id
   private_subnet_ids     = module.networking.private_subnet_ids
   jwt_secret             = var.jwt_secret
-  claude_api_key         = var.claude_api_key
   ses_smtp_username      = var.ses_smtp_username
   ses_smtp_password      = var.ses_smtp_password
 }
@@ -55,6 +54,8 @@ module "container_platform" {
   ses_email_smtpport        = 587
   ses_email_smtpfromaddress = "noreply@leticiaborgesdev.com"
   ses_email_smtpfromname    = "noreply"
+  ai_gateway_url            = var.ai_gateway_url
+  ai_app_key_secret_arn     = module.data.ai_app_key_secret_arn
 }
 
 module "frontend" {

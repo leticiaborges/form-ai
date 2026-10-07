@@ -34,7 +34,7 @@ variable "acm_certificate_arn" {
 }
 
 variable "app_secrets_arn" {
-  description = "ARN of the Secrets Manager secret holding ConnectionString/JwtSecret/ClaudeApiKey (from the data module)."
+  description = "ARN of the Secrets Manager secret holding ConnectionString/JwtSecret/AiApiKey (from the data module)."
   type        = string
 }
 
@@ -88,3 +88,12 @@ variable "ses_email_smtpfromname" {
   type        = string
 }
 
+variable "ai_gateway_url" {
+  description = "Base URL of the AI gateway (ai-gateway root output gateway_url)."
+  type        = string
+}
+
+variable "ai_app_key_secret_arn" {
+  description = "ARN of the secret holding the gateway app key (from the data module)."
+  type        = string
+}

@@ -56,3 +56,20 @@ output "db_bootstrap_command" {
       --network-configuration "awsvpcConfiguration={subnets=[${join(",", module.networking.public_subnet_ids)}],securityGroups=[${module.networking.ecs_security_group_id}],assignPublicIp=ENABLED}"
   EOT
 }
+
+output "public_subnet_ids" {
+  value = module.networking.public_subnet_ids
+}
+output "ecs_security_group_id" {
+  value = module.networking.ecs_security_group_id
+}
+output "ai_gateway_security_group_id" {
+  value = module.networking.ai_gateway_security_group_id
+}
+output "master_secret_arn" {
+  description = "RDS-managed master credentials secret (read by the gateway root's one-off DB bootstrap task)."
+  value       = module.data.master_secret_arn
+}
+output "ai_app_key_secret_arn" {
+  value = module.data.ai_app_key_secret_arn
+}

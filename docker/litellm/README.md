@@ -78,8 +78,6 @@ Always set `max_tokens`. The reply's `model` field is the alias; the model that 
 
 `user` carries the user's **guid only**, never an email or a name.
 
-Prompts and responses are not logged and not stored in the spend log (`turn_off_message_logging`, `store_prompts_in_spend_logs: false`). The spend log keeps model, tokens and cost.
-
 ## Keys and variables
 
 | Key | Used by | Notes |
