@@ -88,3 +88,28 @@ jobs:
           service: formai-prod-api
           cluster: formai-prod-cluster
           wait-for-service-stability: true
+
+  deploy-frontend:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::058264176602:role/formai-github-actions-deploy
+          aws-region: us-east-1
+      - name: Upload build to S3
+        run: aws s3 sync frontend/dist/ s3://formai-prod-frontend --delete
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"

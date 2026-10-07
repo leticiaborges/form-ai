@@ -73,6 +73,22 @@ data "aws_iam_policy_document" "deploy_permissions" {
     actions   = ["logs:GetLogEvents"]
     resources = ["${module.container_platform.db_jobs_log_group_arn}:*"]
   }
+  # Frontend: `aws s3 sync --delete` of the build, then a CloudFront invalidation.
+  statement {
+    sid       = "FrontendBucketList"
+    actions   = ["s3:ListBucket"]
+    resources = [module.frontend.bucket_arn]
+  }
+  statement {
+    sid       = "FrontendBucketWrite"
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["${module.frontend.bucket_arn}/*"]
+  }
+  statement {
+    sid       = "FrontendInvalidate"
+    actions   = ["cloudfront:CreateInvalidation"]
+    resources = [module.frontend.cloudfront_distribution_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "deploy" {
