@@ -141,9 +141,8 @@ public class FormsController : ControllerBase
         var request = new GenerateFormRequest(
         form.Title,
         form.Description,
-        form.SourceText,
+        form.SourceText ?? string.Empty,
         SourceType.Text,
-        null,
         form.QuestionCount,
         form.AllowedTypes,
         form.DifficultyLevel,

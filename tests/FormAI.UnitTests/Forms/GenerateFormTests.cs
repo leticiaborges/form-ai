@@ -70,8 +70,7 @@ public class GenerateFormTests
     private static GenerateFormRequest CreateRequest(string title = "My form 1", string sourceText = DefaultSource,
         bool isGraded = true, int expiresInDays = 7, bool showResultsAfterSubmit = false)
     {
-        return new GenerateFormRequest(title, "Description test form", sourceText, SourceType.Text,
-        string.Empty, QuestionCount: 4,
+        return new GenerateFormRequest(title, "Description test form", sourceText, SourceType.Text, QuestionCount: 4,
         AllowedTypes: new QuestionType[] { QuestionType.Single, QuestionType.Multiple, QuestionType.Text, QuestionType.Numeric },
         DifficultyLevel: DifficultyLevel.Medium, IsGraded: isGraded,
         ShowResultsAfterSubmit: showResultsAfterSubmit, ExpiresAt: DateTime.UtcNow.AddDays(expiresInDays));

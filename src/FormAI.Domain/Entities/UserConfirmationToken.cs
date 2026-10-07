@@ -12,7 +12,7 @@ public class UserConfirmationToken
     public DateTime? UsedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public User User { get; private set; }
+    public User User { get; private set; } = null!;
 
     public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
     public bool IsUsed => UsedAt is not null;
