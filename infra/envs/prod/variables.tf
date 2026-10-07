@@ -55,12 +55,6 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
-variable "claude_api_key" {
-  description = "Anthropic API key for ClaudeFormGenerationService. Pass as TF_VAR_claude_api_key, never commit it."
-  type        = string
-  sensitive   = true
-}
-
 variable "ses_smtp_username" {
   description = "AWS SES SMTP username"
   type        = string
@@ -71,4 +65,10 @@ variable "ses_smtp_password" {
   description = "AWS SES SMTP password"
   type        = string
   sensitive   = true
+}
+
+variable "ai_gateway_url" {
+  description = "Where the AI gateway answers inside the VPC. Must equal the ai-gateway root's gateway_url output."
+  type        = string
+  default     = "http://litellm.ai.internal:4000"
 }

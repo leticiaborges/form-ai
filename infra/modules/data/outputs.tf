@@ -22,3 +22,7 @@ output "master_secret_arn" {
 output "db_job_secrets_arn" {
   value = aws_secretsmanager_secret.db_job_secrets.arn
 }
+
+output "ai_app_key_secret_arn" {
+  value = aws_secretsmanager_secret.ai_app_key.arn
+}

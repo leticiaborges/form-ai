@@ -120,4 +120,31 @@ resource "aws_security_group" "data" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ai_gateway.id]
+  }
+}
+
+resource "aws_security_group" "ai_gateway" {
+  name   = "${var.name}-ai-gateway-sg"
+  vpc_id = aws_vpc.this.id
+
+  # Only the API's tasks (and the one-off jobs, which run in the same SG) may call the gateway.
+  ingress {
+    from_port       = 4000
+    to_port         = 4000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # Anthropic, OpenAI, RDS
+  }
 }

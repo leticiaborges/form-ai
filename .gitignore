@@ -71,5 +71,6 @@ appsettings.Development.json
 /docs/learning
 
 infra/envs/prod/.terraform
+infra/envs/ai-gateway/.terraform
 *.tfplan
 crash.log

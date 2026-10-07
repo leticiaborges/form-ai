@@ -21,3 +21,7 @@ output "ecs_security_group_id" {
 output "data_security_group_id" {
   value = aws_security_group.data.id
 }
+
+output "ai_gateway_security_group_id" {
+  value = aws_security_group.ai_gateway.id
+}
