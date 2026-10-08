@@ -140,7 +140,7 @@ resource "aws_ecs_service" "api" {
   # the arguments above (neither resource references the other), so it must
   # be forced explicitly, or a fast/parallel apply can schedule this before
   # the listener exists and fail the same way this one just did.
-  depends_on = [aws_lb_listener.https]
+  depends_on = [aws_lb_listener_rule.from_cloudfront]
 
   # deploy.yml (or a manual revision) decides which task definition revision
   # runs. Without this, every `terraform apply` moves the service back to the
@@ -177,9 +177,32 @@ resource "aws_lb_listener" "https" {
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.acm_certificate_arn # from Phase 8
+
+  # Anything that did not come through CloudFront (no matching X-Origin-Verify) stops here.
   default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Forbidden"
+      status_code  = "403"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "from_cloudfront" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 1
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api.arn
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Origin-Verify"
+      values           = [var.origin_verify_secret]
+    }
   }
 }
 

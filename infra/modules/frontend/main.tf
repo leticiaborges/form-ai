@@ -84,6 +84,10 @@ resource "aws_cloudfront_distribution" "frontend" {
   origin {
     domain_name = var.api_domain_name
     origin_id   = "alb-api"
+    custom_header {
+      name  = "X-Origin-Verify"
+      value = var.origin_verify_secret
+    }
     custom_origin_config {
       http_port              = 80
       https_port             = 443

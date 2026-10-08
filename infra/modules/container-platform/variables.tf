@@ -97,3 +97,9 @@ variable "ai_app_key_secret_arn" {
   description = "ARN of the secret holding the gateway app key (from the data module)."
   type        = string
 }
+
+variable "origin_verify_secret" {
+  type        = string
+  sensitive   = true
+  description = "Value of the X-Origin-Verify header that CloudFront sends to the API origin."
+}

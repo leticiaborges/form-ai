@@ -34,6 +34,14 @@ module "dns_tls" {
   frontend_domain_name = var.frontend_domain_name
 }
 
+# Shared secret between CloudFront and the ALB: CloudFront adds it as a header on every request
+# to the API origin and the ALB only forwards requests that carry it, so the ALB cannot be
+# reached directly. That is what makes it safe to trust X-Forwarded-For from CloudFront.
+resource "random_password" "origin_verify" {
+  length  = 40
+  special = false # travels in an HTTP header
+}
+
 module "container_platform" {
   source = "../../modules/container-platform"
 
@@ -57,6 +65,7 @@ module "container_platform" {
   ses_email_smtpfromname    = "noreply"
   ai_gateway_url            = var.ai_gateway_url
   ai_app_key_secret_arn     = module.data.ai_app_key_secret_arn
+  origin_verify_secret      = random_password.origin_verify.result
 }
 
 module "frontend" {
@@ -66,6 +75,7 @@ module "frontend" {
   frontend_domain_name           = var.frontend_domain_name
   cloudfront_acm_certificate_arn = module.dns_tls.cloudfront_certificate_arn
   api_domain_name                = var.api_domain_name
+  origin_verify_secret           = random_password.origin_verify.result
 }
 
 # The alias record needs the ALB's dns_name/zone_id, which only exists once
