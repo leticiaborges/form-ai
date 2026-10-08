@@ -141,6 +141,13 @@ resource "aws_ecs_service" "api" {
   # be forced explicitly, or a fast/parallel apply can schedule this before
   # the listener exists and fail the same way this one just did.
   depends_on = [aws_lb_listener.https]
+
+  # deploy.yml (or a manual revision) decides which task definition revision
+  # runs. Without this, every `terraform apply` moves the service back to the
+  # revision in Terraform's state, which holds the unpushed `:latest` image.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
 resource "aws_lb" "this" {
