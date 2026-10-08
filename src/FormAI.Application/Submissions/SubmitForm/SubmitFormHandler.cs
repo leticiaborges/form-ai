@@ -139,6 +139,8 @@ public class SubmitFormHandler
                 continue;
 
             var validSelectedOptions = ValidateSelectedOptions(question, answer!, errors, out string[] selectedOptionTexts);
+            if (!validSelectedOptions)
+                continue;
 
             results.Add(new QuestionResult(question, answer!, selectedOptionTexts));
         }

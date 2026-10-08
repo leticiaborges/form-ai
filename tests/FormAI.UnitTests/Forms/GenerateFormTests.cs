@@ -34,14 +34,14 @@ public class GenerateFormTests
     private void SetGenerationServiceQuestions(List<GeneratedQuestion> questions)
     {
         _listQuestions = questions;
-        _generationService.GenerateAsync(Arg.Any<IReadOnlyList<GenerationSource>>(),
+        _generationService.GenerateAsync(Arg.Any<IReadOnlyList<IGenerationSource>>(),
         Arg.Any<GenerationParameters>(),
         Arg.Any<Guid>(),
         Arg.Any<CancellationToken>()).Returns(questions);
     }
 
-    private static IReadOnlyList<GenerationSource> OnlyText(string text) =>
-       Arg.Is<IReadOnlyList<GenerationSource>>(s =>
+    private static IReadOnlyList<IGenerationSource> OnlyText(string text) =>
+       Arg.Is<IReadOnlyList<IGenerationSource>>(s =>
            s.Count == 1 && s[0] is TextSource && ((TextSource)s[0]).Content == text);
 
     private static List<GeneratedQuestion> CreateGeneratedQuestions()
@@ -249,7 +249,7 @@ public class GenerateFormTests
         Assert.Equal([expectedErrorKey], exception.Errors.Keys);
 
         await _generationService.DidNotReceive().GenerateAsync(
-            Arg.Any<IReadOnlyList<GenerationSource>>(), Arg.Any<GenerationParameters>(),
+            Arg.Any<IReadOnlyList<IGenerationSource>>(), Arg.Any<GenerationParameters>(),
             Arg.Any<Guid>(),
             Arg.Any<CancellationToken>());
         await _forms.DidNotReceive().AddAsync(Arg.Any<Form>(), Arg.Any<CancellationToken>());

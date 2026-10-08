@@ -42,7 +42,7 @@ public class GatewayFormGenerationServiceTests
 
     private static string DraftOf(string question) => $$"""{"questions":[{{question}}]}""";
 
-    private static IReadOnlyList<GenerationSource> Text(string text) => [new TextSource(text)];
+    private static IReadOnlyList<IGenerationSource> Text(string text) => [new TextSource(text)];
 
     private static GatewayFormGenerationService CreateService(StubHandler handler,
         string apiKey = "sk-test")

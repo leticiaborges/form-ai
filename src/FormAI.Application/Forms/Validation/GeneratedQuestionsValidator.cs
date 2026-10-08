@@ -15,11 +15,7 @@ public static class GeneratedQuestionsValidator
 
         for (var i = 0; i < questions.Count; i++)
         {
-            ValidateQuestion(questions, problems, i, out bool continueValidation);
-            if (!continueValidation)
-            {
-                continue;
-            }
+            ValidateQuestion(questions, problems, i);
         }
 
         if (problems.Count > 0)
@@ -29,9 +25,8 @@ public static class GeneratedQuestionsValidator
                 new InvalidOperationException(string.Join(" ", problems)));
     }
 
-    private static void ValidateQuestion(IReadOnlyList<GeneratedQuestion> questions, List<string> problems, int i, out bool continueValidation)
+    private static void ValidateQuestion(IReadOnlyList<GeneratedQuestion> questions, List<string> problems, int i)
     {
-        continueValidation = true;
         var q = questions[i];
         var where = $"Question {i + 1}";
 
@@ -46,7 +41,6 @@ public static class GeneratedQuestionsValidator
         if (!Enum.IsDefined(q.Type))
         {
             problems.Add($"{where}: type is not valid.");
-            continueValidation = false;
             return;
         }
 

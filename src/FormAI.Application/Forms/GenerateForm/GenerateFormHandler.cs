@@ -65,7 +65,7 @@ public class GenerateFormHandler
             });
     }
 
-    private (List<SourceItem> Items, List<GenerationSource> Sources) BuildSources(GenerateFormRequest request)
+    private (List<SourceItem> Items, List<IGenerationSource> Sources) BuildSources(GenerateFormRequest request)
     {
         var pasted = request.SourceText?.Trim() ?? string.Empty;
 
@@ -78,7 +78,7 @@ public class GenerateFormHandler
         }
 
         var items = new List<SourceItem>();
-        var sources = new List<GenerationSource>();
+        var sources = new List<IGenerationSource>();
 
         if (pasted.Length > 0)
         {

@@ -29,7 +29,7 @@ public class GatewayFormGenerationService : IFormGenerationService
         _logger = logger ?? NullLogger<GatewayFormGenerationService>.Instance;
     }
 
-    public async Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(IReadOnlyList<GenerationSource> sources, GenerationParameters parameters,
+    public async Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(IReadOnlyList<IGenerationSource> sources, GenerationParameters parameters,
      Guid userId, CancellationToken cancellationToken = default)
     {
         if (_client.BaseAddress is null || string.IsNullOrWhiteSpace(_settings.ApiKey))
@@ -80,7 +80,7 @@ public class GatewayFormGenerationService : IFormGenerationService
     private static string Truncate(string value, int max) =>
         value.Length <= max ? value : value[..max];
 
-    private async Task<HttpRequestMessage> GetHttpRequestMessage(IReadOnlyList<GenerationSource> sources, GenerationParameters parameters, Guid userId, List<PdfSource> pdfs, CancellationToken cancellationToken)
+    private async Task<HttpRequestMessage> GetHttpRequestMessage(IReadOnlyList<IGenerationSource> sources, GenerationParameters parameters, Guid userId, List<PdfSource> pdfs, CancellationToken cancellationToken)
     {
         var pdf = pdfs.SingleOrDefault();
         var texts = sources.OfType<TextSource>().Select(t => t.Content).ToList();
