@@ -1,3 +1,4 @@
+using FormAI.API.Contracts;
 using FormAI.API.RateLimiting;
 using FormAI.Application.Common.Exceptions;
 using FormAI.Application.Forms.CreateForm;
@@ -143,11 +144,11 @@ public class FormsController : ControllerBase
         form.Description,
         form.SourceText ?? string.Empty,
         SourceType.Text,
-        form.QuestionCount,
+        form.QuestionCount.GetValueOrDefault(),
         form.AllowedTypes,
-        form.DifficultyLevel,
-        form.IsGraded,
-        form.ShowResultsAfterSubmit,
+        form.DifficultyLevel ?? DifficultyLevel.Medium,
+        form.IsGraded ?? false,
+        form.ShowResultsAfterSubmit ?? false,
         form.ExpiresAt.UtcDateTime,
         file);
 

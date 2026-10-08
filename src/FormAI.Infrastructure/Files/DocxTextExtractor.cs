@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace FormAI.Infrastructure.Files;
 
-public class DocxTextExtractor
+public static class DocxTextExtractor
 {
     private const int MaxEntries = 1000;
 

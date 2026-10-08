@@ -22,7 +22,7 @@ public record GeneratedOption(string Text, bool? IsCorrect);
 public interface IFormGenerationService
 {
     Task<IReadOnlyList<GeneratedQuestion>> GenerateAsync(
-        IReadOnlyList<GenerationSource> sources,
+        IReadOnlyList<IGenerationSource> sources,
         GenerationParameters parameters,
         Guid userId,
         CancellationToken cancellationToken = default);
