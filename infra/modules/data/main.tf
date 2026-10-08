@@ -20,8 +20,12 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name        = aws_db_subnet_group.this.name
   vpc_security_group_ids      = [var.data_security_group_id]
   publicly_accessible         = false
-  skip_final_snapshot         = true # fine for a portfolio project; a real prod DB would not set this
-  backup_retention_period     = 3
+  backup_retention_period     = 7
+  deletion_protection         = true # to destroy: set false, apply, then destroy
+  skip_final_snapshot         = false
+  final_snapshot_identifier   = "${var.name}-db-final" # must not already exist when destroying
+  copy_tags_to_snapshot       = true
+  apply_immediately           = true # none of these changes needs a restart
 }
 
 resource "aws_elasticache_cluster" "redis" {
