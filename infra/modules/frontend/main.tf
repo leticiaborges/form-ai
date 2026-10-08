@@ -33,6 +33,59 @@ resource "aws_cloudfront_function" "spa_routing" {
   code    = file("${path.module}/spa-routing.js")
 }
 
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = "${var.name}-security-headers"
+
+  security_headers_config {
+    strict_transport_security {
+      # Deliberately short while rolling out; raise it (e.g. 31536000) once stable.
+      access_control_max_age_sec = 300
+      include_subdomains         = false
+      preload                    = false
+      override                   = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Content-Security-Policy-Report-Only"
+      override = true
+      value = join("; ", [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self'",
+        "img-src 'self' data:",
+        # wss: listed explicitly because Safari doesn't match 'self' against it.
+        "connect-src 'self' wss://${var.frontend_domain_name}",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "object-src 'none'",
+      ])
+    }
+
+    items {
+      header   = "Permissions-Policy"
+      override = true
+      value    = "camera=(), microphone=(), geolocation=()"
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   default_root_object = "index.html"
@@ -61,6 +114,9 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
+
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+
     forwarded_values {
       query_string = false
       cookies {
@@ -77,23 +133,25 @@ resource "aws_cloudfront_distribution" "frontend" {
   # Same-origin API: the cookie-based refresh session (HttpOnly, SameSite=Strict)
   # and the SignalR hub both need to be reached under the frontend's own domain.
   ordered_cache_behavior {
-    path_pattern             = "/api/*"
-    target_origin_id         = "alb-api"
-    viewer_protocol_policy   = "redirect-to-https"
-    allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods           = ["GET", "HEAD"]
-    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    path_pattern               = "/api/*"
+    target_origin_id           = "alb-api"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   ordered_cache_behavior {
-    path_pattern             = "/hubs/*"
-    target_origin_id         = "alb-api"
-    viewer_protocol_policy   = "redirect-to-https"
-    allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods           = ["GET", "HEAD"]
-    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    path_pattern               = "/hubs/*"
+    target_origin_id           = "alb-api"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   aliases = [var.frontend_domain_name]
