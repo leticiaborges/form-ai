@@ -69,6 +69,7 @@ migration.sql
 appsettings.Development.json 
 
 /docs/learning
+/docs/plans
 
 infra/envs/prod/.terraform
 infra/envs/ai-gateway/.terraform
