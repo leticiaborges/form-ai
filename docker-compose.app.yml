@@ -17,9 +17,14 @@ services:
       Email__FromAddress: noreply@formai.local
       Email__FromName: FormAI
       Email__FrontendBaseUrl: http://localhost:5173
-      Claude__ApiKey: ${CLAUDE_API_KEY}
+      Ai__GatewayUrl: http://litellm:4000
+      Ai__ApiKey: ${LITELLM_APP_KEY:?set LITELLM_APP_KEY in .env}
+      # Blank (the default) disables the demo account: POST /api/auth/demo answers 404.
+      Demo__Password: ${DEMO_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      litellm:
         condition: service_healthy

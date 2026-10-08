@@ -1,6 +1,6 @@
 # Known gaps
 
-Everything here is a place where the code and the intent disagree: features described but not built, code that exists but is unused, and behaviour that is wrong on purpose for now. It exists so that neither the next reader nor an agent builds on something that isn't there.
+In here we have: features that are missing or things that could be improved.
 
 ## Wrong or incomplete on purpose
 
