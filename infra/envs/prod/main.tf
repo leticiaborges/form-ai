@@ -21,6 +21,7 @@ module "data" {
   jwt_secret             = var.jwt_secret
   ses_smtp_username      = var.ses_smtp_username
   ses_smtp_password      = var.ses_smtp_password
+  demo_account_password  = var.demo_account_password
 }
 
 # Cert-only: creating the ALB's DNS-validated cert here has no dependency on the

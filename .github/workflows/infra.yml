@@ -21,6 +21,7 @@ jobs:
       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
       TF_VAR_ses_smtp_username: ${{ secrets.SES_SMTP_USERNAME }}
       TF_VAR_ses_smtp_password: ${{ secrets.SES_SMTP_PASSWORD }}
+      TF_VAR_demo_account_password: ${{ secrets.DEMO_ACCOUNT_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
@@ -52,6 +53,7 @@ jobs:
       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
       TF_VAR_ses_smtp_username: ${{ secrets.SES_SMTP_USERNAME }}
       TF_VAR_ses_smtp_password: ${{ secrets.SES_SMTP_PASSWORD }}
+      TF_VAR_demo_account_password: ${{ secrets.DEMO_ACCOUNT_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6

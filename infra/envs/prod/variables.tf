@@ -72,3 +72,9 @@ variable "ai_gateway_url" {
   type        = string
   default     = "http://litellm.ai.internal:4000"
 }
+
+variable "demo_account_password" {
+  description = "Demo account password. If empty will generate a 401 in the Try Demo button."
+  type        = string
+  sensitive   = true
+}

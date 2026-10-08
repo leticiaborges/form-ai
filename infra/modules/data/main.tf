@@ -61,6 +61,7 @@ resource "aws_secretsmanager_secret_version" "app_secrets" {
     JwtSecret        = var.jwt_secret # generate once with `openssl rand -base64 64`, pass as a TF_VAR, never commit it
     SesSmtpUsername  = var.ses_smtp_username
     SesSmtpPassword  = var.ses_smtp_password
+    DemoPassword     = var.demo_account_password
   })
 }
 
