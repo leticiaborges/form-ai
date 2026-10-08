@@ -148,5 +148,3 @@ Use Vitest for what a component proves with the network stubbed; Playwright only
 - Hard-to-reverse, surprising decision chosen over a real alternative → propose an ADR in `docs/adr/` (sequential, a paragraph is enough).
 - Building or finding something in `docs/known-gaps.md` → update it in the same change.
 - Changing a business rule → update "Business rules" above. A rule the code no longer enforces is worse than none.
-
-`docs/plans/` is historical, written before the code existed, and not a source of truth.
