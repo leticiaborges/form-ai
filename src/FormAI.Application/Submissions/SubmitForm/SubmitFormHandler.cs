@@ -138,34 +138,41 @@ public class SubmitFormHandler
             if (!isAnswered)
                 continue;
 
-            var selectedOptionTexts = Array.Empty<string>();
-
-            if (question.Type is QuestionType.Single or QuestionType.Multiple)
-            {
-                var optionTextById = question.Options.ToDictionary(o => o.Id, o => o.Text);
-                var submittedIds = answer!.SelectedOptionIds ?? Array.Empty<Guid>();
-
-                if (submittedIds.Any(id => !optionTextById.ContainsKey(id)))
-                {
-                    errors[question.Id.ToString()] =
-                        new[] { "One or more selected options don't belong to this question." };
-                    continue;
-                }
-
-                if (question.Type == QuestionType.Single && submittedIds.Length > 1)
-                {
-                    errors[question.Id.ToString()] =
-                        new[] { "This question accepts only one option." };
-                    continue;
-                }
-
-                selectedOptionTexts = submittedIds.Select(id => optionTextById[id]).ToArray();
-            }
+            var validSelectedOptions = ValidateSelectedOptions(question, answer!, errors, out string[] selectedOptionTexts);
 
             results.Add(new QuestionResult(question, answer!, selectedOptionTexts));
         }
 
         return results;
+    }
+
+    private static bool ValidateSelectedOptions(FormQuestion question, AnswerRequest answer, Dictionary<string, string[]> errors,
+        out string[] selectedOptionTexts)
+    {
+        selectedOptionTexts = Array.Empty<string>();
+        if (question.Type is QuestionType.Single or QuestionType.Multiple)
+        {
+            var optionTextById = question.Options.ToDictionary(o => o.Id, o => o.Text);
+            var submittedIds = answer!.SelectedOptionIds ?? Array.Empty<Guid>();
+
+            if (submittedIds.Any(id => !optionTextById.ContainsKey(id)))
+            {
+                errors[question.Id.ToString()] =
+                    new[] { "One or more selected options don't belong to this question." };
+                return false;
+            }
+
+            if (question.Type == QuestionType.Single && submittedIds.Length > 1)
+            {
+                errors[question.Id.ToString()] =
+                    new[] { "This question accepts only one option." };
+                return false;
+            }
+
+            selectedOptionTexts = submittedIds.Select(id => optionTextById[id]).ToArray();
+        }
+
+        return true;
     }
 
     private static bool IsAnswered(QuestionType type, AnswerRequest? answer)

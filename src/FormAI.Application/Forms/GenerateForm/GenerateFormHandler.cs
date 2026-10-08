@@ -148,7 +148,6 @@ public class GenerateFormHandler
         ValidateForm(title, description, request);
 
         var (sourceItems, generationSources) = BuildSources(request);
-        var sourceText = string.Join("\n\n", sourceItems.Select(s => s.SourceText));
 
         var parameters = new GenerationParameters(request.QuestionCount,
         request.AllowedTypes, request.DifficultyLevel,

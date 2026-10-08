@@ -53,8 +53,6 @@ public class GatewayFormGenerationService : IFormGenerationService
                 if (IsBudgetExceeded(errorBody))
                     throw BudgetReached(new HttpRequestException($"The gateway answered {(int)response.StatusCode}: budget exceeded."));
 
-                // The provider refused the file itself (damaged, encrypted, too many pages): the
-                // user's file, not an outage. Only a 400 or 422;
                 if (pdf is not null && response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity)
                 {
                     _logger.LogWarning("The gateway rejected a PDF with {Status}: {Body}",

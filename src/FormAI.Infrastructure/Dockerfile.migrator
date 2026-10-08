@@ -18,5 +18,6 @@ RUN dotnet ef migrations bundle \
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /out/efbundle .
+USER $APP_UID
 # The task injects MIGRATOR_CONNECTION from Secrets Manager (the form_ai_migrator login).
 ENTRYPOINT ["sh", "-c", "exec ./efbundle --connection \"$MIGRATOR_CONNECTION\""]

@@ -3,7 +3,7 @@ using FormAI.Domain.Enums;
 
 namespace FormAI.Infrastructure.AI;
 
-public class FormAISchema
+public static class FormAISchema
 {
     public static object ResponseFormat(GenerationParameters parameters)
     {
