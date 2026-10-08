@@ -4,6 +4,7 @@ using FormAI.API.RateLimiting;
 using FormAI.API.Workers;
 using FormAI.Application.Interfaces;
 using FormAI.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi;
 
 
@@ -50,6 +51,14 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddApiRateLimiting(builder.Configuration);
 
 
@@ -74,6 +83,7 @@ if (app.Environment.IsDevelopment())
 }
 
 
+app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("FrontendDev");
 app.UseAuthentication();
