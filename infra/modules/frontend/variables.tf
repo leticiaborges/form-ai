@@ -17,3 +17,9 @@ variable "api_domain_name" {
   description = "Domain the API/ALB answers on, e.g. api.yourdomain.com. Used as the CloudFront origin for /api/* and /hubs/*, so the cookie-based session is same-origin in prod."
   type        = string
 }
+
+variable "origin_verify_secret" {
+  type        = string
+  sensitive   = true
+  description = "Value of the X-Origin-Verify header that CloudFront sends to the API origin."
+}

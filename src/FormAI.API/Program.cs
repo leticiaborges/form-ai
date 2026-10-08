@@ -54,7 +54,11 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.ForwardLimit = 1;
+    // Two proxies sit in front of the API: CloudFront, then the ALB. Each appends the address it
+    // saw, so the client IP is the second entry from the right. Trusting that many entries is safe
+    // only because the ALB rejects requests that did not come through CloudFront (infra:
+    // X-Origin-Verify header); otherwise a caller could prepend a fake address.
+    options.ForwardLimit = 2;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
