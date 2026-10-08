@@ -120,8 +120,8 @@ export function CreateFormPage() {
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-gray-900">Create a new form</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Paste the content you want to turn into questions, and the AI will generate a draft
-              form for you to edit.
+              Paste your content or upload a file, and AI will generate a draft form for you to
+              review and edit.
             </p>
           </div>
 

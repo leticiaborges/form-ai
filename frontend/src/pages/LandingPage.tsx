@@ -26,7 +26,8 @@ export function LandingPage() {
             Build forms <span className="text-brand-600">with AI</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Paste your content. FormAI turns it into a form in seconds — ready to edit and share.
+            Paste or upload your content. FormAI turns it into a form in seconds — ready to edit and
+            share.
           </p>
         </div>
         <div className="flex gap-4 flex-wrap justify-center">
