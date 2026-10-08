@@ -92,7 +92,8 @@ resource "aws_ecs_task_definition" "api" {
       { name = "Jwt__Secret", valueFrom = "${var.app_secrets_arn}:JwtSecret::" },
       { name = "Ai__ApiKey", valueFrom = var.ai_app_key_secret_arn },
       { name = "Email__Username", valueFrom = "${var.app_secrets_arn}:SesSmtpUsername::" },
-      { name = "Email__Password", valueFrom = "${var.app_secrets_arn}:SesSmtpPassword::" }
+      { name = "Email__Password", valueFrom = "${var.app_secrets_arn}:SesSmtpPassword::" },
+      { name = "Demo__Password", valueFrom = "${var.app_secrets_arn}:DemoPassword::" }
     ]
     logConfiguration = {
       logDriver = "awslogs"

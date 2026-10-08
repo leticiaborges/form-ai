@@ -44,3 +44,9 @@ resource "aws_secretsmanager_secret_version" "ai_app_key" {
   secret_id     = aws_secretsmanager_secret.ai_app_key.id
   secret_string = "sk-${random_password.ai_app_key.result}" # LiteLLM requires the sk- prefix
 }
+
+variable "demo_account_password" {
+  description = "Demo account password"
+  type        = string
+  sensitive   = true
+}
