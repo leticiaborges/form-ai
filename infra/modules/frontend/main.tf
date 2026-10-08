@@ -62,23 +62,6 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 
   custom_headers_config {
     items {
-      header   = "Content-Security-Policy-Report-Only"
-      override = true
-      value = join("; ", [
-        "default-src 'self'",
-        "script-src 'self'",
-        "style-src 'self'",
-        "img-src 'self' data:",
-        # wss: listed explicitly because Safari doesn't match 'self' against it.
-        "connect-src 'self' wss://${var.frontend_domain_name}",
-        "frame-ancestors 'none'",
-        "base-uri 'self'",
-        "form-action 'self'",
-        "object-src 'none'",
-      ])
-    }
-
-    items {
       header   = "Permissions-Policy"
       override = true
       value    = "camera=(), microphone=(), geolocation=()"
