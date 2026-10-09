@@ -7,8 +7,10 @@ resource "aws_iam_role" "github_actions_deploy" {
       Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
-        StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
-        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:leticiaborges/form-ai:*" }
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          "token.actions.githubusercontent.com:sub" = "repo:leticiaborges/form-ai:ref:refs/heads/main"
+        }
       }
     }]
   })
@@ -97,7 +99,7 @@ resource "aws_iam_role_policy" "deploy" {
   policy = data.aws_iam_policy_document.deploy_permissions.json
 }
 
-# --- Role 2: Terraform (infra.yml) — broad but not admin ---
+# --- Role 2: Terraform apply (infra.yml, push to main) — broad but not admin ---
 resource "aws_iam_role" "github_actions_terraform" {
   name = "formai-github-actions-terraform"
   assume_role_policy = jsonencode({
@@ -107,8 +109,11 @@ resource "aws_iam_role" "github_actions_terraform" {
       Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
-        StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
-        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:leticiaborges/form-ai:*" }
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          # Only jobs that run in the `production` environment (infra.yml apply jobs).
+          "token.actions.githubusercontent.com:sub" = "repo:leticiaborges/form-ai:environment:production"
+        }
       }
     }]
   })
@@ -135,4 +140,51 @@ resource "aws_iam_role_policy" "terraform_iam_scoped" {
       Resource = "arn:aws:iam::058264176602:role/formai-*"
     }]
   })
+}
+
+# --- Role 3: Terraform plan (infra.yml, pull requests) — read-only ---
+# A plan can run PR code (e.g. an `external` data source), so PRs never get the apply role.
+resource "aws_iam_role" "github_actions_terraform_plan" {
+  name = "formai-github-actions-terraform-plan"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          "token.actions.githubusercontent.com:sub" = "repo:leticiaborges/form-ai:pull_request"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_plan_read_only" {
+  role       = aws_iam_role.github_actions_terraform_plan.name
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+data "aws_iam_policy_document" "terraform_plan" {
+  # ReadOnlyAccess already reads the state; the S3 lock file (use_lockfile) needs writes.
+  statement {
+    sid       = "StateLock"
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["arn:aws:s3:::formai-terraform-state/*.tflock"]
+  }
+  # Refreshing aws_secretsmanager_secret_version reads the value, which ReadOnlyAccess leaves out.
+  # The same values are already in the state this role reads.
+  statement {
+    sid       = "RefreshSecretVersions"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = ["arn:aws:secretsmanager:us-east-1:058264176602:secret:formai-*"]
+  }
+}
+
+resource "aws_iam_role_policy" "terraform_plan" {
+  name   = "formai-github-actions-terraform-plan-policy"
+  role   = aws_iam_role.github_actions_terraform_plan.id
+  policy = data.aws_iam_policy_document.terraform_plan.json
 }
