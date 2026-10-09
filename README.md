@@ -47,15 +47,15 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md).
 
    Fill in `.env`. The passwords and secrets are values of your choice; they are only used by local containers.
 
-   | Variable                                                       | Used for                                                                        |
-   | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-   | `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, `MIGRATOR_DB_PASSWORD` | Main PostgreSQL: superuser, the `form_ai_app` role and the `form_ai_migrator` role |
-   | `JWT_SECRET`                                                   | Playwright suite and `docker-compose.app.yml` only                              |
-   | `DEMO_PASSWORD` (optional)                                     | Demo account password in `docker-compose.app.yml`; blank disables the demo      |
-   | `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD` | The AI gateway and its own database                                             |
-   | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`                          | Real provider keys, read by the gateway only                                    |
-   | `LITELLM_APP_KEY`                                              | The key the API uses against the gateway (any string starting with `sk-`)       |
-   | `LITELLM_APP_MAX_BUDGET_USD`                                   | Monthly budget of that key (default 10)                                         |
+   | Variable                                                        | Used for                                                                           |
+   | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+   | `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, `MIGRATOR_DB_PASSWORD`  | Main PostgreSQL: superuser, the `form_ai_app` role and the `form_ai_migrator` role |
+   | `JWT_SECRET`                                                    | Playwright suite and `docker-compose.app.yml` only                                 |
+   | `DEMO_PASSWORD` (optional)                                      | Demo account password in `docker-compose.app.yml`; blank disables the demo         |
+   | `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD` | The AI gateway and its own database                                                |
+   | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`                           | Real provider keys, read by the gateway only                                       |
+   | `LITELLM_APP_KEY`                                               | The key the API uses against the gateway (any string starting with `sk-`)          |
+   | `LITELLM_APP_MAX_BUDGET_USD`                                    | Monthly budget of that key (default 10)                                            |
 
 2. **Start the local infrastructure**
 
@@ -63,12 +63,12 @@ Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md).
    docker compose up -d
    ```
 
-   | Service         | Address                                                               | Notes                                                                                                                                                                                                                                                          |
-   | --------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | PostgreSQL      | `localhost:5432`                                                      | On first start (empty volume) it creates `form_ai_migrator` (owns the schema, runs migrations) and `form_ai_app` (what the API uses, data access only). If your volume predates these roles, recreate it with `docker compose down -v` (deletes local data). |
-   | Mailpit         | inbox [http://localhost:8025](http://localhost:8025), SMTP on `1025`  | Catches all local email instead of a real SMTP provider.                                                                                                                                                                                                       |
-   | Redis           | `localhost:6379`                                                      | SignalR backplane for live results. No auth, no volume.                                                                                                                                                                                                        |
-   | LiteLLM gateway | `127.0.0.1:4000`                                                      | Every model call goes through it. Needs the `LITELLM_*` and provider keys from `.env`.                                                                                                                                                                         |
+   | Service         | Address                                                              | Notes                                                                                                                                                                                                                                                        |
+   | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | PostgreSQL      | `localhost:5432`                                                     | On first start (empty volume) it creates `form_ai_migrator` (owns the schema, runs migrations) and `form_ai_app` (what the API uses, data access only). If your volume predates these roles, recreate it with `docker compose down -v` (deletes local data). |
+   | Mailpit         | inbox [http://localhost:8025](http://localhost:8025), SMTP on `1025` | Catches all local email instead of a real SMTP provider.                                                                                                                                                                                                     |
+   | Redis           | `localhost:6379`                                                     | SignalR backplane for live results. No auth, no volume.                                                                                                                                                                                                      |
+   | LiteLLM gateway | `127.0.0.1:4000`                                                     | Every model call goes through it. Needs the `LITELLM_*` and provider keys from `.env`.                                                                                                                                                                       |
 
 3. **Register the API's key in the gateway**
 
@@ -165,31 +165,31 @@ Run the suite from `frontend/` with `npm run test:e2e`. It needs `JWT_SECRET` an
 
 ASP.NET Core configuration: each key can be set in `appsettings*.json`, user-secrets or an environment variable (use `__` for `:`, e.g. `Ai__GatewayUrl`). Defaults are those in `appsettings.json`.
 
-| Key                                                   | Default                   | Purpose                                                                                |
-| ----------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| `ConnectionStrings:DefaultConnection`                 | —                         | PostgreSQL connection string (as `form_ai_app`)                                        |
-| `ConnectionStrings:Redis`                             | —                         | Redis for the SignalR backplane                                                        |
-| `Jwt:Secret`                                          | —                         | JWT signing key                                                                        |
-| `Jwt:Issuer` / `Jwt:Audience`                         | —                         | JWT validation parameters                                                              |
-| `Jwt:ExpiresInMinutes`                                | 60                        | Access token lifetime; the token lives only in frontend memory                         |
-| `Jwt:RefreshTokenExpiryDays`                          | 7                         | Refresh token lifetime; it lives only in an `HttpOnly` cookie                          |
-| `Ai:GatewayUrl`                                       | `http://127.0.0.1:4000`   | LiteLLM gateway (OpenAI-compatible API)                                                |
-| `Ai:ApiKey`                                           | —                         | Gateway key for the API (`LITELLM_APP_KEY`)                                            |
-| `Ai:TextAlias`                                        | `form-generator`          | Model alias for text sources                                                           |
-| `Ai:VisionAlias`                                      | `form-generator-vision`   | Model alias used when a PDF is attached                                                |
-| `Ai:MaxTokens`                                        | 4096                      | Output token cap per generation                                                        |
-| `Ai:TimeoutSeconds`                                   | 80                        | Request timeout to the gateway                                                         |
-| `Email:SmtpHost` / `Email:SmtpPort`                   | —                         | SMTP server for confirmation emails (Mailpit locally)                                  |
-| `Email:FromAddress` / `Email:FromName`                | —                         | Sender identity                                                                        |
-| `Email:FrontendBaseUrl`                               | —                         | Base URL used to build confirmation links                                              |
-| `Demo:Password`                                       | —                         | Shared password of demo accounts. Never in `appsettings.json`; blank disables the demo |
-| `RateLimiting:Generate`                               | 10 per 60 min, 6 segments | Per user, on `POST /api/forms/generate`                                                |
-| `RateLimiting:ResendVerification`                     | 3 per 15 min, 3 segments  | On resending the confirmation email                                                    |
-| `RateLimiting:Demo`                                   | 3 per 15 min, 3 segments  | Per IP, on `POST /api/auth/demo`                                                       |
-| `RateLimiting:Login`                                  | 10 per 15 min, 3 segments | Per IP, on `POST /api/auth/login`; failed and successful attempts both count           |
-| `RateLimiting:Register`                               | 5 per 60 min, 6 segments  | Per IP, on `POST /api/auth/register`                                                   |
-| `RateLimiting:Submit`                                 | 100 per 10 min, 5 segments| Per user, else per IP, on `POST /api/forms/{id}/submit`                                |
-| `RefreshTokenCleanup:RetentionDays` / `IntervalHours` | 10 / 24                   | How long expired or revoked refresh tokens are kept, and how often the cleanup runs    |
+| Key                                                   | Default                    | Purpose                                                                                |
+| ----------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
+| `ConnectionStrings:DefaultConnection`                 | —                          | PostgreSQL connection string (as `form_ai_app`)                                        |
+| `ConnectionStrings:Redis`                             | —                          | Redis for the SignalR backplane                                                        |
+| `Jwt:Secret`                                          | —                          | JWT signing key                                                                        |
+| `Jwt:Issuer` / `Jwt:Audience`                         | —                          | JWT validation parameters                                                              |
+| `Jwt:ExpiresInMinutes`                                | 60                         | Access token lifetime; the token lives only in frontend memory                         |
+| `Jwt:RefreshTokenExpiryDays`                          | 7                          | Refresh token lifetime; it lives only in an `HttpOnly` cookie                          |
+| `Ai:GatewayUrl`                                       | `http://127.0.0.1:4000`    | LiteLLM gateway (OpenAI-compatible API)                                                |
+| `Ai:ApiKey`                                           | —                          | Gateway key for the API (`LITELLM_APP_KEY`)                                            |
+| `Ai:TextAlias`                                        | `form-generator`           | Model alias for text sources                                                           |
+| `Ai:VisionAlias`                                      | `form-generator-vision`    | Model alias used when a PDF is attached                                                |
+| `Ai:MaxTokens`                                        | 4096                       | Output token cap per generation                                                        |
+| `Ai:TimeoutSeconds`                                   | 80                         | Request timeout to the gateway                                                         |
+| `Email:SmtpHost` / `Email:SmtpPort`                   | —                          | SMTP server for confirmation emails (Mailpit locally)                                  |
+| `Email:FromAddress` / `Email:FromName`                | —                          | Sender identity                                                                        |
+| `Email:FrontendBaseUrl`                               | —                          | Base URL used to build confirmation links                                              |
+| `Demo:Password`                                       | —                          | Shared password of demo accounts. Never in `appsettings.json`; blank disables the demo |
+| `RateLimiting:Generate`                               | 10 per 60 min, 6 segments  | Per user, on `POST /api/forms/generate`                                                |
+| `RateLimiting:ResendVerification`                     | 3 per 15 min, 3 segments   | On resending the confirmation email                                                    |
+| `RateLimiting:Demo`                                   | 3 per 15 min, 3 segments   | Per IP, on `POST /api/auth/demo`                                                       |
+| `RateLimiting:Login`                                  | 10 per 15 min, 3 segments  | Per IP, on `POST /api/auth/login`; failed and successful attempts both count           |
+| `RateLimiting:Register`                               | 5 per 60 min, 6 segments   | Per IP, on `POST /api/auth/register`                                                   |
+| `RateLimiting:Submit`                                 | 100 per 10 min, 5 segments | Per user, else per IP, on `POST /api/forms/{id}/submit`                                |
+| `RefreshTokenCleanup:RetentionDays` / `IntervalHours` | 10 / 24                    | How long expired or revoked refresh tokens are kept, and how often the cleanup runs    |
 
 Each rate limit takes `PermitLimit`, `WindowMinutes` and `SegmentsPerWindow` (sliding window). Counters are in process memory, so limits apply **per instance**.
 
@@ -234,16 +234,13 @@ infra/                 Terraform (prod and AI gateway)
 
 ## Documentation
 
-| File                                                            | What it holds                                            |
-| --------------------------------------------------------------- | -------------------------------------------------------- |
-| [`CONTEXT.md`](./CONTEXT.md)                                    | The glossary — what each domain term means               |
-| [`CLAUDE.md`](./CLAUDE.md)                                      | Architecture, business rules as implemented, conventions |
-| [`docs/adr/`](./docs/adr/)                                      | Why the non-obvious decisions were made                  |
-| [`docs/known-gaps.md`](./docs/known-gaps.md)                    | What isn't built, what's provisional, what's dead code   |
-| [`docker/litellm/README.md`](./docker/litellm/README.md)        | The AI gateway: aliases, failover, timeouts              |
-| [`docs/deployment/`](./docs/deployment/aws-deployment-guide.md) | AWS deployment guide                                     |
-
-`docs/plans/` holds historical phase plans written before the code existed. They are not maintained and don't describe current behaviour.
+| File                                                     | What it holds                                            |
+| -------------------------------------------------------- | -------------------------------------------------------- |
+| [`CONTEXT.md`](./CONTEXT.md)                             | The glossary — what each domain term means               |
+| [`CLAUDE.md`](./CLAUDE.md)                               | Architecture, business rules as implemented, conventions |
+| [`docs/adr/`](./docs/adr/)                               | Why the non-obvious decisions were made                  |
+| [`docs/known-gaps.md`](./docs/known-gaps.md)             | What isn't built, what's provisional, what's dead code   |
+| [`docker/litellm/README.md`](./docker/litellm/README.md) | The AI gateway: aliases, failover, timeouts              |
 
 ## License
 
