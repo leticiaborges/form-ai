@@ -110,7 +110,7 @@ The access token (`Jwt:ExpiresInMinutes`, 60) lives only in frontend memory, nev
 
 ## Commands
 
-Setup, running the app, local infrastructure and the configuration keys are in [`README.md`](./README.md); don't duplicate them here. The ones you will use most:
+Setup, running the app, local infrastructure and the configuration keys are in [`DEVELOPMENT.md`](./DEVELOPMENT.md); don't duplicate them here. `README.md` is the portfolio-facing overview, not developer docs. The ones you will use most:
 
 ```bash
 dotnet build FormAI.sln
@@ -123,7 +123,7 @@ dotnet ef database update --project src/FormAI.Infrastructure --startup-project 
 
 **Database roles** (`docker/postgres/init/01-create-app-user.sh`, the same script in Docker, CI and production): `form_ai_migrator` owns the schema and is the only role that runs DDL; `form_ai_app` (what the API uses) gets `SELECT/INSERT/UPDATE/DELETE` only. That's why `database update` needs `--connection`. The app never migrates at startup: `deploy.yml` runs an EF migrations bundle (`Dockerfile.migrator`) as a one-off ECS task before the API rolls out, and a failed migration stops the deploy ([ADR 0007](./docs/adr/0007-migrations-run-as-a-separate-role-in-a-deploy-job.md)). EF tools and the bundle build `AppDbContext` through `AppDbContextFactory`, not the API host, so they need no runtime settings. Database options belong in `AppDbContextOptions.UseAppDatabase`, nowhere else.
 
-**Local infrastructure** is Docker Compose (PostgreSQL, Mailpit, Redis, the LiteLLM gateway); see the README. Without the real gateway, `frontend/e2e/support/fake-gateway.mjs` answers by a marker in the source text: `[fake:down]` (503), `[fake:slow]` (never answers), `[fake:truncated]` and `[fake:invalid]` (502).
+**Local infrastructure** is Docker Compose (PostgreSQL, Mailpit, Redis, the LiteLLM gateway); see `DEVELOPMENT.md`. Without the real gateway, `frontend/e2e/support/fake-gateway.mjs` answers by a marker in the source text: `[fake:down]` (503), `[fake:slow]` (never answers), `[fake:truncated]` and `[fake:invalid]` (502).
 
 **Production AI gateway** is LiteLLM on ECS Fargate, in its own Terraform root (`infra/envs/ai-gateway`, apply `prod` first), reached by the API over private DNS and never through the ALB. Its database is separate from the app's (`form_ai_app` and `form_ai_migrator` have no access to it). The gateway stores prompts and responses in its spend log, so user source text lives in the `litellm` database, not in the app's. Details: `docs/deployment/` and `docker/litellm/README.md`.
 
@@ -140,7 +140,7 @@ Config keys are in `appsettings.json`; local values go in the **untracked** `app
 **Frontend** (run from `frontend/`)
 
 - **Vitest** (`npm test`) — jsdom + Testing Library, colocated `*.test.tsx`. MSW stubs the network; `src/test/server.ts` has no default handlers and unhandled requests error, so each test declares its requests. `src/test/renderWithProviders.tsx` wraps the app's providers.
-- **Playwright** (`npm run test:e2e`) — specs in `frontend/e2e/`. It starts its own API (`Testing` environment) and Vite server against a separate `form_ai_e2e` database; setup is in the README. Specs seed through the real HTTP API (`e2e/support/api.ts`).
+- **Playwright** (`npm run test:e2e`) — specs in `frontend/e2e/`. It starts its own API (`Testing` environment) and Vite server against a separate `form_ai_e2e` database; setup is in `DEVELOPMENT.md`. Specs seed through the real HTTP API (`e2e/support/api.ts`).
 
 Use Vitest for what a component proves with the network stubbed; Playwright only for flows that must cross the real API and database.
 

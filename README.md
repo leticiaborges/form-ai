@@ -1,245 +1,106 @@
 # FormAI
 
-FormAI turns text or a file (.pdf, .docx, .pptx, .txt) into a question form. Paste and/or upload your source material, tell Claude how many questions you want and how hard they should be, and it generates a structured quiz you can edit, reorder and share by link. Respondents answer through that link — signed in or anonymously — and you see the responses come in.
+**Turn your presentation into a quiz in seconds, then see what your audience actually understood.**
 
-**Core flow:** paste source text → set the generation parameters → Claude generates the questions → review, edit and reorder them → publish and share the link → respondents answer.
-After, the owner of the form can check the answers through charts.
+🔗 **Live demo:** [formai.leticiaborgesdev.com](https://formai.leticiaborgesdev.com)
 
-This is a work in progress. See [what works](#what-works-today) and [what doesn't yet](#roadmap) before trying it.
+Click **Try demo** to get a temporary account in one click, with no sign-up or email needed.
+Forms created with a demo account are available for one day.
 
-## What works today
+💡 To see the live results, publish a form, open its link in a private window, answer it,
+and watch the Results tab update.
 
-- **Accounts** — register with email confirmation, log in, JWT with refresh tokens, plus a one-click demo account
-- **Generation from pasted text or uploaded file** — question count, allowed question types, difficulty, and whether Claude should fill in the answer key
-- **Four question types** — single choice, multiple choice, free text, numeric
-- **Form editor** — edit question text, add and delete questions and options, drag to reorder both. Saves are diffed, so editing a form that already has responses doesn't invalidate them
-- **Publishing** — forms start private and are answerable only once you publish them; forms expire on a date
-- **Responding** — anonymous or signed in, one submission per respondent, required-question and option validation
-- **Dashboard** — your forms and how many submissions each has
-- **Results** — a Summary view of each question's answer distribution and, on a graded form, its score distribution, plus an Individual view to page through submissions one at a time and see that respondent's answers and score. The tab updates live as submissions arrive
+<img src="docs/images/create-form.gif" alt="Creating a form from uploaded content" width="700">
 
-## Roadmap
+## The problem
 
-Not built yet — the detail is in [`docs/known-gaps.md`](./docs/known-gaps.md).
+You just gave a class, a training session or a presentation at work. Did people get it?
+Writing good questions by hand takes time, so most of the time nobody checks.
 
-## Tech stack
+FormAI takes the material you already have (your slides, notes or a document), drafts
+the questions for you, and gives you a link to share with your audience. You review the
+questions, publish, and watch the answers come in.
 
-- **Backend** — .NET 10, Clean Architecture (`Domain` → `Application` → `Infrastructure`/`API`), EF Core + PostgreSQL, JWT auth
-- **Frontend** — React 19, TypeScript, Vite, Tailwind CSS
-- **AI** — Claude models through a LiteLLM gateway (OpenAI as failover)
-- **Realtime** — SignalR with a Redis backplane (live Results tab)
-- **Local dev infra** — Docker Compose (PostgreSQL, Redis, Mailpit, LiteLLM)
+**Who it's for:** teachers checking understanding after a class, trainers and speakers
+after a session, and teams after a knowledge-sharing meeting.
 
-## Prerequisites
+## How it works
 
-- [.NET SDK 10](https://dotnet.microsoft.com/download)
-- [Node.js](https://nodejs.org/) 20+
-- [Docker](https://www.docker.com/) (PostgreSQL, Redis, Mailpit and the AI gateway)
-- An [Anthropic API key](https://console.anthropic.com/) and an [OpenAI API key](https://platform.openai.com/) — the gateway tries Anthropic first and fails over to OpenAI (see [`docker/litellm/README.md`](./docker/litellm/README.md))
+**1. Upload your content.** Attach your slides (PPTX), a PDF, a Word document or a text file,
+or paste your notes. Choose how many questions, the difficulty, and whether the quiz is graded.
 
-## Setup
+**2. Review the draft.** AI generates the questions. Edit them, reorder them, mark the right
+answers and set points before anyone sees them.
 
-1. **Clone and configure environment variables for Docker**
+<img src="docs/images/publish-form.gif" alt="Reviewing and publishing a form" width="700">
 
-   ```bash
-   cp .env.example .env
-   ```
+**3. Share the link.** Publish the form and send the link. People answer once, signed in or anonymously.
 
-   Fill in `.env`. The passwords and secrets are values of your choice; they are only used by local containers.
+<img src="docs/images/answer-form.gif" alt="Answering a form" width="700">
 
-   | Variable                                                        | Used for                                                                           |
-   | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-   | `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, `MIGRATOR_DB_PASSWORD`  | Main PostgreSQL: superuser, the `form_ai_app` role and the `form_ai_migrator` role |
-   | `JWT_SECRET`                                                    | Playwright suite and `docker-compose.app.yml` only                                 |
-   | `DEMO_PASSWORD` (optional)                                      | Demo account password in `docker-compose.app.yml`; blank disables the demo         |
-   | `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `LITELLM_DB_PASSWORD` | The AI gateway and its own database                                                |
-   | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`                           | Real provider keys, read by the gateway only                                       |
-   | `LITELLM_APP_KEY`                                               | The key the API uses against the gateway (any string starting with `sk-`)          |
-   | `LITELLM_APP_MAX_BUDGET_USD`                                    | Monthly budget of that key (default 10)                                            |
+**4. See the results live.** Answer distributions per question, score distribution on graded forms,
+and each individual submission. The results page updates as answers arrive.
 
-2. **Start the local infrastructure**
+<img src="docs/images/results.gif" alt="Live results" width="700">
 
-   ```bash
-   docker compose up -d
-   ```
+## Under the hood
 
-   | Service         | Address                                                              | Notes                                                                                                                                                                                                                                                        |
-   | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-   | PostgreSQL      | `localhost:5432`                                                     | On first start (empty volume) it creates `form_ai_migrator` (owns the schema, runs migrations) and `form_ai_app` (what the API uses, data access only). If your volume predates these roles, recreate it with `docker compose down -v` (deletes local data). |
-   | Mailpit         | inbox [http://localhost:8025](http://localhost:8025), SMTP on `1025` | Catches all local email instead of a real SMTP provider.                                                                                                                                                                                                     |
-   | Redis           | `localhost:6379`                                                     | SignalR backplane for live results. No auth, no volume.                                                                                                                                                                                                      |
-   | LiteLLM gateway | `127.0.0.1:4000`                                                     | Every model call goes through it. Needs the `LITELLM_*` and provider keys from `.env`.                                                                                                                                                                       |
+A full-stack .NET and React application, deployed on AWS.
 
-3. **Register the API's key in the gateway**
-
-   ```bash
-   bash docker/litellm/provision-app-key.sh
-   ```
-
-   This creates (or updates) the `form-ai-app` key from `LITELLM_APP_KEY`: access to the two model aliases only, with a monthly budget. It is idempotent. Use the same value as `Ai:ApiKey` in the next step.
-
-4. **Configure backend settings**
-
-   Defaults that are safe to commit live in `src/FormAI.API/appsettings.json`. Secrets and machine-specific values go in the **untracked** (git-ignored) `src/FormAI.API/appsettings.Development.json`, or in [user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets). A working `appsettings.Development.json`:
-
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Database=form_ai;Username=form_ai_app;Password=<APP_DB_PASSWORD>",
-       "Redis": "localhost:6379"
-     },
-     "Jwt": { "Secret": "<long random string>", "Issuer": "formai", "Audience": "formai" },
-     "Email": {
-       "SmtpHost": "localhost",
-       "SmtpPort": 1025,
-       "FromAddress": "noreply@formai.local",
-       "FromName": "FormAI",
-       "FrontendBaseUrl": "http://localhost:5173"
-     },
-     "Ai": { "ApiKey": "<LITELLM_APP_KEY>" },
-     "Demo": { "Password": "<password shared by all demo accounts>" }
-   }
-   ```
-
-   Without `Email`, registration can't send its confirmation link and no account can be verified. Without `Ai:ApiKey`, generation fails. Without `Demo:Password`, `POST /api/auth/demo` answers 404 and creates nothing. Never commit real values.
-
-5. **Apply database migrations**
-
-   ```bash
-   dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
-   ```
-
-   Migrations must run as `form_ai_migrator`. The `form_ai_app` role cannot change the schema, so leaving out `--connection` fails. The app never migrates at startup.
-
-6. **Run the backend**
-
-   ```bash
-   dotnet run --project src/FormAI.API
-   ```
-
-   API available at `http://localhost:5155`, with Swagger UI at `/swagger`.
-
-7. **Run the frontend**
-
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-   Frontend available at `http://localhost:5173`. Vite proxies `/api` and `/hubs` (SignalR) to the backend, so no extra configuration is needed.
-
-### Running the API as a container (optional)
-
-To test the production Docker image locally, layer `docker-compose.app.yml` on top of the infrastructure. It builds `src/FormAI.API/Dockerfile`, serves the API at `http://localhost:8080`, and reaches the gateway at `http://litellm:4000`. It needs `JWT_SECRET`, `APP_DB_PASSWORD` and `LITELLM_APP_KEY` in `.env` (and the key registered with step 3); set `DEMO_PASSWORD` to enable the demo account.
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.app.yml up -d --build
+```mermaid
+flowchart LR
+  U[Browser] --> CF[CloudFront]
+  CF --> S3[(S3: React app)]
+  CF --> ALB[ALB] --> API[.NET 10 API on ECS Fargate]
+  API --> RDS[(PostgreSQL on RDS)]
+  API --> REDIS[(Redis: SignalR backplane)]
+  API --> GW[LiteLLM gateway] --> AI[Claude, with OpenAI failover]
 ```
 
-The Vite dev server proxies to `http://localhost:5155` by default; point it at the container with `API_URL=http://localhost:8080 npm run dev`.
+- **Backend:** .NET 10, Clean Architecture, EF Core with PostgreSQL, JWT with rotating refresh tokens in HttpOnly cookies
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS
+- **Real time:** SignalR with a Redis backplane for the live results page
+- **AI:** models behind a LiteLLM gateway with provider failover, a strict JSON schema on the output, and validation before anything is saved
+- **Infrastructure:** AWS (ECS Fargate, RDS, ElastiCache, CloudFront, Route 53) provisioned with Terraform; CI/CD with GitHub Actions, with database migrations run as a separate step under a dedicated role
+- **Testing:** xUnit and NSubstitute, integration tests with Testcontainers, Vitest for components, Playwright end to end
+- **Safeguards:** per-user and per-IP rate limiting, and 404s that don't reveal whether a form exists
 
-## Tests
+Design decisions and their trade-offs are recorded in [`docs/adr/`](./docs/adr/).
 
-- **Backend unit tests** — `dotnet test tests/FormAI.UnitTests/FormAI.UnitTests.csproj` (no Docker needed). `dotnet test FormAI.sln` also runs the integration tests, which start PostgreSQL through Testcontainers and need Docker.
-- **Frontend unit/component tests** — from `frontend/`, `npm test` (Vitest).
-- **End-to-end tests** — Playwright, see below.
+## How it was built
 
-### End-to-end tests (Playwright)
+I built FormAI working alongside [Claude Code](https://claude.com/claude-code). I set the direction and
+made the product and architecture decisions, and we worked through the implementation together: exploring
+options, writing and refactoring code, and keeping the documentation current. The workflow:
 
-The Playwright suite starts its own API against a separate database, `form_ai_e2e`, so it never touches your development data. Create it once, with the same roles and grants as `form_ai` (Docker Compose must be running):
+1. **Shape the idea.** Before writing code, a `grill-me-with-docs` session challenged the requirements and
+   edge cases, and settled the domain vocabulary in [`CONTEXT.md`](./CONTEXT.md).
+2. **Plan before changing code.** Non-trivial changes started in plan mode: Claude Code read the relevant
+   code and proposed an approach, and nothing was edited until I approved it.
+3. **Specify features when it pays off.** The approach depended on the feature. Some were specified first:
+   with `tlc-spec-driven`, a spec with testable requirements was broken into tasks and validated against
+   them; the lighter `tlc-spec-lean` used a single plan with acceptance criteria, checks written before the
+   build, then an independent verification. Other changes went straight from plan mode to code. The specs
+   are in [`.specs/`](./.specs/).
+4. **Verify.** Changes go through unit, integration and end-to-end tests, and CI runs on every pull request.
+5. **Keep the context true.** [`CLAUDE.md`](./CLAUDE.md) describes the architecture and business rules as
+   built, and is updated in the same change as the code, so later work starts from accurate context.
+   Decisions that were hard to reverse were recorded as ADRs.
 
-```bash
-sh docker/postgres/create-e2e-db.sh
-```
+## Running it locally
 
-Then apply the migrations to it as the migrator role (the script is safe to re-run):
-
-```bash
-dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai_e2e;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
-```
-
-Run the suite from `frontend/` with `npm run test:e2e`. It needs `JWT_SECRET` and `APP_DB_PASSWORD` in the repo-root `.env`, plus PostgreSQL, Redis and Mailpit from Docker Compose. AI calls go to a fake gateway (`frontend/e2e/support/fake-gateway.mjs`), so no provider keys are needed. It answers by a marker in the source text: `[fake:down]` (503), `[fake:slow]` (never answers), `[fake:truncated]` and `[fake:invalid]` (502).
-
-## Configuration reference
-
-ASP.NET Core configuration: each key can be set in `appsettings*.json`, user-secrets or an environment variable (use `__` for `:`, e.g. `Ai__GatewayUrl`). Defaults are those in `appsettings.json`.
-
-| Key                                                   | Default                    | Purpose                                                                                |
-| ----------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
-| `ConnectionStrings:DefaultConnection`                 | —                          | PostgreSQL connection string (as `form_ai_app`)                                        |
-| `ConnectionStrings:Redis`                             | —                          | Redis for the SignalR backplane                                                        |
-| `Jwt:Secret`                                          | —                          | JWT signing key                                                                        |
-| `Jwt:Issuer` / `Jwt:Audience`                         | —                          | JWT validation parameters                                                              |
-| `Jwt:ExpiresInMinutes`                                | 60                         | Access token lifetime; the token lives only in frontend memory                         |
-| `Jwt:RefreshTokenExpiryDays`                          | 7                          | Refresh token lifetime; it lives only in an `HttpOnly` cookie                          |
-| `Ai:GatewayUrl`                                       | `http://127.0.0.1:4000`    | LiteLLM gateway (OpenAI-compatible API)                                                |
-| `Ai:ApiKey`                                           | —                          | Gateway key for the API (`LITELLM_APP_KEY`)                                            |
-| `Ai:TextAlias`                                        | `form-generator`           | Model alias for text sources                                                           |
-| `Ai:VisionAlias`                                      | `form-generator-vision`    | Model alias used when a PDF is attached                                                |
-| `Ai:MaxTokens`                                        | 4096                       | Output token cap per generation                                                        |
-| `Ai:TimeoutSeconds`                                   | 80                         | Request timeout to the gateway                                                         |
-| `Email:SmtpHost` / `Email:SmtpPort`                   | —                          | SMTP server for confirmation emails (Mailpit locally)                                  |
-| `Email:FromAddress` / `Email:FromName`                | —                          | Sender identity                                                                        |
-| `Email:FrontendBaseUrl`                               | —                          | Base URL used to build confirmation links                                              |
-| `Demo:Password`                                       | —                          | Shared password of demo accounts. Never in `appsettings.json`; blank disables the demo |
-| `RateLimiting:Generate`                               | 10 per 60 min, 6 segments  | Per user, on `POST /api/forms/generate`                                                |
-| `RateLimiting:ResendVerification`                     | 3 per 15 min, 3 segments   | On resending the confirmation email                                                    |
-| `RateLimiting:Demo`                                   | 3 per 15 min, 3 segments   | Per IP, on `POST /api/auth/demo`                                                       |
-| `RateLimiting:Login`                                  | 10 per 15 min, 3 segments  | Per IP, on `POST /api/auth/login`; failed and successful attempts both count           |
-| `RateLimiting:Register`                               | 5 per 60 min, 6 segments   | Per IP, on `POST /api/auth/register`                                                   |
-| `RateLimiting:Submit`                                 | 100 per 10 min, 5 segments | Per user, else per IP, on `POST /api/forms/{id}/submit`                                |
-| `RefreshTokenCleanup:RetentionDays` / `IntervalHours` | 10 / 24                    | How long expired or revoked refresh tokens are kept, and how often the cleanup runs    |
-
-Each rate limit takes `PermitLimit`, `WindowMinutes` and `SegmentsPerWindow` (sliding window). Counters are in process memory, so limits apply **per instance**.
-
-Docker Compose reads the `.env` variables listed in step 1 (see `.env.example`); those only apply to the local containers, not to the backend itself.
-
-## Commands
-
-```bash
-# Build entire solution
-dotnet build FormAI.sln
-
-# Run API (http://localhost:5155, Swagger at /swagger)
-dotnet run --project src/FormAI.API
-
-# Run all tests
-dotnet test FormAI.sln
-
-# EF Core migrations (run from repo root)
-dotnet ef migrations add <MigrationName> --project src/FormAI.Infrastructure --startup-project src/FormAI.API
-# applying needs the migrator role: form_ai_app cannot change the schema
-dotnet ef database update --project src/FormAI.Infrastructure --startup-project src/FormAI.API --connection "Host=localhost;Database=form_ai;Username=form_ai_migrator;Password=<MIGRATOR_DB_PASSWORD>"
-
-# Frontend (from frontend/)
-npm run dev        # dev server
-npm run build      # type-check and build
-npm run lint
-npm test           # Vitest
-npm run test:e2e   # Playwright
-```
-
-## Project structure
-
-```
-FormAI.Domain          entities, enums, pure rules — zero dependencies
-FormAI.Application     use cases, DTOs, interfaces
-FormAI.Infrastructure  EF Core, repositories, AI gateway client, email, JWT
-FormAI.API             controllers, middleware, SignalR hub, DI wiring
-frontend/              React + TypeScript + Vite app
-docker/                Postgres init scripts, LiteLLM gateway config
-infra/                 Terraform (prod and AI gateway)
-```
+See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for setup, configuration and tests.
 
 ## Documentation
 
 | File                                                     | What it holds                                            |
 | -------------------------------------------------------- | -------------------------------------------------------- |
+| [`DEVELOPMENT.md`](./DEVELOPMENT.md)                     | Local setup, configuration, tests and commands           |
 | [`CONTEXT.md`](./CONTEXT.md)                             | The glossary — what each domain term means               |
 | [`CLAUDE.md`](./CLAUDE.md)                               | Architecture, business rules as implemented, conventions |
 | [`docs/adr/`](./docs/adr/)                               | Why the non-obvious decisions were made                  |
-| [`docs/known-gaps.md`](./docs/known-gaps.md)             | What isn't built, what's provisional, what's dead code   |
+| [`docs/known-gaps.md`](./docs/known-gaps.md)             | What isn't built                                         |
+| [`.specs/`](./.specs/)                                   | Feature specs, checks and verification reports           |
 | [`docker/litellm/README.md`](./docker/litellm/README.md) | The AI gateway: aliases, failover, timeouts              |
 
 ## License
