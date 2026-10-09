@@ -49,8 +49,6 @@ secrets.json
 .idea/
 *.sln.iml
 
-## VS Code
-
 ## OS
 .DS_Store
 Thumbs.db
@@ -66,7 +64,6 @@ coverage*/
 .claude/
 
 migration.sql
-appsettings.Development.json 
 
 /docs/learning
 /docs/plans
