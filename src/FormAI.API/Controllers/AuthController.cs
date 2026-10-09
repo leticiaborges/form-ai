@@ -34,6 +34,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitPolicies.Register)]
     public async Task<IActionResult> Register([FromBody]RegisterUserRequest request, CancellationToken cancellationToken)
     {
         var response = await _registerHandler.HandleAsync(request, cancellationToken);
@@ -41,6 +42,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<IActionResult> Login([FromBody]LoginRequest request, CancellationToken cancellationToken)
     {
         var tokens = await _loginHandler.HandleAsync(request, cancellationToken);

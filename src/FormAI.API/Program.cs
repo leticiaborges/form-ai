@@ -43,14 +43,6 @@ builder.Services.AddSwaggerGen(c =>
                     });
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("FrontendDev", policy =>
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
-
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -89,7 +81,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
