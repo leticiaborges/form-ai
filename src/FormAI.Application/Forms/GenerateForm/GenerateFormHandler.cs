@@ -10,8 +10,8 @@ namespace FormAI.Application.Forms.GenerateForm;
 
 public class GenerateFormHandler
 {
-    public readonly IFormGenerationService _generationService;
-    public readonly IFormRepository _repository;
+    private readonly IFormGenerationService _generationService;
+    private readonly IFormRepository _repository;
     private readonly ISourceTextExtractor _extractor;
 
     public const string PrefixTitle = "Generated Form –";

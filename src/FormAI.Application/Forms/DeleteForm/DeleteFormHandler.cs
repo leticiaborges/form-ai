@@ -6,7 +6,7 @@ namespace FormAI.Application.Forms.DeleteForm;
 
 public class DeleteFormHandler
 {
-    public readonly IFormRepository _formRepository;
+    private readonly IFormRepository _formRepository;
 
     public DeleteFormHandler(IFormRepository formRepository)
     {
