@@ -1,6 +1,6 @@
 namespace FormAI.API.RateLimiting;
 
-public class DemoRateLimitOptions
+public class DemoRateLimitOptions : IRateLimitOptionsSlidingWindow
 {
     public const string SectionName = "RateLimiting:Demo";
 

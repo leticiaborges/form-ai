@@ -71,6 +71,8 @@ export default defineConfig({
         // hits the limit, so the permit count is raised from the shipped 10 to a known 5.
         Demo__Password: "e2e-demo-password",
         RateLimiting__Demo__PermitLimit: "5",
+        RateLimiting__Login__PermitLimit: "10000",
+        RateLimiting__Register__PermitLimit: "10000",
       },
     },
     {

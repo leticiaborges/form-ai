@@ -31,6 +31,7 @@ Entities (`FormAI.Domain/Entities`): `User`, `Form`, `FormQuestion`, `QuestionOp
 - `CheckOwnerAccess` (`form.CreatedBy == userId`, any state) guards every owner-only endpoint: editor read/save, results, submissions, count, delete.
 - `CheckUserAnswerAccess` (`form.IsPublic` only, **no owner carve-out**) guards `GET {id}/answer` and `POST {id}/submit`. It also rejects an expired form with a `ValidationException`, owner included. The owner can still open an expired form in the editor (`GET /api/forms/{id}`).
 - `GET /api/forms/{id}` and `.../results` are owner-only even when published, because they carry the answer key. Respondents use `GET {id}/answer`, which omits it.
+- `POST /api/auth/login` and `POST /api/auth/register` are rate limited per IP (`RateLimiting:Login`: 10 per 15 min; `RateLimiting:Register`: 5 per 60 min). Every attempt spends a permit, successful or not. Counters are in process memory, so the limit is per instance.
 - Everything under `/api/forms` needs a token except `GET {id}/answer`, `GET {id}/my-submission` and `POST {id}/submit` (`[AllowAnonymous]`).
 - `POST /api/auth/demo` is anonymous and creates a demo account (`User.CreateDemo`, verified, `demo-<guid>@demo.invalid`, shared `Demo:Password`). The password is never in `appsettings.json` (untracked `appsettings.Development.json` locally, an ECS secret in production); blank answers 404 and creates nothing. Rate limited per IP (`RateLimiting:Demo`, 3 per 15 min). The token carries `is_demo: "true"`, which drives the frontend banner.
 

@@ -1,6 +1,6 @@
 namespace FormAI.API.RateLimiting;
 
-public class ResendVerificationRateLimitOptions
+public class ResendVerificationRateLimitOptions : IRateLimitOptionsSlidingWindow
 {
     public const string SectionName = "RateLimiting:ResendVerification";
 

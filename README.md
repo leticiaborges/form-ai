@@ -186,6 +186,8 @@ ASP.NET Core configuration: each key can be set in `appsettings*.json`, user-sec
 | `RateLimiting:Generate`                               | 10 per 60 min, 6 segments | Per user, on `POST /api/forms/generate`                                                |
 | `RateLimiting:ResendVerification`                     | 3 per 15 min, 3 segments  | On resending the confirmation email                                                    |
 | `RateLimiting:Demo`                                   | 3 per 15 min, 3 segments  | Per IP, on `POST /api/auth/demo`                                                       |
+| `RateLimiting:Login`                                  | 10 per 15 min, 3 segments | Per IP, on `POST /api/auth/login`; failed and successful attempts both count           |
+| `RateLimiting:Register`                               | 5 per 60 min, 6 segments  | Per IP, on `POST /api/auth/register`                                                   |
 | `RefreshTokenCleanup:RetentionDays` / `IntervalHours` | 10 / 24                   | How long expired or revoked refresh tokens are kept, and how often the cleanup runs    |
 
 Each rate limit takes `PermitLimit`, `WindowMinutes` and `SegmentsPerWindow` (sliding window). Counters are in process memory, so limits apply **per instance**.
