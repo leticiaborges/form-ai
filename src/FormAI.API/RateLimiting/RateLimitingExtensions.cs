@@ -11,6 +11,7 @@ public static class RateLimitPolicies
     public const string Demo = "demo";
     public const string Login = "login";
     public const string Register = "register";
+    public const string Submit = "submit";
 }
 
 public static class RateLimitingExtensions
@@ -24,6 +25,7 @@ public static class RateLimitingExtensions
         var demo = configuration.GetSection(DemoRateLimitOptions.SectionName).Get<DemoRateLimitOptions>() ?? new DemoRateLimitOptions();
         var login = configuration.GetSection(LoginRateLimitOptions.SectionName).Get<LoginRateLimitOptions>() ?? new LoginRateLimitOptions();
         var register = configuration.GetSection(RegisterRateLimitOptions.SectionName).Get<RegisterRateLimitOptions>() ?? new RegisterRateLimitOptions();
+        var submit = configuration.GetSection(SubmitRateLimitOptions.SectionName).Get<SubmitRateLimitOptions>() ?? new SubmitRateLimitOptions();
 
         services.AddRateLimiter(options =>
         {
@@ -34,6 +36,7 @@ public static class RateLimitingExtensions
             AddRateLimitingSlidingWindow(RateLimitPolicies.Demo, options, demo);
             AddRateLimitingSlidingWindow(RateLimitPolicies.Login, options, login);
             AddRateLimitingSlidingWindow(RateLimitPolicies.Register, options, register);
+            AddRateLimitingSlidingWindow(RateLimitPolicies.Submit, options, submit);
 
             options.OnRejected = async (context, cancellationToken) =>
             {
@@ -53,6 +56,8 @@ public static class RateLimitingExtensions
                         "Too many sign-in attempts. Please try again later.",
                     RateLimitPolicies.Register =>
                         "Too many registration attempts. Please try again later.",
+                    RateLimitPolicies.Submit =>
+                        "Too many submissions. Please try again later.",
                     _ =>
                         $"You have reached the limit of {generate.PermitLimit} form generations " +
                         $"per {generate.WindowMinutes} minutes. Please try again later."

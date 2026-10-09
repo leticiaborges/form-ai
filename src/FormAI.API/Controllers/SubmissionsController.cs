@@ -1,9 +1,11 @@
 using System.Security.Claims;
+using FormAI.API.RateLimiting;
 using FormAI.Application.Submissions.GetFormToAnswer;
 using FormAI.Application.Submissions.GetMySubmission;
 using FormAI.Application.Submissions.SubmitForm;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FormAI.API.Controllers;
 
@@ -65,6 +67,7 @@ public class SubmissionsController : ControllerBase
     //POST /api/forms/{formId}/submit
     [HttpPost("submit")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Submit)]
     public async Task<IActionResult> Submit(Guid formId,
         [FromBody] SubmitFormRequest request,
         CancellationToken cancellationToken)

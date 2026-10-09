@@ -73,6 +73,7 @@ export default defineConfig({
         RateLimiting__Demo__PermitLimit: "5",
         RateLimiting__Login__PermitLimit: "10000",
         RateLimiting__Register__PermitLimit: "10000",
+        RateLimiting__Submit__PermitLimit: "10000",
       },
     },
     {

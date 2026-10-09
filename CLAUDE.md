@@ -38,6 +38,7 @@ Entities (`FormAI.Domain/Entities`): `User`, `Form`, `FormQuestion`, `QuestionOp
 **Submitting**
 
 - An expired form rejects new submissions.
+- `POST {id}/submit` is rate limited per user when signed in, else per IP (`RateLimiting:Submit`: 100 per 10 min, across all forms). It only slows a flood: it doesn't make the anonymous one-submission rule enforceable.
 - One submission per respondent per form: matched on `UserId` when signed in, else `RespondentToken` ([ADR 0003](./docs/adr/0003-respondent-token-identity.md)).
 - Rejected: an unknown question, an option not on the question, more than one option on `Single`, an unanswered required question. Problems are collected into one `ValidationException` keyed by question id.
 
