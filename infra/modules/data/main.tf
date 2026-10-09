@@ -21,6 +21,7 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids      = [var.data_security_group_id]
   publicly_accessible         = false
   backup_retention_period     = 7
+  storage_encrypted           = true
   deletion_protection         = true # to destroy: set false, apply, then destroy
   skip_final_snapshot         = false
   final_snapshot_identifier   = "${var.name}-db-final" # must not already exist when destroying
