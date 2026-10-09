@@ -1,5 +1,4 @@
-# Copy to terraform.tfvars and fill in real values. terraform.tfvars is
-# gitignored (*.tfvars) — this .example file is the only one tracked.
+# Copy to terraform.tfvars and fill in real values.
 #
 # jwt_secret and claude_api_key are NOT set here even as placeholders — pass
 # them as TF_VAR_jwt_secret / TF_VAR_claude_api_key environment variables

@@ -1,10 +1,17 @@
+data "aws_caller_identity" "current" {}
+
+locals {
+  account_id               = data.aws_caller_identity.current.account_id
+  github_oidc_provider_arn = "arn:aws:iam::${local.account_id}:oidc-provider/token.actions.githubusercontent.com"
+}
+
 resource "aws_iam_role" "github_actions_deploy" {
   name = "formai-github-actions-deploy"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
+      Principal = { Federated = local.github_oidc_provider_arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
@@ -106,7 +113,7 @@ resource "aws_iam_role" "github_actions_terraform" {
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
+      Principal = { Federated = local.github_oidc_provider_arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
@@ -137,7 +144,7 @@ resource "aws_iam_role_policy" "terraform_iam_scoped" {
         "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:PassRole",
         "iam:TagRole", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies"
       ]
-      Resource = "arn:aws:iam::058264176602:role/formai-*"
+      Resource = "arn:aws:iam::${local.account_id}:role/formai-*"
     }]
   })
 }
@@ -150,7 +157,7 @@ resource "aws_iam_role" "github_actions_terraform_plan" {
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
+      Principal = { Federated = local.github_oidc_provider_arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
@@ -179,7 +186,7 @@ data "aws_iam_policy_document" "terraform_plan" {
   statement {
     sid       = "RefreshSecretVersions"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = ["arn:aws:secretsmanager:us-east-1:058264176602:secret:formai-*"]
+    resources = ["arn:aws:secretsmanager:us-east-1:${local.account_id}:secret:formai-*"]
   }
 }
 

@@ -1,3 +1,10 @@
+data "aws_caller_identity" "current" {}
+
+locals {
+  account_id               = data.aws_caller_identity.current.account_id
+  github_oidc_provider_arn = "arn:aws:iam::${local.account_id}:oidc-provider/token.actions.githubusercontent.com"
+}
+
 # Deploy role for ai-gateway-deploy.yml. Lives in this root (not prod) so the gateway stays separable.
 resource "aws_iam_role" "github_actions_ai_gateway_deploy" {
   name = "formai-github-actions-ai-gateway-deploy"
@@ -5,7 +12,7 @@ resource "aws_iam_role" "github_actions_ai_gateway_deploy" {
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = "arn:aws:iam::058264176602:oidc-provider/token.actions.githubusercontent.com" }
+      Principal = { Federated = local.github_oidc_provider_arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
