@@ -10,7 +10,7 @@ namespace FormAI.UnitTests.Users;
 
 public class StartDemoTests
 {
-    private const string DemoPassword = "DemoUser852*";
+    private const string DemoPassword = "Test-demo-password123@";
 
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
