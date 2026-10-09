@@ -32,16 +32,24 @@ or paste your notes. Choose how many questions, the difficulty, and whether the 
 **2. Review the draft.** AI generates the questions. Edit them, reorder them, mark the right
 answers and set points before anyone sees them.
 
-<img src="docs/images/publish-form.gif" alt="Reviewing and publishing a form" width="700">
+<img src="docs/images/edit-form.gif" alt="Reviewing and saving a form" width="700">
 
-**3. Share the link.** Publish the form and send the link. People answer once, signed in or anonymously.
+**3. Share the link.** Publish the form and send the link to your audience.
+
+<img src="docs/images/publish-form.gif" alt="Publishing a form" width="700">
+
+**4. Your audience answers.** They open the link and answer once, signed in or anonymously.
 
 <img src="docs/images/answer-form.gif" alt="Answering a form" width="700">
 
-**4. See the results live.** Answer distributions per question, score distribution on graded forms,
+**5. See the results live.** Answer distributions per question, score distribution on graded forms,
 and each individual submission. The results page updates as answers arrive.
 
 <img src="docs/images/results.gif" alt="Live results" width="700">
+
+**6. Keep track of your forms.** The dashboard lists all your forms and how many submissions each has.
+
+<img src="docs/images/dashboard.gif" alt="Dashboard" width="700">
 
 ## Under the hood
 
