@@ -36,8 +36,9 @@ function queryString(querystring) {
     for (const key in querystring) {
         const param = querystring[key];
         const values = param.multiValue ? param.multiValue : [param];
-        for (const v of values) {
-            parts.push(v.value === '' ? key : key + '=' + v.value);
+        for (let i = 0; i < values.length; i++) {
+            const value = values[i].value;
+            parts.push(value === '' ? key : key + '=' + value);
         }
     }
     return parts.length ? '?' + parts.join('&') : '';
