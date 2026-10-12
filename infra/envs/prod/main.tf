@@ -104,3 +104,14 @@ resource "aws_route53_record" "frontend" {
     evaluate_target_health = false
   }
 }
+
+resource "aws_route53_record" "frontend_www" {
+  zone_id = var.hosted_zone_id
+  name    = "www.${var.frontend_domain_name}"
+  type    = "A"
+  alias {
+    name                   = module.frontend.cloudfront_distribution_domain_name
+    zone_id                = "Z2FDTNDATAQYW2"
+    evaluate_target_health = false
+  }
+}

@@ -21,8 +21,13 @@ resource "aws_acm_certificate_validation" "api" {
 # provider is already us-east-1 (see envs/prod/main.tf), so no separate
 # aliased provider is needed here, unlike a deployment based in another region.
 resource "aws_acm_certificate" "cloudfront" {
-  domain_name       = var.frontend_domain_name
-  validation_method = "DNS"
+  domain_name               = var.frontend_domain_name
+  subject_alternative_names = ["www.${var.frontend_domain_name}"] # only redirected to the bare domain, see frontend/spa-routing.js
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_route53_record" "cloudfront_cert_validation" {

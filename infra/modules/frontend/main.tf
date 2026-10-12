@@ -141,7 +141,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
-  aliases = [var.frontend_domain_name]
+  aliases = [var.frontend_domain_name, "www.${var.frontend_domain_name}"]
   viewer_certificate {
     acm_certificate_arn = var.cloudfront_acm_certificate_arn # must be requested in us-east-1, CloudFront's hard requirement regardless of your main region
     ssl_support_method  = "sni-only"
